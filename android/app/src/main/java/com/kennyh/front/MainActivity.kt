@@ -1,4 +1,4 @@
-package com.anonymous.front
+package com.kennyh.front
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

@@ -1,4 +1,4 @@
-package com.anonymous.front
+package com.kennyh.front
 
 import android.app.Application
 import android.content.res.Configuration

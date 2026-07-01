@@ -1,74 +1,202 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import React, { useCallback, useState } from "react";
+import { View, Text, ScrollView, Pressable, Dimensions } from "react-native";
+import { useBudgetStore } from "@/store/budgetStore";
+import { LineChart } from "react-native-chart-kit";
+import { useAppColors } from "@/hooks/useAppColors";
+import { Depense } from "@/types/db";
+import { router, useFocusEffect } from "expo-router";
+import { getDepenseCurrentMonth } from "@/db/depense";
+import { getCycleStart, getDepenseParSemaine, getInfosPeriode } from "@/utils/dateFormat";
+import { useAppTheme } from "@/hooks/themeContext";
+import { styles } from "@/styles/styles";
+import { getUser } from "@/db/user";
 
 export default function HomeScreen() {
+  const { textColor, backgroundColor, gradient, cardBg, sectionColor, border } = useAppColors();
+  const { user } = useAppTheme();
+
+
+  useFocusEffect(
+    useCallback(() => {
+      async function loadUser() {
+        const user = await getUser();
+        if (user === null || user === undefined) {
+          router.push("/login");
+        }
+      }
+
+      loadUser();
+    }, [getUser])
+  )
+
+  const { budgetMensuel } = useBudgetStore();
+  const [depenses, setDepenses] = React.useState<Depense[]>([]);
+  const [point, setPoint] = useState({
+    click: false,
+    v: 0,
+    x: 0,
+    y: 0,
+  });
+
+  const loadData = async () => {
+    const data = await getDepenseCurrentMonth();
+    setDepenses(data.sort((a: any, b: any) => b.id - a.id));
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+      setPoint({ click: false, v: 0, x: 0, y: 0, });
+    }, [])
+  );
+
+  const dateDebut = getCycleStart(new Date().toISOString(), 20).toISOString();
+
+  const { joursRestants } = getInfosPeriode(dateDebut);
+
+  const totalDepense = depenses.reduce((sum, d) => sum + d.montant, 0);
+  const reste = budgetMensuel - totalDepense;
+
+  const budgetJournalier = Math.floor(reste / joursRestants);
+
+  const dataGraphlabel = getDepenseParSemaine(dateDebut, depenses).map((s) => s.id);
+  const dataGraphdata = getDepenseParSemaine(dateDebut, depenses).map((s) => s.total);
+
+  const dataGraph = {
+    labels: dataGraphlabel,
+    datasets: [
+      {
+        data: dataGraphdata,
+      },
+    ],
+  };
+
+  const predictionFinMois = totalDepense * 1.2;
+  const economieConseil = reste > 0 ? Math.floor(reste * 0.1) : 0;
+
+  const pourcentage = (totalDepense / budgetMensuel) * 100;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <ScrollView style={[styles.container]} contentContainerStyle={styles.scrollContent}>
+      <Pressable onPress={() => setPoint({ click: false, v: 0, x: 0, y: 0, })}>
+        <Text style={[styles.title, { color: textColor }]}>
+          Bonjour <Text style={[styles.title, { color: sectionColor, fontWeight: "bold" }]}>{user?.name}</Text>
+        </Text>
+
+        <View style={[styles.card, styles.infoGridFull,
+        { borderColor: border, gap: 2, marginVertical: 10, backgroundColor }
+        ]}>
+          <Text style={[styles.section, { color: textColor, marginBottom: 10 }]}>
+            📊 Budget Alimentaire
+          </Text>
+
+          <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border }]}>
+            <Text style={{ color: textColor }}>Budget mensuel</Text>
+            <Text style={[styles.big, { color: textColor }]}>{budgetMensuel.toLocaleString()} Ar</Text>
+
+            <Text style={{ color: textColor }}>
+              Dépensé : {totalDepense.toLocaleString()} Ar
+            </Text>
+
+            <Text style={{ color: textColor }}>
+              Restant : {reste.toLocaleString()} Ar
+            </Text>
+          </View>
+
+          <View style={[{ position: "relative", width: "100%", marginVertical: 10 }]}>
+            <Text style={{ color: textColor, fontSize: 10, position: "absolute", top: -5, left: `${Math.min(pourcentage, 100) - 3}%` }}>{pourcentage.toFixed(2)}%</Text>
+            <View style={[styles.progressBar, { backgroundColor: cardBg }]}>
+              <View
+                style={{
+                  width: `${Math.min(pourcentage, 100)}%`,
+                  height: 10,
+                  backgroundColor: pourcentage > 100 ? "#ef4444" : pourcentage > 50 ? "#fbbf24" : "#22c55e",
+                }}
+              />
+            </View>
+          </View>
+
+          <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border }]}>
+            <Text style={{ color: textColor }}>Budget journalier</Text>
+            <Text style={[styles.big, { color: textColor }]}>
+              {budgetJournalier.toLocaleString()} Ar
+            </Text>
+
+            <Text
+              style={{
+                color: budgetJournalier > 0 ? "#22c55e" : "#ef4444",
+                marginTop: 8,
+                fontWeight: "bold",
+              }}
+            >
+              {budgetJournalier > 0
+                ? "✔ OK pour aujourd'hui"
+                : "⚠ Budget insuffisant"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={[styles.card, styles.infoGridFull, { gap: 10, backgroundColor, borderColor: border }]}>
+          <Text style={[styles.section, { color: textColor }]}>📈 Dépenses</Text>
+
+          <View style={{ backgroundColor, borderRadius: 10, position: 'relative', height: 220 }}>
+            <LineChart
+              data={dataGraph}
+              width={Dimensions.get("window").width - 45}
+              height={220}
+              chartConfig={{
+                backgroundColor: "red",
+                backgroundGradientFrom: gradient.from,
+                backgroundGradientTo: gradient.to,
+                color: () => "#ffffff",
+                labelColor: () => "#ffffff",
+              }}
+              onDataPointClick={(e) => setPoint({ v: e.value, x: e.x, y: e.y, click: true })}
+              bezier
+              style={{ borderRadius: 10 }}
+            />
+            {point.click && <Text style={{ position: 'absolute', zIndex: 1, backgroundColor: cardBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 50, top: point.y, left: point.x, color: textColor }}>{point.v}</Text>}
+          </View>
+
+        </View>
+
+        <View style={[styles.card, styles.infoGridFull, { gap: 2, backgroundColor, borderColor: border }]}>
+          <Text style={[styles.section, { color: textColor }]}>⚡ Actions rapides</Text>
+
+          <Pressable style={[styles.button, { backgroundColor: "transparent", borderColor: sectionColor, borderWidth: 1 }]} onPress={() => router.push("/scan-ticket")}>
+            <Text style={[styles.buttonText, { color: sectionColor }]}>📷 Scanner ticket (OCR)</Text>
+          </Pressable>
+
+          <Pressable style={styles.buttonSecondary}>
+            <Text style={styles.buttonText}>➕ Ajout rapide type WhatsApp</Text>
+          </Pressable>
+        </View>
+
+        <View style={[styles.card, styles.infoGridFull, { gap: 10, backgroundColor, borderColor: border }]}>
+          <Text style={[styles.section, { color: textColor }]}>🧠 Intelligence</Text>
+
+          <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border }]}>
+            <Text style={{ color: textColor }}>
+              💡 Économie conseillée : {economieConseil.toLocaleString()} Ar
+            </Text>
+
+            <Text style={{ color: textColor }}>
+              📉 Prévision fin du mois : {predictionFinMois.toLocaleString()} Ar
+            </Text>
+
+            {predictionFinMois > budgetMensuel ? (
+              <Text style={{ color: "#ef4444", marginTop: 8 }}>
+                ⚠ Risque de dépassement
+              </Text>
+            ) : (
+              <Text style={{ color: "#22c55e", marginTop: 8 }}>
+                ✅ Budget maîtrisé
+              </Text>
+            )}
+          </View>
+        </View>
+
+      </Pressable>
+    </ScrollView >
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});

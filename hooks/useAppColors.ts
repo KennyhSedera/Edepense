@@ -1,0 +1,43 @@
+import { useTheme } from "@react-navigation/native";
+import { Colors } from "@/constants/Colors";
+
+export function useAppColors() {
+  const theme = useTheme();
+
+  const isDark = theme?.dark ?? true;
+
+  const colorScheme = isDark ? "dark" : "light";
+
+  const colors = Colors[colorScheme];
+
+  return {
+    isDark,
+    colorScheme,
+
+    textColor: colors.text,
+    backgroundColor: colors.background,
+    tintColor: colors.tint,
+    border: colors.border,
+
+    iconColor: colors.icon,
+    tabIconDefault: colors.tabIconDefault,
+    tabIconSelected: colors.tabIconSelected,
+
+    gradient: {
+      from: colors.from,
+      to: colors.to,
+      middle: colors.middle,
+    },
+
+    primary: colors.primary,
+    secondary: colors.secondary,
+
+    cardBg: colors.cardBg,
+    labelColor: colors.labelColor,
+    sectionColor: colors.sectionColor,
+    inputBg: colors.inputBg,
+    dangerColor: colors.dangerColor,
+    focusedColor: colors.focusedColor,
+    itemBg: colors.itemBg,
+  };
+}

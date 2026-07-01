@@ -86,9 +86,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.front'
+    namespace 'com.kennyh.front'
     defaultConfig {
-        applicationId 'com.anonymous.front'
+        applicationId 'com.kennyh.front'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -8,13 +8,13 @@ import {
   Alert,
   ToastAndroid,
 } from 'react-native';
-import { scanReceipt, scanReceiptWithAI, ReceiptItem } from '@/utils/image.utile';
+import { scanReceipt, scanReceiptWithAI, ReceiptItem } from '@/utils/image.util';
 import { styles } from '@/styles/styles';
 import { useAppColors } from '@/hooks/useAppColors';
 import Field from '@/components/ui/InputText';
-import { Depense } from '@/types/db';
+import { Depense, DepenseItem } from '@/types/db';
 import InputDate from '@/components/ui/input-date';
-import { setDepense } from '@/db/depense';
+import { setDepense } from '@/controller/depense';
 import { router, useFocusEffect } from 'expo-router';
 import CategoriSelector from '@/components/ui/categori-selector';
 import InputImage from '@/components/ui/input-image';
@@ -25,6 +25,7 @@ import { Plus, Trash2, WifiOff } from 'lucide-react-native';
 import SelectChipsMenu from '@/components/ui/select-chips-menu';
 import { DIMENSION, UNITE } from '@/constants/type';
 import { formatCompactNumber } from '@/utils/numberFormat';
+import { sendNotification } from '@/services/notificationService';
 
 export default function ScanTicket() {
   const [image, setImage] = useState<string | null>(null);
@@ -35,12 +36,16 @@ export default function ScanTicket() {
   const [categorie, setCategorie] = useState('Alimentation');
   const [merchant, setMerchant] = useState('');
   const { labelColor, inputBg, cardBg, border, sectionColor, dangerColor } = useAppColors();
-  const [items, setItems] = useState<ReceiptItem[]>([]);
+  const [items, setItems] = useState<DepenseItem[]>([]);
   const [observation, setObservation] = useState('');
   const [error, setError] = useState<{ [key: string]: string }>({});
   const [isOnline, setIsOnline] = useState(true);
 
-  const itemsTotal = items.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0);
+  const itemsTotal = items.reduce((total, item) => total + (parseFloat(item.unit_price?.toString()) * parseFloat(item.quantity?.toString()) || 0), 0);
+
+  useEffect(() => {
+    setMontant(itemsTotal.toString());
+  }, [itemsTotal]);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
@@ -62,9 +67,33 @@ export default function ScanTicket() {
         setDevise(result.currency ?? '');
         setDate(result.date ?? toISODate(new Date()));
         setMerchant(result.merchant ?? '');
-        setItems(result.items ?? []);
+
+        const depenseItems = result.items.length > 0
+          ? result.items.map((item, index) => ({
+            id: `${Date.now()}-${index}`,
+            name: item.description,
+            quantity: 1,
+            unit: item.unit || 'piece',
+            unit_price: Number(item.amount) || 0,
+            total_price: Number(item.amount) * Number(item.quantity) || 0,
+            image: image as string,
+          }))
+          : [
+            {
+              id: Date.now().toString(),
+              name: result.observation ?? '',
+              quantity: 1,
+              unit: 'piece',
+              total_price: Number(result.total) || 0,
+              unit_price: Number(result.total) || 0,
+              image: image as string,
+            }
+          ];
+
+        setItems(depenseItems);
         setObservation(result.observation ?? '');
         setCategorie(result.categorie ?? 'Autre');
+
       } catch (error) {
         console.error('Scan error:', error);
         Alert.alert('Erreur', "Impossible de lire le ticket. Réessayez avec une photo plus nette.");
@@ -82,35 +111,13 @@ export default function ScanTicket() {
       return;
     }
 
-    const depenseItems = items.length > 0
-      ? items.map((item, index) => ({
-        id: `${Date.now()}-${index}`,
-        name: item.description,
-        quantity: 1,
-        unit: item.unit || 'piece',
-        unit_price: Number(item.amount) / (Number(item.quantity) || 1) || 0,
-        total_price: Number(item.amount) || 0,
-        image: image as string,
-      }))
-      : [
-        {
-          id: Date.now().toString(),
-          name: merchant,
-          quantity: 1,
-          unit: 'piece',
-          total_price: Number(montant),
-          unit_price: Number(montant),
-          image: image as string,
-        }
-      ];
-
     const depense: Depense = {
       id: Date.now().toString(),
       montant: Number(montant),
       categorie: categorie,
       description: observation,
       date: new Date(date).toISOString().split("T")[0],
-      items: depenseItems,
+      items,
     };
 
     try {
@@ -118,8 +125,15 @@ export default function ScanTicket() {
       const json = JSON.parse(res);
 
       if (json.success) {
+        await sendNotification({
+          title: '💰 Nouvelle dépense ajoutée',
+          body: "Une nouvelle depense vient d'être ajoutée avec un ticket scanné!",
+          route: "/detail-shopping",
+          params: { id: depense.id },
+        });
+
         ToastAndroid.show(json.message, ToastAndroid.SHORT);
-        router.push('/shopping');
+        router.push({ pathname: "/(tabs)" });
       }
     } catch (error) {
       console.log(error);
@@ -127,7 +141,8 @@ export default function ScanTicket() {
   };
 
 
-  function updateItem(index: number, patch: Partial<ReceiptItem>) {
+  function updateItem(index: number, patch: Partial<DepenseItem>) {
+
     setItems((prev) =>
       prev.map((it, i) => (i === index ? { ...it, ...patch } : it))
     );
@@ -142,7 +157,7 @@ export default function ScanTicket() {
     setError({ ...error, produits: "" })
     setItems((prev) => [
       ...prev,
-      { id: Date.now().toString(), description: "", quantity: "1", amount: "0", image: undefined, total_price: 0, unit: "piece" },
+      { id: Date.now().toString(), name: "", quantity: 1, unit_price: 0, image: undefined, total_price: 0, unit: "piece" },
     ]);
   }
   return (
@@ -242,19 +257,19 @@ export default function ScanTicket() {
 
                   <Field
                     label="Nom du produit *"
-                    value={item.description}
-                    onChangeText={(v) => updateItem(index, { description: v })}
+                    value={item.name}
+                    onChangeText={(v) => updateItem(index, { name: v })}
                     placeholder="Ex : Riz"
                     compact
-                    error={error[`items.${index}.description`]}
-                    onFocus={() => setError({ ...error, [`items.${index}.description`]: "" })}
+                    error={error[`items.${index}.name`]}
+                    onFocus={() => setError({ ...error, [`items.${index}.name`]: "" })}
                   />
 
                   <View style={styles.itemNumbersRow}>
                     <Field
                       label="Quantité"
                       value={String(item.quantity)}
-                      onChangeText={(v) => updateItem(index, { quantity: v })}
+                      onChangeText={(v) => updateItem(index, { quantity: Number(v), total_price: Number(v) * Number(item.unit_price) })}
                       placeholder="1"
                       keyboardType="numeric"
                       style={{ flex: 1, marginRight: 8 }}
@@ -274,8 +289,8 @@ export default function ScanTicket() {
 
                   <Field
                     label="Prix unitaire"
-                    value={((Number(item.amount) || 0) / (Number(item.quantity) || 1)).toString()}
-                    onChangeText={(v) => updateItem(index, { amount: v })}
+                    value={(Number(item.unit_price) || 0).toString()}
+                    onChangeText={(v) => updateItem(index, { unit_price: Number(v), total_price: Number(v) * Number(item.quantity) })}
                     placeholder="0"
                     keyboardType="numeric"
                     style={{ flex: 1 }}
@@ -286,7 +301,7 @@ export default function ScanTicket() {
 
                   <Text style={[styles.itemLineTotal, { color: sectionColor }]}>
                     ={" "}
-                    {formatCompactNumber(Number(item.amount), devise)}
+                    {formatCompactNumber(Number(item.unit_price) * Number(item.quantity), devise)}
                   </Text>
                 </View>
               ))}

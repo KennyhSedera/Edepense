@@ -46,6 +46,7 @@ async function setDepense(newDepense: any) {
     const existing: Depense[] = await getDepense();
     existing.push(newDepense);
     await AsyncStorage.setItem(STORAGE_DEPENSES_KEY, JSON.stringify(existing));
+    await setLastDepenseDate();
 
     return JSON.stringify({
       success: true,
@@ -102,8 +103,16 @@ async function getDepenseParSemaine(date: string) {
 }
 
 async function getDepenseById(id: string) {
-  const data = await getDepense();
-  return data.filter((d: any) => d.id === id)[0];
+  try {
+    const data = await getDepense();
+
+    const dataById = data.filter((d: any) => d.id === id)[0];
+
+    return dataById ? dataById : {} as Depense;
+  } catch (error) {
+    console.log(error);
+    return {} as Depense;
+  }
 }
 
 async function getByFiltered(params: string) {
@@ -144,4 +153,55 @@ async function getItemById(params: string) {
   return items;
 }
 
-export { getDepense, setDepense, deleteDepense, updateDepense, removeAllDepenses, getDepenseParSemaine, getDepenseCurrentMonth, getDepenseById, getByFiltered, getItemById };
+async function setLastDepenseDate(
+  date: string = new Date().toISOString()
+) {
+  const value =
+    new Date(date)
+      .toISOString()
+      .slice(0, 10);
+
+  await AsyncStorage.setItem(
+    "LAST_EXPENSE_DATE",
+    value
+  );
+}
+
+async function getLastDepenseDate() {
+  return await AsyncStorage.getItem(
+    "LAST_EXPENSE_DATE"
+  );
+}
+
+async function compareLastDepenseDate(
+  date: string
+): Promise<boolean> {
+  const last =
+    await AsyncStorage.getItem(
+      "LAST_EXPENSE_DATE"
+    );
+
+  const current =
+    new Date(date)
+      .toISOString()
+      .slice(0, 10);
+
+  return last === current;
+}
+
+async function hasExpenseToday(): Promise<boolean> {
+
+  const last =
+    await AsyncStorage.getItem(
+      "LAST_EXPENSE_DATE"
+    );
+
+  const today =
+    new Date()
+      .toISOString()
+      .slice(0, 10);
+
+  return last === today;
+}
+
+export { getDepense, setDepense, deleteDepense, updateDepense, removeAllDepenses, getDepenseParSemaine, getDepenseCurrentMonth, getDepenseById, getByFiltered, getItemById, getLastDepenseDate, setLastDepenseDate, compareLastDepenseDate, hasExpenseToday, getDepenseCurrentSemaine, getDepenseCurrentYear, getDepenseToday, getDepenseYesterday };

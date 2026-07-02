@@ -14,7 +14,7 @@ import { Depense } from "@/types/db";
 import { router } from "expo-router";
 import { formatDateStringForDisplay } from './../../utils/dateFormat';
 import { Edit, LucideTrash2, Plus, Search, ShoppingBasket, } from "lucide-react-native";
-import { deleteDepense, getByFiltered, getDepense, getDepenseCurrentMonth } from "@/db/depense";
+import { deleteDepense, getByFiltered, getDepense, getDepenseCurrentMonth } from "@/controller/depense";
 import { depenseCoverImage } from "@/constants/image";
 import { styles } from "@/styles/styles";
 import EmptyData from "@/components/ui/empty-data";
@@ -94,7 +94,7 @@ export default function ShoppingScreen() {
         contentContainerStyle={{ paddingBottom: 30 }}
         style={{ padding: 10, flex: 1, position: "relative" }}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingHorizontal: 0 }]}>
           <SelectDate
             value={value}
             setValue={setValue}
@@ -138,7 +138,7 @@ export default function ShoppingScreen() {
             >
 
               <Image
-                source={depenseCoverImage(depense.categorie)}
+                source={depenseCoverImage(depense?.categorie || "Loisirs")}
                 style={[
                   styles.image,
                   { borderColor: border },

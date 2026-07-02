@@ -1,23 +1,31 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Image, Pressable, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
 import React, { useState } from 'react'
-import Toggle from '@/components/ui/Toggle'
 import { Colors } from '@/constants/Colors';
 import { useAppTheme } from '@/hooks/themeContext';
 import { useTheme } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles as style } from "@/styles/styles";
 import { useAppColors } from '@/hooks/useAppColors';
+import { useHours } from '@/hooks/useHour';
 
-export default function menu() {
+export default function Menu() {
   const { colors, dark } = useTheme();
   const { setThemeMode, user } = useAppTheme();
-  const [enabled, setEnabled] = useState(dark);
-  const { textColor, backgroundColor, border, cardBg, isDark, secondary } = useAppColors();
+  const { textColor, inputBg, border, cardBg, isDark, sectionColor } = useAppColors(); const {
+    hour,
+    enabled,
+    disableNotifications,
+    enableNotifications,
+    handleHourChange
+  } = useHours();
 
   const handleChangeTheme = async (theme: boolean) => {
-    setEnabled(theme);
     await setThemeMode(theme ? "dark" : "light");
   };
+
+  const handleToggle = async (value: boolean) => {
+    value ? await enableNotifications() : await disableNotifications();
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -57,6 +65,31 @@ export default function menu() {
           </View>
           <Text style={[styles.textMode, { color: !isDark ? textColor : colors.primary }]}>Mode Sombre</Text>
         </Pressable>
+      </View>
+
+      <View style={{ marginVertical: 20, padding: 10, borderRadius: 10, backgroundColor: cardBg, borderColor: border, borderWidth: 1 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <Text style={{ fontSize: 16, color: textColor }}>Rappel quotidien</Text>
+          <Switch value={enabled} onValueChange={handleToggle} />
+        </View>
+
+        {enabled && (
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {[12, 14, 16, 18, 20, 21, 22].map((h) => (
+              <TouchableOpacity
+                key={h}
+                onPress={() => handleHourChange(h)}
+                style={{
+                  padding: 10,
+                  borderRadius: 8,
+                  backgroundColor: hour === h ? sectionColor : inputBg,
+                }}
+              >
+                <Text style={{ color: hour === h ? '#fff' : textColor }}>{h}h</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
     </ScrollView>

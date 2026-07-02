@@ -3,12 +3,11 @@ import React, { useCallback, useState } from 'react'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { styles } from '@/styles/styles';
 import { useAppColors } from '@/hooks/useAppColors';
-import { getGlobalSearch } from '@/db/search';
+import { getGlobalSearch } from '@/controller/search';
 import { Depense, DepenseItem, Goal, Provision } from '@/types/db';
 import { formatDateLong } from '@/utils/dateFormat';
 import { Apple, CircleDollarSignIcon, Search, ShoppingBasket } from "lucide-react-native";
 import { formatMoney } from '@/utils/numberFormat';
-import { useBudgetStore } from '@/store/budgetStore';
 import EmptyData from '@/components/ui/empty-data';
 
 export default function GlobalSearch() {

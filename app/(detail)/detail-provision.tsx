@@ -2,7 +2,7 @@ import { View, Text, ScrollView, ToastAndroid, Pressable, Image } from 'react-na
 import React, { useCallback, useState } from 'react'
 import { useLocalSearchParams, useSearchParams } from 'expo-router/build/hooks'
 import { styles } from '@/styles/styles';
-import { deleteProvision, getProvisionById } from '@/db/provision';
+import { deleteProvision, getProvisionById } from '@/controller/provision';
 import { router, useFocusEffect } from 'expo-router';
 import DeleteModal from '@/components/ui/DeleteModal';
 import MenuButton, { MenuItem } from '@/components/ui/MenuButton';
@@ -14,11 +14,13 @@ import { formatMoney } from '@/utils/numberFormat';
 import { formatDateLong } from '@/utils/dateFormat';
 import { depenseCoverImage } from '@/constants/image';
 import { getUnitLabel } from '@/constants/type';
+import RenderImage from '@/components/ui/render-image';
 
 export default function DetailProvision() {
   const { textColor, backgroundColor, border, labelColor, dangerColor } = useAppColors();
   const { id }: { id: string } = useLocalSearchParams();
-  const [data, setData] = useState<Provision | null>(null)
+  const [data, setData] = useState<Provision | null>(null);
+  const [showImage, setShowImage] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({
     show: false,
     id: "",
@@ -55,6 +57,13 @@ export default function DetailProvision() {
   return (
     <View style={{ flex: 1 }}>
       <DeleteModal onChange={handleDelete} visible={confirmDelete.show} message={confirmDelete.message} id={data?.id} />
+
+      <RenderImage
+        value={data?.image}
+        onChange={setShowImage}
+        visible={showImage}
+      />
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
       >

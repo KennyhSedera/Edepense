@@ -6,12 +6,12 @@ import { styles } from '@/styles/styles';
 import Field from '@/components/ui/InputText';
 import { ScrollView } from 'react-native';
 import InputDate from '@/components/ui/input-date';
-import { toISODate } from './../utils/dateFormat';
+import { toISODate } from '@/utils/dateFormat';
 import { User } from '@/types/db';
-import { setUser } from '@/db/user';
+import { setUser } from '@/controller/user';
 import { router } from 'expo-router';
 
-export default function login() {
+export default function Login() {
   const { gradient, cardBg, textColor, border, sectionColor } = useAppColors();
   const [data, setData] = React.useState<User>({
     id: new Date().getTime().toString(),
@@ -20,7 +20,7 @@ export default function login() {
     budget_mensuel: "",
     budget_journalier: "",
     salaire_mensuel: "",
-    devise: "Ar",
+    devise: "MGA",
     date_debut: toISODate(new Date()),
     created_at: toISODate(new Date()),
     updated_at: toISODate(new Date()),
@@ -73,11 +73,11 @@ export default function login() {
     <LinearGradient
       colors={[gradient.from, gradient.to]}
       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-      style={{ width: "100%", height: "100%", alignItems: "center", paddingVertical: 50 }}
+      style={{ width: "100%", height: "100%", alignItems: "center", paddingVertical: 60 }}
     >
       <ScrollView style={[styles.container, { width: "100%", borderRadius: 10 }]} contentContainerStyle={{ alignItems: "center" }}>
         <View style={[styles.card, { backgroundColor: cardBg, borderColor: border, width: "90%" }]}>
-          <Text style={[styles.name, { color: textColor, textAlign: "center", marginBottom: 10 }]}>Création compte</Text>
+          <Text style={[styles.name, { color: textColor, textAlign: "center", marginTop: 40, marginBottom: 20 }]}>Création compte</Text>
           <View style={[styles.form]}>
             <Field
               label="Nom et prénom"
@@ -111,30 +111,6 @@ export default function login() {
               compact
               error={error.salaire_mensuel}
               onFocus={() => setError({ ...error, salaire_mensuel: "" })}
-            />
-
-            <Field
-              label="Budget mensuel"
-              placeholder="Ex: 1000€"
-              value={data.budget_mensuel?.toString() || ""}
-              onChangeText={(e) => setData({ ...data, budget_mensuel: e })}
-              style={{ marginBottom: 10 }}
-              keyboardType='numeric'
-              compact
-              error={error.budget_mensuel}
-              onFocus={() => setError({ ...error, budget_mensuel: "" })}
-            />
-
-            <Field
-              label="Budjet journalier estimée"
-              placeholder="Ex: 1000€"
-              value={data.budget_journalier?.toString() || ""}
-              onChangeText={(e) => setData({ ...data, budget_journalier: e })}
-              style={{ marginBottom: 10 }}
-              keyboardType='numeric'
-              compact
-              error={error.budget_journalier}
-              onFocus={() => setError({ ...error, budget_journalier: "" })}
             />
 
             <Field

@@ -20,7 +20,7 @@ import { useBudgetStore } from "@/store/budgetStore";
 import { formatDateStringForDisplay, toISODate } from "@/utils/dateFormat";
 import DatePickerCalendar from '@/components/ui/DatePickerCalendar';
 import Field from "@/components/ui/InputText";
-import { getDepenseById, setDepense, updateDepense } from "@/db/depense";
+import { getDepenseById, setDepense, updateDepense } from "@/controller/depense";
 import { styles } from "@/styles/styles";
 import InputImage from "@/components/ui/input-image";
 import { CATEGORIES, DIMENSION, UNITE } from "@/constants/type";

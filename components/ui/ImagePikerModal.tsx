@@ -1,7 +1,7 @@
 import { Modal, Pressable, Text, View } from 'react-native'
 import React from 'react'
 import { ModalProps } from '@/types/global'
-import { pickFromGallery, takePhoto } from '@/utils/image.utile';
+import { pickFromGallery, takePhoto } from '@/utils/image.util';
 import { useAppColors } from '@/hooks/useAppColors';
 import { CameraIcon, Image } from 'lucide-react-native';
 import { styles } from '@/styles/styles';

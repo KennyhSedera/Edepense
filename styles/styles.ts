@@ -11,6 +11,49 @@ export const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
+  itemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 8,
+  },
+
+  itemImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+
+  itemImagePlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  itemName: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+  itemQty: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  itemTotal: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginLeft: 12,
+  },
+
+  value: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
   progressBar: {
     height: 10,
     borderRadius: 10,
@@ -222,8 +265,10 @@ export const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 15,
+    marginBottom: 10,
+    paddingTop: 10,
     alignItems: "center",
+    paddingHorizontal: 15,
   },
 
   title: {
@@ -262,6 +307,7 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     backgroundColor: "#fff",
+    overflow: 'hidden',
   },
 
   name: {

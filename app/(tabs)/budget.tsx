@@ -1,21 +1,21 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Image, Pressable, ScrollView, Text, View } from 'react-native'
 import React, { useCallback, useState } from 'react'
 import { CircleDollarSignIcon, Edit, LucideTrash2, Plus, Search } from 'lucide-react-native'
 import { styles } from '@/styles/styles'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { useAppColors } from '@/hooks/useAppColors'
 import { Goal } from '@/types/db'
-import { deleteGoal, getGoal } from '@/db/goal'
+import { deleteGoal, getGoal } from '@/controller/goal'
 import EmptyData from '@/components/ui/empty-data'
-import { depenseCoverImage, goalCoverImage } from '@/constants/image'
+import { goalCoverImage } from '@/constants/image'
 import { useBudgetStore } from '@/store/budgetStore'
 import { formatDateLong } from '@/utils/dateFormat'
 import { ToastAndroid } from 'react-native'
-import { formatCompactNumber, formatMoney } from '@/utils/numberFormat';
+import { formatCompactNumber } from '@/utils/numberFormat';
 import { getGoalType } from '@/constants/type'
 import DeleteModal from '@/components/ui/DeleteModal'
 
-export default function budget() {
+export default function Budget() {
   const { sectionColor, border, backgroundColor, textColor, labelColor } = useAppColors();
   const { search }: { search: string } = useLocalSearchParams();
   const [confirmDelete, setConfirmDelete] = useState({

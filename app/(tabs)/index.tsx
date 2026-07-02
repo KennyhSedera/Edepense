@@ -5,11 +5,12 @@ import { LineChart } from "react-native-chart-kit";
 import { useAppColors } from "@/hooks/useAppColors";
 import { Depense } from "@/types/db";
 import { router, useFocusEffect } from "expo-router";
-import { getDepenseCurrentMonth } from "@/db/depense";
+import { getDepenseCurrentMonth } from "@/controller/depense";
 import { getCycleStart, getDepenseParSemaine, getInfosPeriode } from "@/utils/dateFormat";
 import { useAppTheme } from "@/hooks/themeContext";
 import { styles } from "@/styles/styles";
-import { getUser } from "@/db/user";
+import { getUser } from "@/controller/user";
+import QuickAdd from "@/components/ui/QuickAdd";
 
 export default function HomeScreen() {
   const { textColor, backgroundColor, gradient, cardBg, sectionColor, border } = useAppColors();
@@ -37,6 +38,7 @@ export default function HomeScreen() {
     x: 0,
     y: 0,
   });
+  const [open, setOpen] = useState(false);
 
   const loadData = async () => {
     const data = await getDepenseCurrentMonth();
@@ -167,9 +169,13 @@ export default function HomeScreen() {
             <Text style={[styles.buttonText, { color: sectionColor }]}>📷 Scanner ticket (OCR)</Text>
           </Pressable>
 
-          <Pressable style={styles.buttonSecondary}>
+          <Pressable style={styles.buttonSecondary} onPress={() => setOpen(true)}>
             <Text style={styles.buttonText}>➕ Ajout rapide type WhatsApp</Text>
           </Pressable>
+          <QuickAdd
+            visible={open}
+            onChange={() => setOpen(false)}
+          />
         </View>
 
         <View style={[styles.card, styles.infoGridFull, { gap: 10, backgroundColor, borderColor: border }]}>

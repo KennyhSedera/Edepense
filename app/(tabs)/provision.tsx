@@ -5,7 +5,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useAppColors } from '@/hooks/useAppColors';
 import { styles } from '@/styles/styles';
 import { Provision } from '@/types/db';
-import { deleteProvision, getProvision } from '@/db/provision';
+import { deleteProvision, getProvision } from '@/controller/provision';
 import { useBudgetStore } from '@/store/budgetStore';
 import { formatDateLong } from '@/utils/dateFormat';
 import { depenseCoverImage } from '@/constants/image';
@@ -14,7 +14,7 @@ import { formatCompactNumber } from '@/utils/numberFormat';
 import DeleteModal from '@/components/ui/DeleteModal';
 import { getUnitLabel } from '@/constants/type';
 
-export default function provision() {
+export default function ProvisionScreen() {
   const { sectionColor, border, backgroundColor, labelColor, textColor } = useAppColors();
   const { devise } = useBudgetStore();
   const [provision, setProvision] = useState<Provision[]>([]);

@@ -28,7 +28,6 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
         <data android:scheme="com.kennyh.front"/>
-        <data android:scheme="exp+front"/>
       </intent-filter>
     </activity>
   </application>

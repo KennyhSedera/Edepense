@@ -5,7 +5,7 @@ import CustomTabBar from "@/components/ui/CustomTabBar";
 import { MainHeader } from "@/components/ui/HeaderComponent";
 import { Apple, Bell, CircleDollarSignIcon, LayoutGrid, Menu, Search, ShoppingBasket } from "lucide-react-native";
 import { styles } from "@/styles/styles";
-import { getUser } from "@/db/user";
+import { getUser } from "@/controller/user";
 import { useAppColors } from "@/hooks/useAppColors";
 
 export default function TabLayout() {
@@ -28,13 +28,7 @@ export default function TabLayout() {
       <MainHeader>
         <View style={{ width: "100%" }}>
           <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-            }}
+            style={styles.header}
           >
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <Image
@@ -175,7 +169,7 @@ export default function TabLayout() {
         translucent
       />
       <Tabs
-        initialRouteName="shopping"
+        initialRouteName="index"
         tabBar={(props) => (
           <CustomTabBar {...props} />
         )}

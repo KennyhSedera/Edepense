@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, Image, ActivityIndicator, Pressable, Alert, ToastAndroid } from 'react-native'
 import React, { useCallback, useState } from 'react'
 import { useFocusEffect, useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
-import { getGoalById, deleteGoal } from '@/db/goal';
+import { getGoalById, deleteGoal } from '@/controller/goal';
 import { Goal } from '@/types/db';
 import { useAppColors } from '@/hooks/useAppColors';
 import { styles } from '@/styles/styles';
@@ -12,6 +12,7 @@ import { goalCoverImage } from '@/constants/image';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react-native';
 import MenuButton, { MenuItem } from '@/components/ui/MenuButton';
 import DeleteModal from '@/components/ui/DeleteModal';
+import RenderImage from '@/components/ui/render-image';
 
 export default function DetailBudget() {
   const { id }: { id: string } = useLocalSearchParams();
@@ -20,6 +21,7 @@ export default function DetailBudget() {
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const { backgroundColor, textColor, dangerColor, cardBg, border, sectionColor } = useAppColors();
+  const [showImage, setShowImage] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({
     show: false,
     id: "",
@@ -60,7 +62,6 @@ export default function DetailBudget() {
       }
 
     }
-
     setConfirmDelete({ show: false, id: "", message: "" });
   }
 
@@ -79,12 +80,21 @@ export default function DetailBudget() {
   return (
     <View style={{ flex: 1, position: 'relative' }}>
       <DeleteModal onChange={handleDelete} visible={confirmDelete.show} message={confirmDelete.message} id={confirmDelete.id} />
+
+      <RenderImage
+        value={goal?.image ? { uri: goal.image } : goalCoverImage(goal?.type || "")}
+        onChange={setShowImage}
+        visible={showImage}
+      />
+
       <ScrollView style={[styles.container]} contentContainerStyle={{ padding: 12 }}>
-        <Image
-          source={goal?.image ? { uri: goal.image } : goalCoverImage(goal?.type || "")}
-          style={[styles.previewImage, { marginBottom: 12, minHeight: 200, backgroundColor: cardBg, borderColor: border }]}
-          resizeMode='cover'
-        />
+        <Pressable onPress={() => setShowImage(true)} style={[styles.image, { backgroundColor: cardBg, borderColor: border, height: 200, marginBottom: 10 }]}>
+          <Image
+            source={goal?.image ? { uri: goal.image } : goalCoverImage(goal?.type || "")}
+            style={[styles.previewImage, { marginBottom: 12, minHeight: 200, backgroundColor: cardBg, borderColor: border }]}
+            resizeMode='cover'
+          />
+        </Pressable>
         <View style={[styles.infoGrid, {}]}>
           <View style={[styles.infoGridFull, styles.miniCard, { backgroundColor: cardBg, borderColor: border }]}>
             <Text style={[styles.name, { color: textColor }]}>{goal?.titre}</Text>

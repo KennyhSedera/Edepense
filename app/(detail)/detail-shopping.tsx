@@ -3,17 +3,17 @@ import { View, Text, StyleSheet, ScrollView, Image, Button, ToastAndroid } from 
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useAppColors } from "@/hooks/useAppColors";
 import { Depense } from "@/types/db";
-import { useBudgetStore } from "@/store/budgetStore";
 import { Pressable } from "react-native";
 import { depenseCoverImage } from "@/constants/image";
-import { deleteDepense, getDepenseById } from "@/db/depense";
+import { deleteDepense, getDepenseById } from "@/controller/depense";
 import { formatDateLong } from '@/utils/dateFormat';
-import { styles as style } from '@/styles/styles'
 import { formatMoney } from "@/utils/numberFormat";
 import MenuButton, { MenuItem } from "@/components/ui/MenuButton";
-import { Edit2Icon, LucideEdit, Trash2 } from "lucide-react-native";
+import { LucideEdit, Trash2 } from "lucide-react-native";
 import DeleteModal from "@/components/ui/DeleteModal";
 import { getUnitLabel } from '@/constants/type';
+import RenderImage from "@/components/ui/render-image";
+import { styles } from "@/styles/styles";
 
 export default function DepenseDetail() {
   const { textColor, backgroundColor, border, cardBg, labelColor, sectionColor, itemBg, dangerColor } = useAppColors();
@@ -23,12 +23,20 @@ export default function DepenseDetail() {
     id: "",
     message: "",
   });
+  const [showImage, setShowImage] = useState(false);
 
-  const params = useLocalSearchParams();
+  const { id }: { id: string } = useLocalSearchParams();
+
   const loadData = async () => {
-    const data = await getDepenseById(params.id as string);
-    setDepenses(data);
+    const data = await getDepenseById(id);
+    if (data && data.id) {
+      setDepenses(data);
+      return;
+    }
+    // router.back();
   }
+
+  console.log(id);
 
   useFocusEffect(
     useCallback(() => {
@@ -44,18 +52,15 @@ export default function DepenseDetail() {
       const data = JSON.parse(res);
       if (data.success) {
         ToastAndroid.show(data.message, ToastAndroid.SHORT);
-        loadData();
-        router.back();
+        router.replace("/shopping");
         setConfirmDelete({ show: false, id: "", message: "" });
       }
     }
-
     setConfirmDelete({ show: false, id: "", message: "" });
   }
 
   return (
     <View style={{ flex: 1 }}>
-      <DeleteModal onChange={handleDelete} visible={confirmDelete.show} message={confirmDelete.message} id={depense.id} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
       >
@@ -74,10 +79,14 @@ export default function DepenseDetail() {
             <Text style={{ color: dangerColor, fontSize: 15 }}>Supprimer</Text>
           </MenuItem>
         </MenuButton>
-        <Pressable style={[styles.image, { borderColor: border }]}>
+        <Pressable
+          onPress={() => setShowImage(true)}
+          style={[styles.image, { borderColor: border, height: 200, marginBottom: 20 }]}
+        >
           <Image
-            source={depenseCoverImage(depense.categorie)}
-            style={[{ borderRadius: 16, width: "100%", height: "100%" }]}
+            source={depenseCoverImage(depense?.categorie as string)}
+            style={[{ width: "100%", height: "100%" }]}
+            resizeMode="cover"
           />
         </Pressable>
 
@@ -123,7 +132,7 @@ export default function DepenseDetail() {
 
         {/* ITEMS */}
         {items.length > 0 && (
-          <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+          <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border }]}>
             <Text style={[styles.section, { color: sectionColor }]}>
               Produits ({items.length})
             </Text>
@@ -159,7 +168,7 @@ export default function DepenseDetail() {
                     {item.name}
                   </Text>
                   <Text style={[styles.itemQty, { color: labelColor }]}>
-                    Quantité : {item.quantity} {item.unit && ` ( ${getUnitLabel(item.unit)})`}
+                    Quantité : {item.quantity} {` ( ${getUnitLabel(item.unit)})`}
                   </Text>
                 </View>
                 <Text style={[styles.itemTotal, { color: sectionColor }]}>
@@ -170,6 +179,15 @@ export default function DepenseDetail() {
           </View>
         )}
       </ScrollView>
+
+      <DeleteModal onChange={handleDelete} visible={confirmDelete.show} message={confirmDelete.message} id={depense.id} />
+
+      <RenderImage
+        value={depenseCoverImage(depense?.categorie as string)}
+        onChange={setShowImage}
+        visible={showImage}
+      />
+
     </View>
   );
 }
@@ -206,123 +224,3 @@ export function MiniCard({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    padding: 5,
-    paddingBottom: 40,
-  },
-
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-  },
-
-  headerAmount: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-
-  image: {
-    width: "100%",
-    height: 250,
-    objectFit: "contain",
-    borderRadius: 16,
-    marginBottom: 6,
-    borderWidth: 1,
-  },
-
-  card: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
-    marginBottom: 6,
-  },
-
-  infoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-
-  infoGridHalf: {
-    width: "49%",
-    marginBottom: 12,
-  },
-
-  infoGridFull: {
-    width: "100%",
-    marginBottom: 12,
-  },
-
-  miniCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
-  },
-
-  label: {
-    fontSize: 12,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-
-  value: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-
-  section: {
-    fontSize: 15,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 8,
-  },
-
-  itemImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-
-  itemImagePlaceholder: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  itemName: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-
-  itemQty: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-
-  itemTotal: {
-    fontSize: 15,
-    fontWeight: "700",
-    marginLeft: 12,
-  },
-});

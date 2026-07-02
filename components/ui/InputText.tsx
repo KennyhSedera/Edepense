@@ -23,7 +23,7 @@ export default function Field({
   };
   return (
     <View style={[compact ? styles.fieldCompact : styles.field, style]}>
-      <Text style={[styles.label, { color: labelColor }]}>{label}</Text>
+      {label && <Text style={[styles.label, { color: labelColor }]}>{label}</Text>}
       <TextInput
         value={value}
         onChangeText={onChangeText}

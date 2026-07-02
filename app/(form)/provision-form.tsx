@@ -3,7 +3,7 @@ import Field from "@/components/ui/InputText";
 import SelectChips from "@/components/ui/select-chips";
 import SelectChipsMenu from "@/components/ui/select-chips-menu";
 import { CATEGORIES_PROVISION, DIMENSION, UNITE } from "@/constants/type";
-import { getProvisionById, setProvision, updateProvision } from "@/db/provision";
+import { getProvisionById, setProvision, updateProvision } from "@/controller/provision";
 import { useAppColors } from "@/hooks/useAppColors";
 import { styles } from "@/styles/styles";
 import { Provision } from "@/types/db";

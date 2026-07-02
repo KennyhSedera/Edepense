@@ -16,34 +16,6 @@ export type User = {
   updated_at?: string;
 };
 
-export type Expense = {
-  id: string;
-  user_id: string;
-
-  montant: number;
-  categorie: "alimentation" | "transport" | "sante" | "autre";
-
-  description: string;
-  lieu?: string;
-
-  date: string;
-  created_at: string;
-};
-
-export type ExpenseItem = {
-  id: string;
-  expense_id: string;
-
-  name: string;
-  quantity: number;
-  unit: string;
-
-  image?: string;
-
-  unit_price: number;
-  total_price: number;
-};
-
 export type Provision = {
   id: string;
   user_id?: string;
@@ -114,8 +86,8 @@ export type DepenseItem = {
 export type Depense = {
   id: string;
   montant: number;
-  categorie: string;
-  description: string;
+  categorie?: string;
+  description?: string;
   date: string;
 
   items?: DepenseItem[];

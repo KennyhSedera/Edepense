@@ -2,7 +2,7 @@ import React from "react";
 import { DimensionValue } from "react-native";
 
 export type FieldProps = {
-  label: string;
+  label?: string;
   value: string | undefined;
   onChangeText?: (v: string) => void;
   placeholder?: string;
@@ -16,8 +16,8 @@ export type FieldProps = {
 }
 
 export type ModalProps = {
-  value?: string | null | undefined;
-  onChange: (data: string) => void;
+  value?: string | null | undefined | number | Date | boolean | object | any | any[];
+  onChange: (data?: string | null | undefined | number | Date | boolean | object | any | any[]) => void;
   placeholder?: string;
   visible: boolean;
 };
@@ -70,3 +70,9 @@ export type SelectProps = {
   position?: Position;
 }
 
+export type SendNotifProps = {
+  params?: any,
+  route?: string,
+  title: string,
+  body: string
+}

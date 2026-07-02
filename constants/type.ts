@@ -42,7 +42,7 @@ const UNITE = [
 
 function getUnitLabel(v: string): string {
   const label = UNITE.find(u => u.value === v)?.label
-  return label as string;
+  return label ? label : "Autre";
 }
 
 const ITEMS_DATE = [

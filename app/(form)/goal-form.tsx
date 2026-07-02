@@ -13,7 +13,7 @@ import {
 
 import InputDate from "@/components/ui/input-date";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { getGoalById, setGoal, updateGoal } from "@/db/goal";
+import { getGoalById, setGoal, updateGoal } from "@/controller/goal";
 import { Goal } from "@/types/db";
 import InputImage from "@/components/ui/input-image";
 

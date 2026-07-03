@@ -15,6 +15,7 @@ export default function Field({
   error,
   onFocus,
   readOnly,
+  autoCapitalize,
 }: FieldProps) {
   const { textColor, border, labelColor, inputBg, } = useAppColors();
 
@@ -32,6 +33,7 @@ export default function Field({
         keyboardType={keyboardType}
         multiline={multiline}
         onFocus={handleFocus}
+        autoCapitalize={autoCapitalize}
         style={[
           styles.input,
           multiline && styles.inputMultiline,

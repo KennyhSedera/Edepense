@@ -33,10 +33,7 @@ export default function DepenseDetail() {
       setDepenses(data);
       return;
     }
-    // router.back();
   }
-
-  console.log(id);
 
   useFocusEffect(
     useCallback(() => {
@@ -180,7 +177,12 @@ export default function DepenseDetail() {
         )}
       </ScrollView>
 
-      <DeleteModal onChange={handleDelete} visible={confirmDelete.show} message={confirmDelete.message} id={depense.id} />
+      <DeleteModal
+        onChange={handleDelete}
+        visible={confirmDelete.show}
+        message={confirmDelete.message}
+        id={depense.id}
+      />
 
       <RenderImage
         value={depenseCoverImage(depense?.categorie as string)}

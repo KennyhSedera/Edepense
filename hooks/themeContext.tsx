@@ -15,7 +15,6 @@ import { useColorScheme as useSystemColorScheme } from "react-native";
 import { STORAGE_THEME_KEY } from "@/constants/storage";
 import { User } from "@/types/db";
 import { getUser } from "@/controller/user";
-import { useHours } from "./useHour";
 import { getHourNotification } from "@/controller/notification";
 
 export type ThemeType = "light" | "dark";
@@ -28,6 +27,8 @@ type ThemeContextType = {
   isLoading: boolean;
   user: User | null;
   hour: number | null;
+  loadUser: () => Promise<void>;
+  loadTheme: () => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(
@@ -41,44 +42,53 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [hour, setHour] = useState<number | null>(null);
 
-  useEffect(() => {
-    const loadTheme = async () => {
-      try {
-        const saved = await AsyncStorage.getItem(STORAGE_THEME_KEY);
-        const user = await getUser();
-        const hour = await getHourNotification();
+  const loadTheme = async () => {
+    try {
+      const saved = await AsyncStorage.getItem(STORAGE_THEME_KEY);
 
-        if (hour !== null) {
-          setHour(hour);
-        }
-
-        if (user !== null) {
-          setUser(user);
-        }
-        if (saved === null) {
-          await AsyncStorage.setItem(STORAGE_THEME_KEY, systemTheme === "dark" ? "dark" : "light");
-          setTheme(systemTheme === "dark" ? "dark" : "light");
-          return;
-        }
-
-        if (saved === "light" || saved === "dark") {
-          setTheme(saved);
-        } else {
-          setTheme(systemTheme === "dark" ? "dark" : "light");
-        }
-      } catch (e) {
-        setTheme("light");
-      } finally {
-        setIsLoading(false);
+      if (saved === null) {
+        await AsyncStorage.setItem(STORAGE_THEME_KEY, systemTheme === "dark" ? "dark" : "light");
+        setTheme(systemTheme === "dark" ? "dark" : "light");
+        return;
       }
-    };
 
+      if (saved === "light" || saved === "dark") {
+        setTheme(saved);
+      } else {
+        setTheme(systemTheme === "dark" ? "dark" : "light");
+      }
+    } catch (e) {
+      setTheme("light");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadTheme();
   }, [systemTheme]);
 
   const toggleTheme = () => {
     setTheme((t) => (t === "light" ? "dark" : "light"));
   };
+
+  async function loadUser() {
+    const user = await getUser();
+
+    if (user !== null) {
+      setUser(user);
+    }
+
+    const hour = await getHourNotification();
+
+    if (hour !== null) {
+      setHour(hour);
+    }
+  }
+
+  useEffect(() => {
+    loadUser();
+  }, []);
 
   const setThemeMode = async (t: ThemeType) => {
     setTheme(t);
@@ -91,12 +101,14 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
     <ThemeContext.Provider
       value={{
         theme,
-        toggleTheme,
-        setThemeMode,
         navigationTheme,
         isLoading,
         user,
-        hour
+        hour,
+        toggleTheme,
+        setThemeMode,
+        loadUser,
+        loadTheme,
       }}
     >
       {children}

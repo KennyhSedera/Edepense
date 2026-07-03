@@ -1,26 +1,11 @@
-import { Colors } from "@/constants/Colors";
-import { STORAGE_THEME_KEY } from "@/constants/storage";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAppColors } from "@/hooks/useAppColors";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 
 export function MainHeader({ children }: { children: React.ReactNode }) {
-  const [colorScheme, setColorScheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    const loadTheme = async () => {
-      const theme = await AsyncStorage.getItem(STORAGE_THEME_KEY);
-      setColorScheme(theme === "dark" ? "dark" : "light");
-    };
-
-    loadTheme();
-  }, []);
-
-  const from = Colors[colorScheme].from;
-  const to = Colors[colorScheme].to;
+  const { gradient: { from, to } } = useAppColors();
 
   return (
     <LinearGradient
@@ -30,8 +15,8 @@ export function MainHeader({ children }: { children: React.ReactNode }) {
       style={{
         flexDirection: "row",
         height: "auto",
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
+        borderBottomLeftRadius: children === undefined ? 0 : 30,
+        borderBottomRightRadius: children === undefined ? 0 : 30,
         shadowColor: "#000",
         shadowOffset: {
           width: 0,
@@ -40,6 +25,7 @@ export function MainHeader({ children }: { children: React.ReactNode }) {
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
+        paddingBottom: children === undefined ? 8 : 0,
       }}
     >
       <SafeAreaView edges={["top"]}>

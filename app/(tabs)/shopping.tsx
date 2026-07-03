@@ -13,7 +13,7 @@ import { useBudgetStore } from "@/store/budgetStore";
 import { Depense } from "@/types/db";
 import { router } from "expo-router";
 import { formatDateStringForDisplay } from './../../utils/dateFormat';
-import { Edit, LucideTrash2, Plus, Search, ShoppingBasket, } from "lucide-react-native";
+import { CheckCheckIcon, CheckCircle2Icon, CheckIcon, Edit, LucideTrash2, Plus, Search, ShoppingBasket, } from "lucide-react-native";
 import { deleteDepense, getByFiltered, getDepense, getDepenseCurrentMonth } from "@/controller/depense";
 import { depenseCoverImage } from "@/constants/image";
 import { styles } from "@/styles/styles";
@@ -35,6 +35,31 @@ export default function ShoppingScreen() {
     message: "",
   });
 
+  const [selected, setSelected] = useState<Depense[]>([]);
+
+  function handleSelection(depense: Depense) {
+    if (selected.includes(depense)) {
+      setSelected(selected.filter((d) => d.id !== depense.id));
+    } else {
+      setSelected([...selected, depense]);
+    }
+  }
+
+  function handlePress(depense: Depense) {
+    if (selected.length > 0) {
+      if (selected.includes(depense)) {
+        return setSelected(selected.filter((d) => d.id !== depense.id));
+      } else {
+        return setSelected([...selected, depense]);
+      }
+    }
+    return router.push({
+      pathname: "/detail-shopping",
+      params: {
+        id: depense.id,
+      },
+    });
+  }
 
   const loadData = async () => {
     const data = await getByFiltered(value)
@@ -123,58 +148,56 @@ export default function ShoppingScreen() {
 
         {/* GRID */}
         <View style={styles.grid}>
-          {filteredDepenses.map((depense: Depense) => (
-            <Pressable
-              key={depense.id}
-              style={[styles.card, { backgroundColor, borderColor: border }]}
-              onPress={() =>
-                router.push({
-                  pathname: "/detail-shopping",
-                  params: {
-                    id: depense.id,
-                  },
-                })
-              }
-            >
+          {filteredDepenses.map((depense: Depense) => {
+            const isSelected = selected.includes(depense);
 
-              <Image
-                source={depenseCoverImage(depense?.categorie || "Loisirs")}
-                style={[
-                  styles.image,
-                  { borderColor: border },
-                ]}
-              />
-              <View style={styles.cardContent}>
-                <Text style={[styles.name, { color: textColor }]}>
-                  {depense.categorie}
-                </Text>
-                <Text style={styles.price}>
-                  {formatCompactNumber(depense.montant, devise)}
-                </Text>
-                <Text style={[styles.date, { color: textColor }]}>
-                  {formatDateStringForDisplay(depense.date)}
-                </Text>
-                {depense.items && <View>
-                  <Text style={{ color: textColor }}>{depense.items?.length} Produits</Text>
-                </View>}
-              </View>
+            return (
+              <Pressable
+                key={depense.id}
+                style={[styles.card, { backgroundColor, borderColor: isSelected ? sectionColor : border, borderWidth: isSelected ? 3 : 1, position: "relative", overflow: "visible" }]}
+                onPress={() => handlePress(depense)}
+                onLongPress={() => handleSelection(depense)}
+              >
+                {isSelected && <View style={{ position: "absolute", top: -10, right: -10, zIndex: 1, backgroundColor: sectionColor, borderRadius: 100, padding: 5 }}><CheckIcon color={"#fff"} size={16} /></View>}
+                <Image
+                  source={depenseCoverImage(depense?.categorie || "Loisirs")}
+                  style={[
+                    styles.image,
+                    { borderColor: border },
+                  ]}
+                />
+                <View style={styles.cardContent}>
+                  <Text style={[styles.name, { color: textColor }]}>
+                    {depense.categorie}
+                  </Text>
+                  <Text style={styles.price}>
+                    {formatCompactNumber(depense.montant, devise)}
+                  </Text>
+                  <Text style={[styles.date, { color: textColor }]}>
+                    {formatDateStringForDisplay(depense.date)}
+                  </Text>
+                  {depense.items && <View>
+                    <Text style={{ color: textColor }}>{depense.items?.length} Produits</Text>
+                  </View>}
+                </View>
 
-              <View style={[styles.actions]}>
-                <Pressable
-                  onPress={() => router.push({ pathname: "/shopping-form", params: { id: depense.id } })}
-                >
-                  <Edit color={sectionColor} size={20} />
-                </Pressable>
-                <Pressable onPress={() => setConfirmDelete({
-                  show: true,
-                  message: "Voulez-vous vraiment supprimer cette depense ?",
-                  id: depense.id
-                })}>
-                  <LucideTrash2 color={"red"} size={22} />
-                </Pressable>
-              </View>
-            </Pressable>
-          ))}
+                <View style={[styles.actions]}>
+                  <Pressable
+                    onPress={() => router.push({ pathname: "/shopping-form", params: { id: depense.id } })}
+                  >
+                    <Edit color={sectionColor} size={20} />
+                  </Pressable>
+                  <Pressable onPress={() => setConfirmDelete({
+                    show: true,
+                    message: "Voulez-vous vraiment supprimer cette depense ?",
+                    id: depense.id
+                  })}>
+                    <LucideTrash2 color={"red"} size={22} />
+                  </Pressable>
+                </View>
+              </Pressable>
+            )
+          })}
         </View>
       </ScrollView >
     </View>

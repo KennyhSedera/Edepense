@@ -41,8 +41,8 @@ const UNITE = [
 ];
 
 function getUnitLabel(v: string): string {
-  const label = UNITE.find(u => u.value === v)?.label
-  return label ? label : "Autre";
+  const label = UNITE.find(u => u.value?.toLocaleLowerCase() === v?.toLocaleLowerCase())?.label
+  return label ? label : v?.toLocaleLowerCase() || "Autre";
 }
 
 const ITEMS_DATE = [

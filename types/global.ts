@@ -1,22 +1,26 @@
-import React from "react";
+import React, { ReactNode } from "react";
+import { ImageSourcePropType } from "react-native";
+import { InputModeOptions, KeyboardType } from "react-native";
 import { DimensionValue } from "react-native";
+import { SharedValue } from "react-native-reanimated";
 
 export type FieldProps = {
   label?: string;
   value: string | undefined;
   onChangeText?: (v: string) => void;
   placeholder?: string;
-  keyboardType?: "default" | "numeric";
+  keyboardType?: KeyboardType;
   multiline?: boolean;
   style?: any;
   compact?: boolean;
   error?: string;
   onFocus?: () => void;
   readOnly?: boolean;
+  autoCapitalize?: "none" | "sentences" | "words" | "characters";
 }
 
 export type ModalProps = {
-  value?: string | null | undefined | number | Date | boolean | object | any | any[];
+  value?: string | null | undefined | number | Date | boolean | object | any | any[] | ImageSourcePropType;
   onChange: (data?: string | null | undefined | number | Date | boolean | object | any | any[]) => void;
   placeholder?: string;
   visible: boolean;
@@ -76,3 +80,14 @@ export type SendNotifProps = {
   title: string,
   body: string
 }
+
+export type AnimateHeaderProps = {
+  children: ReactNode;
+  header: (
+    scrollY: SharedValue<number>
+  ) => ReactNode;
+  maxHeight?: number;
+  minHeight?: number;
+};
+
+export type PriceMode = "unit_price" | "total_price";

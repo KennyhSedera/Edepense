@@ -24,7 +24,7 @@ function Header({ title }: { title: string }) {
             <Pressable onPress={() => router.back()}>
               <ChevronLeft size={24} color={"white"} />
             </Pressable>
-            <Text style={{ fontSize: 20, fontWeight: "600", color: "white" }}>
+            <Text style={styles.headerTitle}>
               {title}
             </Text>
           </View>

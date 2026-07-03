@@ -114,6 +114,18 @@ export default function Login() {
             />
 
             <Field
+              label="Budget mensuel"
+              placeholder="Ex: 1000€"
+              value={data.budget_mensuel?.toString() || ""}
+              onChangeText={(e) => setData({ ...data, budget_mensuel: e })}
+              style={{ marginBottom: 10 }}
+              keyboardType='numeric'
+              compact
+              error={error.budget_mensuel}
+              onFocus={() => setError({ ...error, budget_mensuel: "" })}
+            />
+
+            <Field
               label="Devise principale"
               placeholder="Ex: €"
               value={data.devise}

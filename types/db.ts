@@ -10,7 +10,7 @@ export type User = {
 
   date_debut: string;
 
-  image?: string;
+  avatar?: string;
 
   created_at?: string;
   updated_at?: string;

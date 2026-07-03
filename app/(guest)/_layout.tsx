@@ -7,10 +7,11 @@ import { styles } from '@/styles/styles';
 
 function HeaderWithSearch({ title, searchable }: { title: string; searchable: boolean }) {
   const [search, setSearch] = useState("");
+
   return (
     <MainHeader >
       {title && (
-        <View style={[styles.header, { paddingTop: 10, gap: 10, paddingBottom: 10, }]}>
+        <View style={[styles.header, { paddingTop: 10, gap: 10, }]}>
           <Pressable onPress={() => router.back()}>
             <ChevronLeft size={28} color={"white"} />
           </Pressable>
@@ -75,13 +76,12 @@ function HeaderWithSearch({ title, searchable }: { title: string; searchable: bo
 }
 
 export default function GuestLayout() {
-
   return (
     <Stack screenOptions={{ headerShown: true }}>
       <Stack.Screen name='globalSearch' options={{ header: () => <HeaderWithSearch title='' searchable={true} /> }} />
       <Stack.Screen name='menu' options={{ header: () => <HeaderWithSearch title='Menu' searchable={false} /> }} />
       <Stack.Screen name='notification' options={{ header: () => <HeaderWithSearch title='Notification' searchable={false} /> }} />
-      <Stack.Screen name='profile' options={{ header: () => <HeaderWithSearch title='Profile' searchable={false} /> }} />
+      <Stack.Screen name='profile' options={{ headerShown: false }} />
     </Stack>
   )
 }

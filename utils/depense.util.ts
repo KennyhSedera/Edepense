@@ -1,8 +1,9 @@
 import { Depense, DepenseItem } from "@/types/db";
+import { PriceMode } from "@/types/global";
 
 export function parseExpense(
   text: string,
-  prix: string = "Prix unitaire",
+  prix: PriceMode = "unit_price",
   categorie: string = "Alimentation"
 ): Depense {
   const cleaned = text
@@ -12,67 +13,108 @@ export function parseExpense(
 
   const parts = cleaned.split(/,|\n/);
 
-  const items: DepenseItem[] = [];
-  let total = 0;
+  function parseWhatsAppParts(parts: string[]) {
+    const items = [];
 
-  for (let raw of parts) {
-    const p = raw.trim();
-    if (!p) continue;
+    const normalizeUnit = (u: string) =>
+      u
+        .toLowerCase()
+        .replace(/pièces|pièce|pieces/g, "piece");
 
-    let name = "";
-    let quantity = 1;
-    let unit = "autre";
-    let price = 0;
+    const unitRegex =
+      /\b(kg|g|l|ml|piece|pièce|pièces|kapoaka|sac)\b/i;
 
-    const tokens = p.split(" ");
+    const parseFraction = (value: string): number => {
+      if (/^\d+\/\d+$/.test(value)) {
+        const [a, b] = value.split("/").map(Number);
+        return a / b;
+      }
+      return Number(value);
+    };
 
-    const unitMatch = p.match(/(kg|g|l|ml|piece|pièces|pièce|pieces|plaquette|paquet|carton|sac)/i);
-    if (unitMatch) unit = unitMatch[1].toLocaleLowerCase();
+    for (const part of parts) {
+      const tokens = part.trim().split(" ");
+      if (!tokens.length) continue;
 
-    if (unit === "pièces" || unit === "pièce" || unit === "pieces") {
-      unit = "piece"
+      let quantity = 1;
+      let unit = "autre";
+
+      const unitMatch = part.match(unitRegex);
+
+      if (unitMatch) {
+        unit = normalizeUnit(unitMatch[1]);
+      }
+
+      const qtyMatch = part.match(/(\d+\/\d+|\d+(\.\d+)?)/);
+
+      if (qtyMatch) {
+        if (qtyMatch[1].includes("/")) {
+          const [a, b] = qtyMatch[1].split("/").map(Number);
+          quantity = a / b;
+        } else {
+          quantity = Number(qtyMatch[1]);
+        }
+      }
+
+      const numbers = tokens
+        .map(t => Number(t.replace(/[^\d]/g, "")))
+        .filter(n => !isNaN(n) && n > 0);
+
+      const price =
+        Number(tokens[tokens.length - 1].replace(/[^\d]/g, "")) ||
+        Math.max(...numbers) ||
+        0;
+
+      const name = tokens
+        .filter(t => {
+          const clean = t.toLowerCase();
+
+          if (unitRegex.test(clean)) return false;
+          if (/^\d+$/.test(clean)) return false;
+          if (/^\d+\/\d+$/.test(clean)) return false;
+          if (clean === "") return false;
+
+          return true;
+        })
+        .join(" ")
+        .trim();
+
+      if (!name || !price) continue;
+
+      const safeQuantity = quantity > 0 ? quantity : 1;
+
+      let unit_price = 0;
+      let total_price = 0;
+
+      if (prix === "unit_price") {
+        unit_price = price;
+        total_price = Math.round(price * safeQuantity);
+      } else {
+        total_price = price;
+        unit_price =
+          safeQuantity > 0
+            ? Math.round(price / safeQuantity)
+            : price;
+      }
+
+      items.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name,
+        quantity: safeQuantity,
+        unit,
+        unit_price,
+        total_price,
+      });
     }
 
-    const numericValues = tokens
-      .map(t => Number(t.replace(/[^\d]/g, "")))
-      .filter(n => !isNaN(n) && n > 0);
-
-
-    price = Math.max(...numericValues);
-
-    const filteredWords = tokens.filter(t => Number(t.replace(/[^\d]/g, "")) !== price && t !== unitMatch?.[1]);
-
-    const qtyMatch = filteredWords
-      .map(t => Number(t.replace(/[^\d]/g, "")))
-      .find(n => !isNaN(n) && n > 0);
-    if (qtyMatch) {
-      quantity = Number(qtyMatch);
-    }
-
-    name = filteredWords
-      .filter(t => isNaN(Number(t)))
-      .join(" ")
-      .trim();
-
-    if (!name) continue;
-    if (!price) continue;
-
-    const safeQuantity = quantity && quantity > 0 ? quantity : 1;
-    const unit_price = prix === "Prix unitaire" ? price : Math.round(price / safeQuantity);
-    const total_price = prix === "Prix unitaire" ? price * safeQuantity : price;
-    const id = Date.now().toString()
-
-    items.push({
-      id,
-      name,
-      quantity,
-      unit: unit || "autre",
-      unit_price,
-      total_price,
-    });
-
-    total += total_price;
+    return items;
   }
+  const items = parseWhatsAppParts(parts);
+
+  const total = items.reduce(
+    (acc, item) => acc + item.total_price,
+    0
+  );
 
   return {
     id: Date.now().toString(),
@@ -81,4 +123,5 @@ export function parseExpense(
     montant: total,
     items,
   };
+
 }

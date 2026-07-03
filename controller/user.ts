@@ -28,3 +28,29 @@ export async function setUser(user: User) {
 export async function removeUser() {
   await AsyncStorage.removeItem(STORAGE_USER_KEY);
 }
+
+export async function updateUser(user: User) {
+  try {
+    await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify([user]));
+    return JSON.stringify({
+      success: true,
+      message: "Utilisateur mis à jour avec succès"
+    });
+  } catch (error) {
+    console.log(error);
+    return JSON.stringify({
+      success: false,
+      message: "Error updating user"
+    });
+  }
+}
+
+export async function getBudgetMensuel() {
+  try {
+    const user = await getUser();
+    return user.budget_mensuel;
+  } catch (error) {
+    console.log(error);
+    return 0;
+  }
+}

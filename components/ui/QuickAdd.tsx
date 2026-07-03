@@ -7,14 +7,14 @@ import SelectChips from "./select-chips";
 import { CATEGORIES } from "@/constants/type";
 import { parseExpense } from "@/utils/depense.util";
 import { setDepense } from "@/controller/depense";
-import { ModalProps } from "@/types/global";
+import { ModalProps, PriceMode } from "@/types/global";
 import { sendNotification } from "@/services/notificationService";
 
 export default function QuickAdd({ visible, onChange }: ModalProps) {
   const [message, setMessage] = useState("");
   const { backgroundColor, border, sectionColor, labelColor, textColor, inputBg } = useAppColors();
   const [categorie, setCategorie] = useState("Alimentation");
-  const [prix, setPrix] = useState("Prix unitaire");
+  const [prix, setPrix] = useState<PriceMode>("unit_price");
   const [error, setError] = useState("");
 
   const handleSubmit = async () => {
@@ -51,7 +51,7 @@ export default function QuickAdd({ visible, onChange }: ModalProps) {
     setMessage("");
     setError("");
     setCategorie("Alimentation");
-    setPrix("Prix unitaire");
+    setPrix("unit_price");
     onChange();
   }
 
@@ -81,10 +81,10 @@ export default function QuickAdd({ visible, onChange }: ModalProps) {
           />
 
           <SelectChips
-            data={["Prix unitaire", "Prix total"]}
+            data={[{ value: "unit_price", label: "Prix unitaire" }, { value: "total_price", label: "Prix total" }]}
             label="Prix ajouté"
             value={prix}
-            setValue={(v) => setPrix(v)}
+            setValue={(v) => setPrix(v as PriceMode)}
           />
 
           <Text style={[styles.text, { color: textColor, textTransform: "capitalize" }]}>

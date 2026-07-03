@@ -57,6 +57,7 @@ function Navigation() {
       <Stack screenOptions={{ headerShown: false }} >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/edit-profile" options={{ headerShown: false }} />
         <Stack.Screen name="(form)" options={{ headerShown: false }} />
         <Stack.Screen name="(detail)" options={{ headerShown: false }} />
         <Stack.Screen name="(guest)" options={{ headerShown: false }} />

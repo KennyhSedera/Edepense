@@ -23,7 +23,11 @@ export default function RenderImage({ value, onChange, visible }: ModalProps) {
         style={[styles.blur]}
       >
         <View style={[styles.infoGridFull, { backgroundColor: "#000000f1", padding: 0, height: DIMENSION.height, justifyContent: "center", position: 'relative' }]}>
-          <Image source={value || { uri: value }} resizeMode='contain' style={[{
+          <Image source={
+            typeof value === "string"
+              ? { uri: value }
+              : value
+          } resizeMode='contain' style={[{
             width: "100%",
             height: "100%",
           }]} />

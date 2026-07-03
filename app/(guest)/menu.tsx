@@ -1,5 +1,5 @@
-import { Image, Pressable, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import { Image, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import React, { } from 'react'
 import { Colors } from '@/constants/Colors';
 import { useAppTheme } from '@/hooks/themeContext';
 import { useTheme } from '@react-navigation/native';
@@ -7,11 +7,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { styles as style } from "@/styles/styles";
 import { useAppColors } from '@/hooks/useAppColors';
 import { useHours } from '@/hooks/useHour';
+import { ChevronRightIcon } from 'lucide-react-native';
+import { router } from 'expo-router';
+import Toggle from '@/components/ui/Toggle';
 
 export default function Menu() {
   const { colors, dark } = useTheme();
-  const { setThemeMode, user } = useAppTheme();
-  const { textColor, inputBg, border, cardBg, isDark, sectionColor } = useAppColors(); const {
+  const { setThemeMode, user, loadTheme } = useAppTheme();
+  const { textColor, backgroundColor, border, cardBg, isDark, sectionColor } = useAppColors(); const {
     hour,
     enabled,
     disableNotifications,
@@ -19,8 +22,8 @@ export default function Menu() {
     handleHourChange
   } = useHours();
 
-  const handleChangeTheme = async (theme: boolean) => {
-    await setThemeMode(theme ? "dark" : "light");
+  const handleChangeTheme = (theme: boolean) => {
+    setThemeMode(theme ? "dark" : "light");
   };
 
   const handleToggle = async (value: boolean) => {
@@ -28,61 +31,83 @@ export default function Menu() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={[style.card, style.infoGridFull, { backgroundColor: cardBg, borderColor: border, }]}>
-
-        <Text style={[style.title, { color: textColor }]}>{user?.name}</Text>
-        <Text style={[style.category, { color: textColor }]}>{user?.email}</Text>
-      </View>
-      <View style={[style.grid, { marginVertical: 6 }]}>
-        <Pressable onPress={() => handleChangeTheme(false)} style={{ width: "48%" }}>
-          <View style={[styles.card, { borderWidth: !dark ? 3 : 0, borderColor: isDark ? border : colors.primary }]}>
-            <LinearGradient colors={[Colors["light"].from, Colors["light"].to]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.linear]}>
-              <View style={[styles.cardMode]}>
-                <View style={[styles.cardTextMode, { width: "45%" }]} />
-                <View style={[styles.cardTextMode]} />
-              </View>
-              <View style={[styles.cardMode]}>
-                <View style={[styles.cardTextMode, { width: "45%" }]} />
-                <View style={[styles.cardTextMode]} />
-              </View>
-            </LinearGradient>
+    <ScrollView contentContainerStyle={style.scrollContent}>
+      <Pressable
+        onPress={() => router.push("/profile")}
+        style={[
+          style.card,
+          style.infoGridFull,
+          style.rowSpacing,
+          { backgroundColor: cardBg, borderColor: border }
+        ]}
+      >
+        <View style={style.chipsWrap}>
+          <Image
+            source={user?.avatar ? { uri: user?.avatar } : require("@/assets/images/avatar.png")}
+            style={[style.avatar, { borderColor: border }]}
+          />
+          <View>
+            <Text style={[style.title, { color: textColor }]}>{user?.name}</Text>
+            <Text style={[style.category, { color: textColor, fontSize: 14 }]}>{user?.email}</Text>
           </View>
-          <Text style={[styles.textMode, { color: isDark ? textColor : colors.primary }]}>Mode Claire</Text>
-        </Pressable>
-        <Pressable onPress={() => handleChangeTheme(true)} style={{ width: "48%" }}>
-          <View style={[styles.card, , { borderColor: !isDark ? border : colors.primary, borderWidth: dark ? 3 : 0, }]}>
-            <LinearGradient colors={[Colors["dark"].from, Colors["dark"].to]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.linear]}>
-              <View style={[styles.cardMode, { backgroundColor: "#000000" }]}>
-                <View style={[styles.cardTextMode, { width: "30%", backgroundColor: "#fff" }]} />
-                <View style={[styles.cardTextMode, { width: "100%", backgroundColor: "#fff" }]} />
-              </View>
-              <View style={[styles.cardMode, { backgroundColor: "#000000" }]}>
-                <View style={[styles.cardTextMode, { width: "30%", backgroundColor: "#fff" }]} />
-                <View style={[styles.cardTextMode, { width: "100%", backgroundColor: "#fff" }]} />
-              </View>
-            </LinearGradient>
-          </View>
-          <Text style={[styles.textMode, { color: !isDark ? textColor : colors.primary }]}>Mode Sombre</Text>
-        </Pressable>
+        </View>
+        <ChevronRightIcon size={30} color={textColor} />
+      </Pressable>
+
+      <View style={[style.grid, style.card, style.infoGridFull, { backgroundColor: cardBg, paddingHorizontal: 8, paddingVertical: 12, borderRadius: 10, borderColor: border }]}>
+        <Text style={[style.label, { color: textColor, marginLeft: 5, fontSize: 16 }]}>Thème de l'application</Text>
+        <View style={[style.grid, { width: "100%", gap: 1 }]}>
+          <Pressable onPress={() => handleChangeTheme(false)} style={{ width: "49.5%" }}>
+            <View style={[style.cardMode, { borderWidth: !dark ? 3 : 0, borderColor: isDark ? border : colors.primary }]}>
+              <LinearGradient colors={[Colors["light"].from, Colors["light"].to]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[style.linearMode]}>
+                <View style={[style.cardModeContent]}>
+                  <View style={[style.cardTextMode, { width: "45%" }]} />
+                  <View style={[style.cardTextMode]} />
+                </View>
+                <View style={[style.cardModeContent]}>
+                  <View style={[style.cardTextMode, { width: "45%" }]} />
+                  <View style={[style.cardTextMode]} />
+                </View>
+              </LinearGradient>
+            </View>
+            <Text style={[style.textMode, { color: isDark ? textColor : colors.primary }]}>Mode Claire</Text>
+          </Pressable>
+          <Pressable onPress={() => handleChangeTheme(true)} style={{ width: "49.5%" }}>
+            <View style={[style.cardMode, , { borderColor: !isDark ? border : colors.primary, borderWidth: dark ? 3 : 0, }]}>
+              <LinearGradient colors={[Colors["dark"].from, Colors["dark"].to]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[style.linearMode]}>
+                <View style={[style.cardModeContent, { backgroundColor: "#000000" }]}>
+                  <View style={[style.cardTextMode, { width: "30%", backgroundColor: "#fff" }]} />
+                  <View style={[style.cardTextMode, { width: "100%", backgroundColor: "#fff" }]} />
+                </View>
+                <View style={[style.cardModeContent, { backgroundColor: "#000000" }]}>
+                  <View style={[style.cardTextMode, { width: "30%", backgroundColor: "#fff" }]} />
+                  <View style={[style.cardTextMode, { width: "100%", backgroundColor: "#fff" }]} />
+                </View>
+              </LinearGradient>
+            </View>
+            <Text style={[style.textMode, { color: !isDark ? textColor : colors.primary }]}>Mode Sombre</Text>
+          </Pressable>
+        </View>
       </View>
 
-      <View style={{ marginVertical: 20, padding: 10, borderRadius: 10, backgroundColor: cardBg, borderColor: border, borderWidth: 1 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <Text style={{ fontSize: 16, color: textColor }}>Rappel quotidien</Text>
-          <Switch value={enabled} onValueChange={handleToggle} />
+      <View style={{ padding: 10, borderRadius: 10, backgroundColor: cardBg, borderColor: border, borderWidth: 1 }}>
+        <View style={[style.rowSpacing, enabled && { marginBottom: 15 }]}>
+          <Text style={[style.label, { color: textColor, marginLeft: 5, fontSize: 16, marginBottom: 0 }]}>Rappel quotidien</Text>
+          <Toggle value={enabled} onChange={handleToggle} />
         </View>
 
         {enabled && (
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {[12, 14, 16, 18, 20, 21, 22].map((h) => (
+          <View style={[style.chipsWrap]}>
+            {[13, 14, 15, 16, 17, 18, 19, 20, 21, 22].map((h) => (
               <TouchableOpacity
                 key={h}
                 onPress={() => handleHourChange(h)}
                 style={{
-                  padding: 10,
+                  width: "18%",
+                  padding: 8,
+                  alignItems: "center",
                   borderRadius: 8,
-                  backgroundColor: hour === h ? sectionColor : inputBg,
+                  backgroundColor: hour === h ? sectionColor : backgroundColor,
                 }}
               >
                 <Text style={{ color: hour === h ? '#fff' : textColor }}>{h}h</Text>
@@ -95,41 +120,3 @@ export default function Menu() {
     </ScrollView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-  },
-  button: {
-    padding: 15,
-    alignItems: 'center',
-    borderRadius: 5,
-    marginVertical: 10
-  },
-  text: {
-    backgroundColor: 'transparent',
-    fontSize: 15,
-    color: '#fff',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  separator: {
-    marginVertical: 20,
-    height: 1,
-    width: "100%",
-  },
-  card: {
-    height: "auto", padding: 3, borderRadius: 12, width: "100%"
-  },
-  cardMode: { height: "auto", width: "100%", borderRadius: 12, backgroundColor: "#ffffffa1", paddingHorizontal: 10, paddingVertical: 15, display: "flex", justifyContent: "space-between", alignItems: "stretch", gap: 5 },
-
-  cardTextMode: { height: 10, width: "100%", borderRadius: 12, backgroundColor: "#000" },
-
-  textMode: { textAlign: "center", fontWeight: "medium", margin: 5, fontSize: 14 },
-
-  linear: { height: 200, borderRadius: 6, padding: 10, display: "flex", justifyContent: "center", alignItems: "center", gap: 15 },
-
-})

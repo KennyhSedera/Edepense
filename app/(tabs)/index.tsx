@@ -1,6 +1,5 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, ScrollView, Pressable, Dimensions } from "react-native";
-import { useBudgetStore } from "@/store/budgetStore";
 import { LineChart } from "react-native-chart-kit";
 import { useAppColors } from "@/hooks/useAppColors";
 import { Depense } from "@/types/db";
@@ -9,28 +8,13 @@ import { getDepenseCurrentMonth } from "@/controller/depense";
 import { getCycleStart, getDepenseParSemaine, getInfosPeriode } from "@/utils/dateFormat";
 import { useAppTheme } from "@/hooks/themeContext";
 import { styles } from "@/styles/styles";
-import { getUser } from "@/controller/user";
 import QuickAdd from "@/components/ui/QuickAdd";
 
 export default function HomeScreen() {
   const { textColor, backgroundColor, gradient, cardBg, sectionColor, border } = useAppColors();
   const { user } = useAppTheme();
 
-
-  useFocusEffect(
-    useCallback(() => {
-      async function loadUser() {
-        const user = await getUser();
-        if (user === null || user === undefined) {
-          router.push("/login");
-        }
-      }
-
-      loadUser();
-    }, [getUser])
-  )
-
-  const { budgetMensuel } = useBudgetStore();
+  const [budgetMensuel, setBudgetMensuel] = useState<number>(0);
   const [depenses, setDepenses] = React.useState<Depense[]>([]);
   const [point, setPoint] = useState({
     click: false,
@@ -39,6 +23,12 @@ export default function HomeScreen() {
     y: 0,
   });
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setBudgetMensuel(Number(user?.budget_mensuel));
+    }, 500);
+  }, [user]);
 
   const loadData = async () => {
     const data = await getDepenseCurrentMonth();
@@ -201,7 +191,6 @@ export default function HomeScreen() {
             )}
           </View>
         </View>
-
       </Pressable>
     </ScrollView >
   );

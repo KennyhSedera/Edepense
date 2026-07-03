@@ -27,7 +27,6 @@ export function formatDateStringForDisplay(isoDate: string) {
 }
 
 export function getDaysInMonth(year: number, month: number) {
-  // month: 1-12
   return new Date(year, month, 0).getDate();
 }
 
@@ -126,7 +125,6 @@ export function getSemaines(dateDebut: string) {
   return semaines;
 }
 
-
 export function getDepenseParSemaine(date: string, depenses: any[]) {
   const debut = new Date(date);
 
@@ -178,4 +176,35 @@ export function getCycleStart(date: string, jourFixe: number) {
   }
 
   return start;
+}
+
+export function getDayFixed(date: string | Date): number {
+  const d = new Date(date);
+
+  return d.getDate();
+}
+
+export function getDaysInMonthFromStartDay(startDay: number): number {
+  const today = new Date();
+  const currentDay = today.getDate();
+
+  let cycleStartMonth = today.getMonth();
+  let cycleStartYear = today.getFullYear();
+
+  if (currentDay < startDay) {
+    cycleStartMonth -= 1;
+    if (cycleStartMonth < 0) {
+      cycleStartMonth = 11;
+      cycleStartYear -= 1;
+    }
+  }
+
+  const cycleStart = new Date(cycleStartYear, cycleStartMonth, startDay);
+
+  const cycleEnd = new Date(cycleStartYear, cycleStartMonth + 1, startDay);
+
+  const diffMs = cycleEnd.getTime() - cycleStart.getTime();
+  const nbJours = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  return nbJours;
 }

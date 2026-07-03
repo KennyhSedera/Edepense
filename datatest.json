@@ -1,0 +1,72 @@
+{
+  "categorie": "Alimentation",
+  "date": "2026-07-03T17:28:20.502Z",
+  "id": "1783099700502",
+  "items": [
+    {
+      "id": "1783099700500-8jchg5",
+      "name": "Huile hina",
+      "quantity": 1,
+      "total_price": 4900,
+      "unit": "piece",
+      "unit_price": 4900
+    },
+    {
+      "id": "1783099700501-h7a472",
+      "name": "Sel fin",
+      "quantity": 2,
+      "total_price": 900,
+      "unit": "piece",
+      "unit_price": 450
+    },
+    {
+      "id": "1783099700501-gq803t",
+      "name": "Tsamaso",
+      "quantity": 3,
+      "total_price": 3600,
+      "unit": "kapoaka",
+      "unit_price": 1200
+    },
+    {
+      "id": "1783099700501-xd7fb4",
+      "name": "Voanjo",
+      "quantity": 1,
+      "total_price": 800,
+      "unit": "kapoaka",
+      "unit_price": 800
+    },
+    {
+      "id": "1783099700502-vrvsli",
+      "name": "Ovy",
+      "quantity": 1,
+      "total_price": 1300,
+      "unit": "kg",
+      "unit_price": 1300
+    },
+    {
+      "id": "1783099700502-h8daxd",
+      "name": "Cotte",
+      "quantity": 1,
+      "total_price": 1000,
+      "unit": "kg",
+      "unit_price": 1000
+    },
+    {
+      "id": "1783099700502-heivi3",
+      "name": "Tongolo",
+      "quantity": 1,
+      "total_price": 2500,
+      "unit": "kg",
+      "unit_price": 2500
+    },
+    {
+      "id": "1783099700502-3ghqwi",
+      "name": "Voanjobory",
+      "quantity": 3,
+      "total_price": 2400,
+      "unit": "kapoaka",
+      "unit_price": 800
+    }
+  ],
+  "montant": 17400
+}

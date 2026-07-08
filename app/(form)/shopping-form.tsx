@@ -3,30 +3,26 @@ import {
   View,
   Text,
   TextInput,
-  StyleSheet,
-  ScrollView,
-  Image,
   TouchableOpacity,
   Alert,
-  Platform,
   ToastAndroid,
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
-import { Camera, Pencil, Trash2, Plus } from "lucide-react-native";
+import { Trash2, Plus } from "lucide-react-native";
 import { useAppColors } from "@/hooks/useAppColors";
 import type { Depense, DepenseItem } from "@/types/db";
-import { useBudgetStore } from "@/store/budgetStore";
-import { formatDateStringForDisplay, toISODate } from "@/utils/dateFormat";
+import { formatDateStringForDisplay, toISODate } from "@/utils/date.util";
 import DatePickerCalendar from '@/components/ui/DatePickerCalendar';
 import Field from "@/components/ui/InputText";
-import { getDepenseById, setDepense, updateDepense } from "@/controller/depense";
+import { getDepenseById, setDepense, updateDepense } from "@/controller/depense.controller";
 import { styles } from "@/styles/styles";
 import InputImage from "@/components/ui/input-image";
 import { CATEGORIES, DIMENSION, UNITE } from "@/constants/type";
 import SelectChips from "@/components/ui/select-chips";
 import SelectChipsMenu from "@/components/ui/select-chips-menu";
-
+import { MainHeader } from "@/components/header/header-main";
+import { FormHeader } from "./_layout";
+import { useAuth } from "@/contexts/AuthContext";
 
 type ItemForm = {
   id: string;
@@ -47,11 +43,12 @@ export default function DepenseForm() {
   const [showCustomDateInput, setShowCustomDateInput] = useState(false);
   const [dateModalVisible, setDateModalVisible] = useState(false);
   const [error, setError] = useState<Record<string, string>>({});
+  const { user } = useAuth();
 
   const [items, setItems] = useState<ItemForm[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const { devise } = useBudgetStore();
+  const devise = user?.devise || "MGA";
 
   const router = useRouter();
   const {
@@ -208,6 +205,7 @@ export default function DepenseForm() {
 
       const newDepense: Depense = {
         id: depenseId ? depenseId : Date.now().toString(),
+        user_id: user?.id || "",
         montant: parseFloat(montant),
         categorie: categorie.trim(),
         description: description.trim(),
@@ -250,9 +248,9 @@ export default function DepenseForm() {
 
 
   return (
-    <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={styles.scrollContent}
+    <MainHeader
+      height={100}
+      header={() => <FormHeader title="Formulaire de Dépense" />}
     >
       <DatePickerCalendar value={date} onChange={(v: string) => handleConfirmDate(v)} visible={dateModalVisible} />
 
@@ -462,7 +460,7 @@ export default function DepenseForm() {
           {saving ? "Enregistrement..." : depenseId ? "Enregistrer la modification" : "Enregistrer la dépense"}
         </Text>
       </TouchableOpacity>
-    </ScrollView>
+    </MainHeader>
   );
 }
 

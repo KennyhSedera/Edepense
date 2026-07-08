@@ -35,7 +35,6 @@ export function formatMoney(
       maximumFractionDigits: 0,
     }).format(amount);
   } catch {
-    // Dernier filet de sécurité si Intl échoue quand même
     return `${amount.toLocaleString(locale)} ${safeCurrency}`;
   }
 }
@@ -53,4 +52,9 @@ export function formatCompactNumber(value: number, devise: string = 'MGA'): stri
   }
 
   return formatMoney(value, safeCurrency);
+}
+
+export function toOrdinalFr(n: number, feminin = false) {
+  if (n === 1) return feminin ? "1ère" : "1er";
+  return `${n}e`;
 }

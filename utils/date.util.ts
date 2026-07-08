@@ -1,3 +1,5 @@
+import { Depense } from "@/types/db";
+
 export function toISODate(d: Date) {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -207,4 +209,51 @@ export function getDaysInMonthFromStartDay(startDay: number): number {
   const nbJours = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
   return nbJours;
+}
+
+export function formatDateHeure(date: string | Date): string {
+  const d = new Date(date);
+
+  return d.toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export function formatDateRelative(date: string | Date): string {
+  const d = new Date(date);
+  const now = new Date();
+
+  const diffMs = now.getTime() - d.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHeure = Math.floor(diffMin / 60);
+  const diffJour = Math.floor(diffHeure / 24);
+  const diffSemaine = Math.floor(diffJour / 7);
+  const diffMois = Math.floor(diffJour / 30);
+  const diffAn = Math.floor(diffJour / 365);
+
+  if (diffSec < 60) return "à l'instant";
+  if (diffMin < 60) return `il y a ${diffMin} minute${diffMin > 1 ? "s" : ""}`;
+  if (diffHeure < 24) return `il y a ${diffHeure} heure${diffHeure > 1 ? "s" : ""}`;
+  if (diffJour < 7) return `il y a ${diffJour} jour${diffJour > 1 ? "s" : ""}`;
+  if (diffSemaine < 4) return `il y a ${diffSemaine} semaine${diffSemaine > 1 ? "s" : ""}`;
+  if (diffMois < 12) return `il y a ${diffMois} mois`;
+  return `il y a ${diffAn} an${diffAn > 1 ? "s" : ""}`;
+}
+
+export function getDepensesMoisPrecedent(depenses: Depense[], dateDebutCycleActuel: Date): Depense[] {
+  const debutPrecedent = new Date(dateDebutCycleActuel);
+  debutPrecedent.setMonth(debutPrecedent.getMonth() - 1);
+
+  const finPrecedent = new Date(dateDebutCycleActuel);
+  finPrecedent.setDate(finPrecedent.getDate() - 1);
+
+  return depenses.filter((d) => {
+    const date = new Date(d.date);
+    return date >= debutPrecedent && date <= finPrecedent;
+  });
 }

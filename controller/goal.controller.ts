@@ -1,6 +1,8 @@
 import { STORAGE_GOAL_KEY } from "@/constants/storage";
 import { Goal } from "@/types/db";
+import { getLocalUser } from "@/utils/token.util";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getUserId } from "./user.controller";
 
 export async function getGoal() {
   const data = await AsyncStorage.getItem(STORAGE_GOAL_KEY);
@@ -8,16 +10,20 @@ export async function getGoal() {
   if (!data) return [];
 
   const goal = JSON.parse(data || "[]") as Goal[];
+  const uId = await getUserId();
 
-  return goal;
+  return goal.filter((g: any) => g.user_id === uId);
 }
 
 export async function setGoal(goal: Goal) {
   try {
-    const existing = await getGoal();
-    existing.push(goal);
+    const uId = await getUserId();
+    const allGoals = JSON.parse((await AsyncStorage.getItem(STORAGE_GOAL_KEY)) || "[]") as Goal[];
 
-    await AsyncStorage.setItem(STORAGE_GOAL_KEY, JSON.stringify(existing));
+    (goal as any).user_id = uId || "";
+    allGoals.push(goal);
+
+    await AsyncStorage.setItem(STORAGE_GOAL_KEY, JSON.stringify(allGoals));
 
     return JSON.stringify({
       success: true,
@@ -33,7 +39,11 @@ export async function setGoal(goal: Goal) {
 }
 
 export async function removeGoal() {
-  await AsyncStorage.removeItem(STORAGE_GOAL_KEY);
+  const uId = await getUserId();
+  const allGoals = JSON.parse((await AsyncStorage.getItem(STORAGE_GOAL_KEY)) || "[]") as Goal[];
+
+  const remaining = allGoals.filter((g: any) => g.user_id !== uId);
+  await AsyncStorage.setItem(STORAGE_GOAL_KEY, JSON.stringify(remaining));
 
   return JSON.stringify({
     success: true,
@@ -42,8 +52,11 @@ export async function removeGoal() {
 }
 
 export async function updateGoal(goal: Goal, id: string) {
-  const existing = await getGoal();
-  const newData = existing.map((item: any) => (item.id === id ? goal : item));
+  const uId = await getUserId();
+  const allGoals = JSON.parse((await AsyncStorage.getItem(STORAGE_GOAL_KEY)) || "[]") as Goal[];
+
+  (goal as any).user_id = uId || "";
+  const newData = allGoals.map((item: any) => (item.id === id ? goal : item));
 
   await AsyncStorage.setItem(STORAGE_GOAL_KEY, JSON.stringify(newData));
 
@@ -55,8 +68,8 @@ export async function updateGoal(goal: Goal, id: string) {
 }
 
 export async function deleteGoal(id: string) {
-  const existing = await getGoal();
-  const newData = existing.filter((item: any) => (item.id !== id));
+  const allGoals = JSON.parse((await AsyncStorage.getItem(STORAGE_GOAL_KEY)) || "[]") as Goal[];
+  const newData = allGoals.filter((item: any) => item.id !== id);
 
   await AsyncStorage.setItem(STORAGE_GOAL_KEY, JSON.stringify(newData));
 
@@ -67,7 +80,11 @@ export async function deleteGoal(id: string) {
 }
 
 export async function removeAllGoals() {
-  await AsyncStorage.removeItem(STORAGE_GOAL_KEY);
+  const uId = await getUserId();
+  const allGoals = JSON.parse((await AsyncStorage.getItem(STORAGE_GOAL_KEY)) || "[]") as Goal[];
+
+  const remaining = allGoals.filter((g: any) => g.user_id !== uId);
+  await AsyncStorage.setItem(STORAGE_GOAL_KEY, JSON.stringify(remaining));
 
   return JSON.stringify({
     success: true,
@@ -77,6 +94,5 @@ export async function removeAllGoals() {
 
 export async function getGoalById(id: string) {
   const data = await getGoal();
-
   return data.find((d: Goal) => d.id === id);
 }

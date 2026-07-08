@@ -18,6 +18,7 @@ export const styles = StyleSheet.create({
   itemTopRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   itemsHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   metricsRow: { flexDirection: "row", gap: 10, marginBottom: 10 },
+  centered: { alignItems: "center", justifyContent: "center" },
 
   // Grid
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 5 },
@@ -69,7 +70,7 @@ export const styles = StyleSheet.create({
   dateButton: { flex: 1, borderWidth: 1, borderRadius: 10, paddingVertical: 10, alignItems: "center", marginRight: 8, justifyContent: "center" },
   addItemButton: { flexDirection: "row", borderWidth: 1.5, borderStyle: "dashed", borderRadius: 10, paddingVertical: 12, alignItems: "center", justifyContent: "center", marginTop: 4 },
   removeButton: { marginLeft: "auto", padding: 10, borderRadius: 50, alignItems: "center", justifyContent: "center" },
-  iconButton: { padding: 4 },
+  iconButton: { padding: 4, borderRadius: 50, alignItems: "center", justifyContent: "center" },
   buttonText: { fontSize: 16, color: "#fff", fontWeight: "bold" },
   dateButtonText: { fontSize: 13, fontWeight: "600" },
 
@@ -122,7 +123,7 @@ export const styles = StyleSheet.create({
   // Header
   header: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10, paddingTop: 10, alignItems: "center", paddingHorizontal: 15 },
   headerTitle: { fontSize: 20, fontWeight: "600", color: "white" },
-  headerAnimated: { position: "absolute", top: 0, left: 0, right: 0, overflow: "hidden", zIndex: 100, paddingHorizontal: 20, paddingBottom: 16, justifyContent: "flex-end", marginBottom: 10, },
+  headerAnimated: { position: "absolute", top: 0, left: 0, right: 0, overflow: "hidden", zIndex: 100, marginBottom: 10, },
 
   // Misc
   progressBar: { height: 10, borderRadius: 10, overflow: "hidden", marginVertical: 10 },
@@ -130,4 +131,7 @@ export const styles = StyleSheet.create({
   emptyText: { fontSize: 16, fontWeight: "medium", textAlign: "center", marginTop: 10 },
   loadingContainer: { alignItems: "center", paddingVertical: 24, gap: 8 },
   loadingText: { color: "#666" },
+
+  // Linear gradient
+  linearGradient: { flexDirection: "row", height: "auto", minHeight: 50, shadowColor: "#000", shadowOffset: { width: 0, height: 2, }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5, borderTopRightRadius: 20, borderTopLeftRadius: 20, paddingVertical: 10 }
 });

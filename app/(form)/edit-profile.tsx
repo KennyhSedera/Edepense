@@ -1,26 +1,25 @@
 import React, { useState } from 'react';
 import {
-  ScrollView, View, Text, TouchableOpacity,
+  View, Text, TouchableOpacity,
   Alert, ToastAndroid, ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAppColors } from '@/hooks/useAppColors';
-import { useAppTheme } from '@/hooks/themeContext';
 import { styles } from '@/styles/styles';
 import Field from '@/components/ui/InputText';
-import { getDaysInMonthFromStartDay } from '@/utils/dateFormat';
-import { updateUser } from '@/controller/user';
-import { getDayFixed } from '../../utils/dateFormat';
-import AnimatedHeader from '@/components/animate-header';
-import HeaderProfile from '@/components/ui/header-profile';
+import { getDaysInMonthFromStartDay } from '@/utils/date.util';
+import { getDayFixed } from '../../utils/date.util';
+import AnimatedHeader from '@/components/header/animate-header';
+import HeaderProfile from '@/components/header/header-profile';
 import ImagePikerModal from '@/components/ui/ImagePikerModal';
 import SelectChips from '@/components/ui/select-chips';
+import { useAuth } from '@/contexts/AuthContext';
 
 const DEVISES = ['MGA', 'EUR', 'USD', 'GBP'];
 
 export default function EditProfileScreen() {
-  const { user, loadUser } = useAppTheme();
-  const { textColor, cardBg, border, sectionColor, labelColor, backgroundColor } = useAppColors();
+  const { user, updateUser } = useAuth();
+  const { textColor, cardBg, border, sectionColor, labelColor } = useAppColors();
 
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
@@ -31,18 +30,35 @@ export default function EditProfileScreen() {
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [avatar, setAvatar] = useState(user?.avatar);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const budgetJournalier = dateDebut && budgetMensuel
     ? (Number(budgetMensuel) / getDaysInMonthFromStartDay(Number(dateDebut))).toFixed(0)
     : user?.budget_journalier ?? 0;
 
-  const handleSave = async () => {
+  function validate(): Record<string, string> {
+    const errors: Record<string, string> = {};
     if (!name.trim()) {
-      Alert.alert('Erreur', 'Le nom est requis.');
-      return;
+      errors.name = 'Le nom est requis.';
     }
     if (!budgetMensuel || isNaN(Number(budgetMensuel))) {
-      Alert.alert('Erreur', 'Le budget mensuel doit être un nombre valide.');
+      errors.budgetMensuel = 'Le budget mensuel doit être un nombre valide.';
+    }
+    if (!salaireMensuel || isNaN(Number(salaireMensuel))) {
+      errors.salaireMensuel = 'Le salaire mensuel doit être un nombre valide.';
+    }
+    if (!email.trim()) {
+      errors.email = 'L\'email est requis.';
+    }
+
+    return errors;
+  }
+
+  const handleSave = async () => {
+    const errors = validate();
+
+    if (Object.keys(errors).length > 0) {
+      setErrors(errors);
       return;
     }
 
@@ -61,14 +77,12 @@ export default function EditProfileScreen() {
       };
 
       const res = await updateUser(updated);
-      const json = JSON.parse(res);
 
-      if (json.success) {
-        ToastAndroid.show(json.message, ToastAndroid.SHORT);
-        await loadUser();
+      if (res.success) {
+        ToastAndroid.show(res.message as string, ToastAndroid.SHORT);
         router.back();
       } else {
-        Alert.alert('Erreur', json.message);
+        Alert.alert('Erreur', res.error);
       }
     } catch (error) {
       console.error(error);
@@ -82,7 +96,6 @@ export default function EditProfileScreen() {
     if (!user) return;
     setAvatar(v);
     await updateUser({ ...user, avatar: v } as Parameters<typeof updateUser>[0]);
-    await loadUser();
     setVisible(false);
   }
 
@@ -92,15 +105,19 @@ export default function EditProfileScreen() {
 
   return (
     <AnimatedHeader
-      maxHeight={280}
-      minHeight={80}
+      maxHeight={270}
+      minHeight={90}
+      marginBottomMax={90}
+      marginBottomMin={0}
+      topTitle={false}
       header={(scrollY) => (
         <HeaderProfile
           scrollY={scrollY}
           avatar={avatar}
           action={handleSetVisible}
-          title="Modifier mon profil"
-          subtitle="Informations personnelles"
+          title="Modification de mon profil"
+          subtitle=""
+          isback
         />
       )}
     >
@@ -115,6 +132,8 @@ export default function EditProfileScreen() {
           value={name}
           onChangeText={setName}
           placeholder="Ex: Kennyh Sedera"
+          error={errors.name}
+          onFocus={() => setErrors({ ...errors, name: '' })}
         />
 
         <Field
@@ -124,6 +143,8 @@ export default function EditProfileScreen() {
           placeholder="Ex: kennyh@email.com"
           keyboardType="email-address"
           autoCapitalize="none"
+          error={errors.email}
+          onFocus={() => setErrors({ ...errors, email: '' })}
         />
       </View>
 
@@ -138,6 +159,8 @@ export default function EditProfileScreen() {
           onChangeText={setSalaireMensuel}
           placeholder="Ex: 1200000"
           keyboardType="numeric"
+          error={errors.salaireMensuel}
+          onFocus={() => setErrors({ ...errors, salaireMensuel: '' })}
         />
 
         <Field
@@ -146,6 +169,8 @@ export default function EditProfileScreen() {
           onChangeText={setBudgetMensuel}
           placeholder="Ex: 500000"
           keyboardType="numeric"
+          error={errors.budgetMensuel}
+          onFocus={() => setErrors({ ...errors, budgetMensuel: '' })}
         />
 
         {/* Budget journalier calculé automatiquement */}

@@ -1,26 +1,31 @@
+import { MainHeader } from "@/components/header/header-main";
 import InputImage from "@/components/ui/input-image";
 import Field from "@/components/ui/InputText";
 import SelectChips from "@/components/ui/select-chips";
 import SelectChipsMenu from "@/components/ui/select-chips-menu";
 import { CATEGORIES_PROVISION, DIMENSION, UNITE } from "@/constants/type";
-import { getProvisionById, setProvision, updateProvision } from "@/controller/provision";
+import { getProvisionById, setProvision, updateProvision } from "@/controller/provision.controller";
 import { useAppColors } from "@/hooks/useAppColors";
 import { styles } from "@/styles/styles";
 import { Provision } from "@/types/db";
-import { toISODate } from "@/utils/dateFormat";
+import { toISODate } from "@/utils/date.util";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   View,
   Text,
   Pressable,
-  ScrollView,
   ToastAndroid,
 } from "react-native";
+import { FormHeader } from "./_layout";
+import { setDepense } from "@/controller/depense.controller";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProvisionForm() {
+  const { user } = useAuth();
   const [data, setData] = useState<Provision>({
     id: Date.now().toString(),
+    user_id: user?.id || "",
     nom: "",
     quantite_initiale: 1,
     quantite_restante: 1,
@@ -92,11 +97,18 @@ export default function ProvisionForm() {
     }
 
     const qte = Number(data.quantite_initiale);
-    const qte_restant = id ? (qteInitiale > data.quantite_initiale ? qteRestant - (qteInitiale - data.quantite_initiale) : qteInitiale < data.quantite_initiale ? qteRestant + (data.quantite_initiale - qteInitiale) : qteRestant) : data.quantite_initiale
     const prix = Number(data.prix_unitaire);
+    const isEdit = !!id;
+
+    const deltaQte = isEdit ? qte - qteInitiale : qte;
+
+    const qte_restant = isEdit
+      ? qteRestant + (qte - qteInitiale)
+      : qte;
 
     const provision = {
-      id: id ? id : Date.now().toString(),
+      id: id ?? Date.now().toString(),
+      user_id: user?.id || "",
       nom: data.nom,
       quantite_initiale: qte,
       quantite_restante: qte_restant,
@@ -110,27 +122,41 @@ export default function ProvisionForm() {
       categorie: data.categorie,
     };
 
+    const montant = deltaQte * prix;
+    const depense = {
+      user_id: user?.id || "",
+      id: Date.now().toString(),
+      categorie: provision.categorie,
+      montant,
+      description: `Achat de ${deltaQte} ${provision.unite} de ${provision.nom} pour un prix unitaire de ${prix}.`,
+      date: new Date().toISOString().split("T")[0],
+      items: [{ id: Date.now().toString(), name: provision.nom, quantity: deltaQte, unit: provision.unite, unit_price: prix, total_price: montant }],
+    }
+
     try {
-      let res = "";
-      if (id) {
-        res = await updateProvision(provision, id);
-      } else {
-        res = await setProvision(provision);
+      const res = isEdit
+        ? await updateProvision(provision, id)
+        : await setProvision(provision);
+
+      const result = JSON.parse(res);
+      if (!result.success) return;
+
+      if (deltaQte > 0) {
+        await setDepense(depense);
       }
 
-      const data = JSON.parse(res);
-      if (data.success) {
-        ToastAndroid.show(data.message, ToastAndroid.SHORT);
-        router.back();
-      }
-
+      ToastAndroid.show(result.message, ToastAndroid.SHORT);
+      router.back();
     } catch (error) {
       console.log(error);
     }
   };
 
   return (
-    <ScrollView style={[styles.container, { padding: 12 }]} contentContainerStyle={{ paddingBottom: 12 }}>
+    <MainHeader
+      height={100}
+      header={() => <FormHeader title="Formulaire de provision" />}
+    >
       <View style={[styles.form, { borderColor: border, borderWidth: 1, backgroundColor: cardBg }]}>
         <InputImage value={data.image} setValue={(e) => setData({ ...data, image: e })} />
       </View>
@@ -195,6 +221,6 @@ export default function ProvisionForm() {
       <Pressable style={[styles.miniButton, { backgroundColor: sectionColor, marginTop: 22 }]} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Enregistrer</Text>
       </Pressable>
-    </ScrollView>
+    </MainHeader>
   );
 }

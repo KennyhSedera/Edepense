@@ -1,31 +1,35 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
   Alert,
   ToastAndroid,
 } from 'react-native';
-import { scanReceipt, scanReceiptWithAI, ReceiptItem } from '@/utils/image.util';
 import { styles } from '@/styles/styles';
 import { useAppColors } from '@/hooks/useAppColors';
 import Field from '@/components/ui/InputText';
 import { Depense, DepenseItem } from '@/types/db';
 import InputDate from '@/components/ui/input-date';
-import { setDepense } from '@/controller/depense';
-import { router, useFocusEffect } from 'expo-router';
+import { setDepense, setDepenses } from '@/controller/depense.controller';
+import { router } from 'expo-router';
 import CategoriSelector from '@/components/ui/categori-selector';
 import InputImage from '@/components/ui/input-image';
-import { toISODate } from '@/utils/dateFormat';
-import NetInfo from '@react-native-community/netinfo';
+import { toISODate } from '@/utils/date.util';
 import EmptyData from '@/components/ui/empty-data';
 import { Plus, Trash2, WifiOff } from 'lucide-react-native';
 import SelectChipsMenu from '@/components/ui/select-chips-menu';
-import { DIMENSION, UNITE } from '@/constants/type';
-import { formatCompactNumber } from '@/utils/numberFormat';
+import { CATEGORIES, DIMENSION, UNITE } from '@/constants/type';
+import { formatCompactNumber } from '@/utils/number.util';
 import { sendNotification } from '@/services/notificationService';
+import { MainHeader } from '@/components/header/header-main';
+import { DetailHeader } from '../(detail)/_layout';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAppNet } from '@/hooks/useAppNet';
+import { scanReceiptOffline, sendDataToScan } from '@/utils/scan.ticket.util';
+import { setProvisions } from '@/controller/provision.controller';
+import SelectChips from '@/components/ui/select-chips';
 
 export default function ScanTicket() {
   const [image, setImage] = useState<string | null>(null);
@@ -39,7 +43,9 @@ export default function ScanTicket() {
   const [items, setItems] = useState<DepenseItem[]>([]);
   const [observation, setObservation] = useState('');
   const [error, setError] = useState<{ [key: string]: string }>({});
-  const [isOnline, setIsOnline] = useState(true);
+  const { isOnline } = useAppNet();
+  const { user } = useAuth();
+  const [categories, setCategories] = useState(CATEGORIES);
 
   const itemsTotal = items.reduce((total, item) => total + (parseFloat(item.unit_price?.toString()) * parseFloat(item.quantity?.toString()) || 0), 0);
 
@@ -47,61 +53,84 @@ export default function ScanTicket() {
     setMontant(itemsTotal.toString());
   }, [itemsTotal]);
 
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsOnline(state.isConnected === true && state.isInternetReachable !== false);
-    });
-    return () => unsubscribe();
-  }, []);
-
   const handleScan = async (uri: string) => {
-    if (uri) {
-      setImage(uri);
-      setLoading(true);
-      try {
-        const result = isOnline
-          ? await scanReceiptWithAI(uri)
-          : await scanReceipt(uri);
-
-        setMontant(result.total ?? '');
-        setDevise(result.currency ?? '');
-        setDate(result.date ?? toISODate(new Date()));
-        setMerchant(result.merchant ?? '');
-
-        const depenseItems = result.items.length > 0
-          ? result.items.map((item, index) => ({
-            id: `${Date.now()}-${index}`,
-            name: item.description,
-            quantity: 1,
-            unit: item.unit || 'piece',
-            unit_price: Number(item.amount) || 0,
-            total_price: Number(item.amount) * Number(item.quantity) || 0,
-            image: image as string,
-          }))
-          : [
-            {
-              id: Date.now().toString(),
-              name: result.observation ?? '',
-              quantity: 1,
-              unit: 'piece',
-              total_price: Number(result.total) || 0,
-              unit_price: Number(result.total) || 0,
-              image: image as string,
-            }
-          ];
-
-        setItems(depenseItems);
-        setObservation(result.observation ?? '');
-        setCategorie(result.categorie ?? 'Autre');
-
-      } catch (error) {
-        console.error('Scan error:', error);
-        Alert.alert('Erreur', "Impossible de lire le ticket. Réessayez avec une photo plus nette.");
-      } finally {
-        setLoading(false);
-      }
-    } else {
+    if (!uri) {
       setImage("");
+      return;
+    }
+
+    setImage(uri);
+    setLoading(true);
+    try {
+      const result = isOnline ? await sendDataToScan(uri) : await scanReceiptOffline(uri);
+      const parsedResult = typeof result === "string" ? JSON.parse(result) : result;
+      const depenses = parsedResult.depense ?? [];
+      const provisions = parsedResult.provision ?? [];
+
+      if (depenses.length === 0) {
+        throw new Error("Aucune dépense détectée dans la réponse");
+      }
+
+      if (depenses.length > 1) {
+        if (provisions.length > 0) { await setProvisions(provisions); }
+        const res = await setDepenses(depenses);
+        const parsedResponse = JSON.parse(res);
+        if (parsedResponse.success) {
+          await sendNotification({
+            title: "💰 Nouvelle dépense ajoutée",
+            body: `${parsedResponse.newDepenses.length} nouvelles dépenses ont été ajoutées avec le scan du ticket !`,
+            route: "/(detail)/detail-shopping",
+            params: { id: parsedResponse.newDepenses[0].id, },
+          });
+          ToastAndroid.show(parsedResponse.message, ToastAndroid.SHORT);
+          router.push({ pathname: "/(tabs)", });
+          return;
+        }
+
+        throw new Error(
+          parsedResponse.message ??
+          "Erreur lors de l'enregistrement"
+        );
+      }
+
+      const premiereDepense = depenses[0];
+
+      const existingCategories = CATEGORIES.filter(cat => cat === premiereDepense.categorie);
+      if (existingCategories.length === 0) {
+        setCategories([...CATEGORIES, premiereDepense.categorie]);
+      }
+
+      setMontant(String(premiereDepense.montant ?? ""));
+      setDevise(parsedResult.devise ?? "AR");
+      setDate(premiereDepense.date ?? toISODate(new Date()));
+      setMerchant(parsedResult.merchant ?? "");
+      setObservation(parsedResult.observation ?? "");
+      setCategorie(premiereDepense.categorie ?? "Autre");
+
+      const depenseItems =
+        (premiereDepense.items ?? []).map(
+          (item: any, index: number) => ({
+            id: `${Date.now()}-${index}`,
+            name: item.name ?? "",
+            quantity: item.quantity ?? 1,
+            unit: item.unit ?? "piece",
+            unit_price: item.unit_price ?? 0,
+            total_price: item.total_price ?? 0,
+            image: uri,
+          })
+        );
+
+      setItems(depenseItems);
+
+    } catch (error) {
+      console.error("Scan error:", error);
+
+      Alert.alert(
+        "Erreur",
+        "Impossible de lire le ticket. Réessayez avec une photo plus nette."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,6 +142,7 @@ export default function ScanTicket() {
 
     const depense: Depense = {
       id: Date.now().toString(),
+      user_id: user?.id || '',
       montant: Number(montant),
       categorie: categorie,
       description: observation,
@@ -152,7 +182,6 @@ export default function ScanTicket() {
     setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
-
   function addItem() {
     setError({ ...error, produits: "" })
     setItems((prev) => [
@@ -160,9 +189,12 @@ export default function ScanTicket() {
       { id: Date.now().toString(), name: "", quantity: 1, unit_price: 0, image: undefined, total_price: 0, unit: "piece" },
     ]);
   }
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40, padding: 10 }}>
 
+  return (
+    <MainHeader
+      height={100}
+      header={() => <DetailHeader title="Scan du ticket" />}
+    >
       {!loading && (
         <InputImage
           value={image}
@@ -195,9 +227,11 @@ export default function ScanTicket() {
               placeholder="Ex: McDonalds"
             />
 
-            <CategoriSelector
-              categorie={categorie}
-              setCategorie={setCategorie}
+            <SelectChips
+              label="Categorie"
+              data={categories}
+              value={categorie}
+              setValue={setCategorie}
             />
 
             <Field
@@ -250,9 +284,9 @@ export default function ScanTicket() {
                 >
                   <TouchableOpacity
                     onPress={() => removeItem(index)}
-                    style={[styles.iconButton, styles.removeButton, { position: 'absolute', zIndex: 1, top: -10, right: -8, backgroundColor: dangerColor, borderWidth: 1, borderColor: border }]}
+                    style={[styles.iconButton, styles.removeButton, { position: 'absolute', zIndex: 1, top: -15, right: -8, backgroundColor: dangerColor, borderWidth: 1, borderColor: border, padding: 6 }]}
                   >
-                    <Trash2 color={"white"} size={18} />
+                    <Trash2 color={"white"} size={20} />
                   </TouchableOpacity>
 
                   <Field
@@ -324,6 +358,6 @@ export default function ScanTicket() {
           </TouchableOpacity>
         </>
       )}
-    </ScrollView>
+    </MainHeader>
   );
 }

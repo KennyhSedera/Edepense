@@ -1,23 +1,56 @@
-import { View, Text, Pressable, TextInput } from 'react-native'
+import { View, Text, Pressable, TextInput, Image } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { router, Stack } from 'expo-router'
-import { MainHeader } from '@/components/ui/HeaderComponent';
-import { ChevronLeft, Search, X } from 'lucide-react-native';
+import { router, Stack, useLocalSearchParams } from 'expo-router'
+import { ChevronLeft, Search, XCircle } from 'lucide-react-native';
 import { styles } from '@/styles/styles';
+import { getCurrentSearch, setCurrentSearch } from '@/controller/search.controller';
 
-function HeaderWithSearch({ title, searchable }: { title: string; searchable: boolean }) {
+export function HeaderWithSearch({ title, searchable }: { title: string; searchable: boolean }) {
+  const { search: searchParam } = useLocalSearchParams();
   const [search, setSearch] = useState("");
 
+  useEffect(() => {
+    async function restore() {
+      if (searchParam) {
+        setSearch(searchParam as string);
+        return;
+      }
+      const last = await getCurrentSearch();
+      if (last) {
+        setSearch(last);
+        router.setParams({ search: last });
+      }
+    }
+    if (searchable) restore();
+  }, []);
+
+  const handleChangeText = (text: string) => {
+    setSearch(text);
+    router.setParams({ search: text });
+    setCurrentSearch(text);
+  };
+
+  const handleClear = () => {
+    setSearch("");
+    router.setParams({ search: "" });
+    setCurrentSearch("");
+  };
+
   return (
-    <MainHeader >
+    <View style={[styles.rowSpacing]}>
       {title && (
-        <View style={[styles.header, { paddingTop: 10, gap: 10, }]}>
-          <Pressable onPress={() => router.back()}>
-            <ChevronLeft size={28} color={"white"} />
+        <View style={[styles.header, { paddingTop: 0, gap: 10, width: "100%" }]}>
+          <View style={[styles.rowSpacing]}>
+            <Pressable onPress={() => router.back()}>
+              <ChevronLeft size={28} color={"white"} />
+            </Pressable>
+            <Text style={{ fontSize: 20, fontWeight: "600", color: "white" }}>
+              {title}
+            </Text>
+          </View>
+          <Pressable onPress={() => router.push(`/globalSearch`)}>
+            <Search size={28} color={"white"} />
           </Pressable>
-          <Text style={{ fontSize: 20, fontWeight: "600", color: "white", marginTop: 5 }}>
-            {title}
-          </Text>
         </View>
       )}
       {searchable && (
@@ -28,8 +61,6 @@ function HeaderWithSearch({ title, searchable }: { title: string; searchable: bo
             justifyContent: "space-between",
             paddingRight: 12,
             paddingLeft: 5,
-            paddingVertical: 10,
-            marginTop: 5,
             width: "100%",
             gap: 10
           }}
@@ -38,27 +69,21 @@ function HeaderWithSearch({ title, searchable }: { title: string; searchable: bo
             <ChevronLeft size={32} color={"white"} />
           </Pressable>
           <View style={{
-            position: 'relative', width: '80%', height: 45
+            position: 'relative', width: '80%', height: 40
           }}>
-            {search && <Pressable onPress={() => {
-              setSearch("");
-              router.setParams({ search: "" });
-            }}
-              style={{ position: 'absolute', right: 10, top: 12, zIndex: 1 }}
+            {search && <Pressable onPress={handleClear}
+              style={{ position: 'absolute', right: 10, top: 8, zIndex: 1 }}
             >
-              <X size={22} color={'#ececec'} />
+              <XCircle size={18} color={'#ececec'} />
             </Pressable>}
             <TextInput
               placeholder="Rechercher..."
               placeholderTextColor={"#ececec"}
               value={search}
-              onChangeText={(text) => {
-                setSearch(text);
-                router.setParams({ search: text });
-              }}
+              onChangeText={handleChangeText}
               style={{
                 flex: 1,
-                padding: 8,
+                padding: 10,
                 fontSize: 16,
                 color: "white",
                 backgroundColor: "#eeeeee1a",
@@ -71,17 +96,19 @@ function HeaderWithSearch({ title, searchable }: { title: string; searchable: bo
           </View>
           <Search size={28} color={"white"} />
         </View>)}
-    </MainHeader>
+    </View>
   )
 }
 
 export default function GuestLayout() {
   return (
-    <Stack screenOptions={{ headerShown: true }}>
-      <Stack.Screen name='globalSearch' options={{ header: () => <HeaderWithSearch title='' searchable={true} /> }} />
-      <Stack.Screen name='menu' options={{ header: () => <HeaderWithSearch title='Menu' searchable={false} /> }} />
-      <Stack.Screen name='notification' options={{ header: () => <HeaderWithSearch title='Notification' searchable={false} /> }} />
-      <Stack.Screen name='profile' options={{ headerShown: false }} />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name='globalSearch' />
+      <Stack.Screen name='menu' />
+      <Stack.Screen name='notification' />
+      <Stack.Screen name='profile' />
+      <Stack.Screen name='setting' />
+      <Stack.Screen name='notes-vocales' />
     </Stack>
   )
 }

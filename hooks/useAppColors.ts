@@ -37,6 +37,7 @@ export function useAppColors() {
     sectionColor: colors.sectionColor,
     inputBg: colors.inputBg,
     dangerColor: colors.dangerColor,
+    successColor: colors.successColor,
     focusedColor: colors.focusedColor,
     itemBg: colors.itemBg,
   };

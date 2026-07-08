@@ -11,6 +11,8 @@ const SCHEDULE_LOCK_KEY = "notif_schedule_lock";
 const ENABLE_KEY = "notification_enabled";
 const DAILY_KEY = "daily_notification_id";
 const LAST_EXPENSE_DATE_KEY = "last_expense_date";
+const CURRENT_SEARCH_KEY = "CURRENT_SEARCH";
+const MESSAGE_KEY = "message";
 
 export {
   STORAGE_THEME_KEY,
@@ -26,4 +28,6 @@ export {
   ENABLE_KEY,
   DAILY_KEY,
   LAST_EXPENSE_DATE_KEY,
+  CURRENT_SEARCH_KEY,
+  MESSAGE_KEY,
 };

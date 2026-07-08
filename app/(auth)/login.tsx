@@ -1,155 +1,241 @@
-import { View, Text, Pressable, ToastAndroid } from 'react-native'
-import React from 'react'
-import { LinearGradient } from 'expo-linear-gradient'
-import { useAppColors } from '@/hooks/useAppColors';
-import { styles } from '@/styles/styles';
-import Field from '@/components/ui/InputText';
-import { ScrollView } from 'react-native';
-import InputDate from '@/components/ui/input-date';
-import { toISODate } from '@/utils/dateFormat';
-import { User } from '@/types/db';
-import { setUser } from '@/controller/user';
-import { router } from 'expo-router';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import Animated, { FadeInUp } from "react-native-reanimated";
+import { ArrowRight } from "lucide-react-native";
+import { useAppColors } from "@/hooks/useAppColors";
+import { useRouter } from "expo-router";
+import AnimatedHeader from "@/components/header/animate-header";
+import HeaderDripAnimated from "@/components/header/header-drip-animated";
+import { useAuth } from "@/contexts/AuthContext";
+import Field from "@/components/ui/InputText";
 
-export default function Login() {
-  const { gradient, cardBg, textColor, border, sectionColor } = useAppColors();
-  const [data, setData] = React.useState<User>({
-    id: new Date().getTime().toString(),
-    name: "",
-    email: "",
-    budget_mensuel: "",
-    budget_journalier: "",
-    salaire_mensuel: "",
-    devise: "MGA",
-    date_debut: toISODate(new Date()),
-    created_at: toISODate(new Date()),
-    updated_at: toISODate(new Date()),
-  });
-  const [error, setError] = React.useState<Partial<Record<keyof User, string>>>({});
+export default function LoginScreen() {
+  const { textColor, cardBg, sectionColor } = useAppColors();
+  const router = useRouter();
+  const { login } = useAuth();
 
-  function validate() {
-    const errors: Partial<Record<keyof User, string>> = {};
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-    if (!data.name) {
-      errors.name = "Le nom est requis.";
-    }
-
-    if (!data.email) {
+  function validate(): Record<string, string> {
+    const errors: Record<string, string> = {};
+    if (!email.trim()) {
       errors.email = "L'email est requis.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      errors.email = "L'email est invalide.";
     }
-
-    if (Number(data.salaire_mensuel) <= 0) {
-      errors.salaire_mensuel = "Le salaire mensuel doit avoir une valeur positive.";
+    if (!password.trim()) {
+      errors.password = "Le mot de passe est requis.";
     }
-
     return errors;
-
   }
 
-  async function handleSubmit() {
+  const handleLogin = async () => {
     const errors = validate();
     if (Object.keys(errors).length > 0) {
-      setError(errors);
+      setErrors(errors);
       return;
     }
-
-    try {
-      const res = await setUser(data);
-      const json = JSON.parse(res);
-      if (json.success) {
-        ToastAndroid.show(json.message, ToastAndroid.SHORT);
-        router.replace("/(tabs)");
-      }
-    } catch (error) {
-      console.log(error);
-
+    const result = await login(email, password);
+    if (!result.success) {
+      setErrors(result.error as Record<string, string>);
+      return;
     }
-
-  }
+    return;
+  };
 
   return (
-    <LinearGradient
-      colors={[gradient.from, gradient.to]}
-      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-      style={{ width: "100%", height: "100%", alignItems: "center", paddingVertical: 60 }}
+    <AnimatedHeader
+      maxHeight={250}
+      minHeight={85}
+      header={(scrollY) => (
+        <HeaderDripAnimated
+          scrollY={scrollY}
+          maxHeight={220}
+          minHeight={90}
+          title="Connexion"
+          subtitle="Bienvenue sur E-Dépense, l'application de gestion des finances numériques."
+        />
+      )}
     >
-      <ScrollView style={[styles.container, { width: "100%", borderRadius: 10 }]} contentContainerStyle={{ alignItems: "center" }}>
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border, width: "90%" }]}>
-          <Text style={[styles.name, { color: textColor, textAlign: "center", marginTop: 40, marginBottom: 20 }]}>Création compte</Text>
-          <View style={[styles.form]}>
-            <Field
-              label="Nom et prénom"
-              placeholder="Ex: John Doe"
-              value={data.name}
-              onChangeText={(e) => setData({ ...data, name: e })}
-              style={{ marginBottom: 10 }}
-              compact
-              error={error.name}
-              onFocus={() => setError({ ...error, name: "" })}
-            />
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={s.body}>
+          <Animated.View entering={FadeInUp.delay(100).duration(500)}>
             <Field
               label="Email"
-              placeholder="Ex: gh0lg@example.com"
-              value={data.email}
-              onChangeText={(e) => setData({ ...data, email: e })}
-              style={{ marginBottom: 10 }}
-              compact
-              error={error.email}
-              onFocus={() => setError({ ...error, email: "" })}
+              placeholder="Entrez votre adresse email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
+              keyboardType="email-address"
+              returnKeyType="next"
+              error={errors.email}
+              onFocus={() => setErrors({ ...errors, email: "" })}
+              inputStyle={{ backgroundColor: 'transparent' }}
+              style={{ marginBottom: 32 }}
             />
+          </Animated.View>
 
+          <Animated.View entering={FadeInUp.delay(180).duration(500)}>
             <Field
-              label="Salaire mensuel"
-              placeholder="Ex: 1000€"
-              value={data.salaire_mensuel?.toString() || ""}
-              onChangeText={(e) => setData({ ...data, salaire_mensuel: e })}
-              style={{ marginBottom: 10 }}
-              keyboardType='numeric'
-              compact
-              error={error.salaire_mensuel}
-              onFocus={() => setError({ ...error, salaire_mensuel: "" })}
+              label="Mot de passe"
+              placeholder="Entrez votre mot de passe"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoComplete="password"
+              autoCorrect={false}
+              returnKeyType="done"
+              error={errors.password}
+              onFocus={() => setErrors({ ...errors, password: "" })}
+              inputStyle={{ backgroundColor: 'transparent' }}
             />
+          </Animated.View>
 
-            <Field
-              label="Budget mensuel"
-              placeholder="Ex: 1000€"
-              value={data.budget_mensuel?.toString() || ""}
-              onChangeText={(e) => setData({ ...data, budget_mensuel: e })}
-              style={{ marginBottom: 10 }}
-              keyboardType='numeric'
-              compact
-              error={error.budget_mensuel}
-              onFocus={() => setError({ ...error, budget_mensuel: "" })}
-            />
-
-            <Field
-              label="Devise principale"
-              placeholder="Ex: €"
-              value={data.devise}
-              onChangeText={(e) => setData({ ...data, devise: e })}
-              style={{ marginBottom: 10 }}
-              compact
-              error={error.devise}
-              onFocus={() => setError({ ...error, devise: "" })}
-            />
-
-            <InputDate
-              label="Date début par mois"
-              value={data.date_debut}
-              onChange={(e: string) => setData({ ...data, date_debut: e || "" })}
-              error={error.date_debut}
-              onFocus={() => setError({ ...error, date_debut: "" })}
-            />
-
-            <Pressable onPress={handleSubmit} style={[styles.miniButton, { backgroundColor: sectionColor, borderColor: border, alignItems: "center" }]}>
-              <Text style={{ color: "white" }}>S'inscrire</Text>
+          <Animated.View
+            entering={FadeInUp.delay(240).duration(500)}
+            style={s.forgotWrapper}
+          >
+            <Pressable onPress={() => router.push("/(auth)/forgot-password")}>
+              <Text style={[s.forgotText, { color: sectionColor }]}>
+                Mot de passe oublié ?
+              </Text>
             </Pressable>
-          </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.delay(300).duration(500)}>
+            <Pressable
+              onPress={handleLogin}
+              style={({ pressed }) => [
+                s.loginButton,
+                { backgroundColor: sectionColor },
+                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+              ]}
+            >
+              <Text style={[s.loginButtonText, { color: "#fff" }]}>Se connecter</Text>
+              <ArrowRight size={18} color="#fff" strokeWidth={2.5} />
+            </Pressable>
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInUp.delay(360).duration(500)}
+            style={s.dividerRow}
+          >
+            <View style={[s.divider, { backgroundColor: cardBg }]} />
+            <Text style={[s.dividerText, { color: textColor }]}>ou</Text>
+            <View style={[s.divider, { backgroundColor: cardBg }]} />
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInUp.delay(420).duration(500)}
+            style={s.signupRow}
+          >
+            <Text style={[s.signupText, { color: textColor }]}>Pas encore de compte ?</Text>
+            <Pressable onPress={() => router.push("/(auth)/register")}>
+              <Text style={[s.signupLink, { color: sectionColor }]}>
+                {" "}
+                Créer un compte
+              </Text>
+            </Pressable>
+          </Animated.View>
         </View>
-      </ScrollView>
-    </LinearGradient>
-  )
+      </KeyboardAvoidingView>
+    </AnimatedHeader>
+  );
 }
+
+const s = StyleSheet.create({
+  body: {
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 40,
+    margin: 10,
+    borderRadius: 20,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 8,
+    marginTop: 18,
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === "ios" ? 14 : 10,
+    gap: 10,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
+  input: {
+    flex: 1,
+    fontSize: 14.5,
+  },
+  forgotWrapper: {
+    alignItems: "flex-end",
+    marginTop: 10,
+  },
+  forgotText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  loginButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    paddingVertical: 16,
+    marginTop: 28,
+    gap: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  loginButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 28,
+    gap: 12,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  signupRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  signupText: {
+    fontSize: 13.5,
+  },
+  signupLink: {
+    fontSize: 13.5,
+    fontWeight: "700",
+  },
+});

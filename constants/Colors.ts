@@ -20,6 +20,7 @@ export const Colors = {
     sectionColor: "#2A7B9B",
     inputBg: "#ffffff",
     dangerColor: "#ef4444",
+    successColor: "#57C785",
     focusedColor: "#2A7B9B",
     itemBg: "#ffffff"
   },
@@ -41,6 +42,7 @@ export const Colors = {
     sectionColor: "#57C785",
     inputBg: "#1f1f1f",
     dangerColor: "#ef4444",
+    successColor: "#57C785",
     focusedColor: "#00ccff",
     itemBg: "#252525",
   },

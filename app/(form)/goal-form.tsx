@@ -1,7 +1,7 @@
 import Field from "@/components/ui/InputText";
 import { useAppColors } from "@/hooks/useAppColors";
 import { styles } from "@/styles/styles";
-import { formatDateLong, toISODate } from "@/utils/dateFormat";
+import { formatDateLong, toISODate } from "@/utils/date.util";
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -13,9 +13,12 @@ import {
 
 import InputDate from "@/components/ui/input-date";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { getGoalById, setGoal, updateGoal } from "@/controller/goal";
+import { getGoalById, setGoal, updateGoal } from "@/controller/goal.controller";
 import { Goal } from "@/types/db";
 import InputImage from "@/components/ui/input-image";
+import { MainHeader } from "@/components/header/header-main";
+import { FormHeader } from "./_layout";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function GoalForm() {
   const [titre, setTitre] = useState("");
@@ -25,6 +28,7 @@ export default function GoalForm() {
   const [image, setImage] = useState('');
   const [montantActuel, setMontantActuel] = useState(0)
   const [error, setError] = useState<Record<string, string>>({});
+  const { user } = useAuth();
 
   const types: { value: "epargne" | "reduction_depense", title: string }[] = [
     { value: "epargne", title: 'Epargné' },
@@ -87,6 +91,7 @@ export default function GoalForm() {
 
     const goal: Goal = {
       id: id ? id : Date.now().toString(),
+      user_id: user?.id || "",
       titre,
       type,
       date_limite: dateLimite,
@@ -121,7 +126,10 @@ export default function GoalForm() {
   };
 
   return (
-    <ScrollView style={[styles.container, { padding: 12 }]}>
+    <MainHeader
+      height={100}
+      header={() => <FormHeader title="Formulaire d'objectif" />}
+    >
 
       <View style={[styles.form, { borderColor: border, borderWidth: 1, backgroundColor: cardBg }]}>
         <InputImage value={image} setValue={(e) => setImage(e)} />
@@ -187,6 +195,6 @@ export default function GoalForm() {
         <Text style={styles.buttonText}>{id ? "Modifier" : "Créer"} un objectif</Text>
       </Pressable>
 
-    </ScrollView>
+    </MainHeader>
   );
 }

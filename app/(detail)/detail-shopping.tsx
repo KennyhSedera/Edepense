@@ -5,19 +5,21 @@ import { useAppColors } from "@/hooks/useAppColors";
 import { Depense } from "@/types/db";
 import { Pressable } from "react-native";
 import { depenseCoverImage } from "@/constants/image";
-import { deleteDepense, getDepenseById } from "@/controller/depense";
-import { formatDateLong } from '@/utils/dateFormat';
-import { formatMoney } from "@/utils/numberFormat";
+import { deleteDepense, getDepenseById } from "@/controller/depense.controller";
+import { formatDateLong } from '@/utils/date.util';
+import { formatMoney } from "@/utils/number.util";
 import MenuButton, { MenuItem } from "@/components/ui/MenuButton";
-import { LucideEdit, Trash2 } from "lucide-react-native";
+import { CameraOffIcon, LucideEdit, Trash2 } from "lucide-react-native";
 import DeleteModal from "@/components/ui/DeleteModal";
 import { getUnitLabel } from '@/constants/type';
 import RenderImage from "@/components/ui/render-image";
 import { styles } from "@/styles/styles";
+import { MainHeader } from "@/components/header/header-main";
+import { DetailHeader } from "./_layout";
 
 export default function DepenseDetail() {
   const { textColor, backgroundColor, border, cardBg, labelColor, sectionColor, itemBg, dangerColor } = useAppColors();
-  const [depense, setDepenses] = React.useState<Depense>({ id: "", montant: 0, categorie: "", description: "", date: "", items: [] });
+  const [depense, setDepenses] = React.useState<Depense>({ id: "", montant: 0, categorie: "", description: "", date: "", items: [], user_id: "" });
   const [confirmDelete, setConfirmDelete] = useState({
     show: false,
     id: "",
@@ -57,11 +59,15 @@ export default function DepenseDetail() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
+    <MainHeader
+      height={100}
+      header={() => <DetailHeader title="Détail dépense" />}
+    >
+      <Pressable
+        onPress={() => setShowImage(true)}
+        style={[styles.image, { borderColor: border, height: 200, marginBottom: 20, position: "relative" }]}
       >
-        <MenuButton>
+        <MenuButton position={{ right: 5, top: 5 }}>
           <MenuItem
             onPress={() => router.push({ pathname: '/shopping-form', params: { id: depense.id } })}
           >
@@ -76,106 +82,101 @@ export default function DepenseDetail() {
             <Text style={{ color: dangerColor, fontSize: 15 }}>Supprimer</Text>
           </MenuItem>
         </MenuButton>
-        <Pressable
-          onPress={() => setShowImage(true)}
-          style={[styles.image, { borderColor: border, height: 200, marginBottom: 20 }]}
-        >
-          <Image
-            source={depenseCoverImage(depense?.categorie as string)}
-            style={[{ width: "100%", height: "100%" }]}
-            resizeMode="cover"
-          />
-        </Pressable>
+        <Image
+          source={depenseCoverImage(depense?.categorie as string)}
+          style={[{ width: "100%", height: "100%" }]}
+          resizeMode="cover"
+        />
+      </Pressable>
 
-        {/* INFOS */}
-        <View style={styles.infoGrid}>
-          <MiniCard
-            label="Catégorie"
-            value={depense?.categorie as string}
-            backgroundColor={backgroundColor}
-            border={border}
-            labelColor={labelColor}
-            textColor={textColor}
-            style={styles.infoGridFull}
-          />
-          <MiniCard
-            label="Montant"
-            value={`${formatMoney(depense?.montant) ?? ""} `}
-            backgroundColor={backgroundColor}
-            border={border}
-            labelColor={labelColor}
-            textColor={textColor}
-            style={styles.infoGridHalf}
-          />
-          <MiniCard
-            label="Date"
-            value={formatDateLong(depense?.date as string)}
-            backgroundColor={backgroundColor}
-            border={border}
-            labelColor={labelColor}
-            textColor={textColor}
-            style={styles.infoGridHalf}
-          />
-          <MiniCard
-            label="Description"
-            value={depense?.description as string}
-            backgroundColor={backgroundColor}
-            border={border}
-            labelColor={labelColor}
-            textColor={textColor}
-            style={styles.infoGridFull}
-          />
-        </View>
+      {/* INFOS */}
+      <View style={styles.infoGrid}>
+        <MiniCard
+          label="Catégorie"
+          value={getUnitLabel(depense?.categorie as string)}
+          backgroundColor={backgroundColor}
+          border={border}
+          labelColor={labelColor}
+          textColor={textColor}
+          style={styles.infoGridFull}
+        />
+        <MiniCard
+          label="Montant"
+          value={`${formatMoney(depense?.montant) ?? ""} `}
+          backgroundColor={backgroundColor}
+          border={border}
+          labelColor={labelColor}
+          textColor={textColor}
+          style={styles.infoGridHalf}
+        />
+        <MiniCard
+          label="Date"
+          value={formatDateLong(depense?.date as string)}
+          backgroundColor={backgroundColor}
+          border={border}
+          labelColor={labelColor}
+          textColor={textColor}
+          style={styles.infoGridHalf}
+        />
+        <MiniCard
+          label="Description"
+          value={depense?.description as string}
+          backgroundColor={backgroundColor}
+          border={border}
+          labelColor={labelColor}
+          textColor={textColor}
+          style={styles.infoGridFull}
+        />
+      </View>
 
-        {/* ITEMS */}
-        {items.length > 0 && (
-          <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={[styles.section, { color: sectionColor }]}>
-              Produits ({items.length})
-            </Text>
+      {/* ITEMS */}
+      {items.length > 0 && (
+        <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border }]}>
+          <Text style={[styles.section, { color: sectionColor }]}>
+            Produits ({items.length})
+          </Text>
 
-            {items.map((item: any, index: number) => (
-              <Pressable
-                key={index}
-                onPress={() => router.push({ pathname: "/detail-item", params: { id: item.id } })}
-                style={[
-                  styles.itemRow,
-                  { backgroundColor: itemBg, borderColor: border },
-                ]}
-              >
-                {item.image ? (
-                  <Image
-                    source={{ uri: item.image }}
-                    style={[styles.itemImage, { borderColor: border }]}
-                  />
-                ) : (
-                  <View
-                    style={[
-                      styles.itemImage,
-                      styles.itemImagePlaceholder,
-                      { borderColor: border, backgroundColor: cardBg },
-                    ]}
-                  >
-                    <Text style={{ color: labelColor, fontSize: 11 }}>—</Text>
-                  </View>
-                )}
-
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={[styles.itemName, { color: textColor }]}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.itemQty, { color: labelColor }]}>
-                    Quantité : {item.quantity} {` ( ${getUnitLabel(item.unit)})`}
-                  </Text>
+          {items.map((item: any, index: number) => (
+            <Pressable
+              key={index}
+              onPress={() => router.push({ pathname: "/detail-item", params: { id: item.id } })}
+              style={[
+                styles.itemRow,
+                { backgroundColor: itemBg, borderColor: border },
+              ]}
+            >
+              {item.image ? (
+                <Image
+                  source={{ uri: item.image }}
+                  style={[styles.itemImage, { borderColor: border }]}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.itemImage,
+                    styles.itemImagePlaceholder,
+                    { borderColor: border, backgroundColor: cardBg },
+                  ]}
+                >
+                  <CameraOffIcon size={20} color={labelColor} />
                 </View>
-                <Text style={[styles.itemTotal, { color: sectionColor }]}>
-                  {formatMoney(item.total_price)}
+              )}
+
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={[styles.itemName, { color: textColor }]}>
+                  {item.name}
                 </Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </ScrollView>
+                <Text style={[styles.itemQty, { color: labelColor }]}>
+                  Quantité : {item.quantity} {` ( ${getUnitLabel(item.unit)})`}
+                </Text>
+              </View>
+              <Text style={[styles.itemTotal, { color: sectionColor }]}>
+                {formatMoney(item.total_price)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       <DeleteModal
         onChange={handleDelete}
@@ -190,7 +191,7 @@ export default function DepenseDetail() {
         visible={showImage}
       />
 
-    </View>
+    </MainHeader>
   );
 }
 

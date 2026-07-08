@@ -2,10 +2,12 @@ import { View, Text, Pressable } from 'react-native'
 import React, { createContext, useContext } from 'react'
 import { MoreVertical } from 'lucide-react-native'
 import { useAppColors } from '@/hooks/useAppColors'
+import { Position } from '@/types/global'
+import { DIMENSION } from '@/constants/type'
 
 const MenuContext = createContext<{ close: () => void } | null>(null)
 
-export default function MenuButton({ children }: { children: React.ReactNode }) {
+export default function MenuButton({ children, position }: { children: React.ReactNode, position?: Position }) {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const { backgroundColor, textColor, cardBg, border } = useAppColors()
 
@@ -13,14 +15,14 @@ export default function MenuButton({ children }: { children: React.ReactNode }) 
 
   return (
     <>
-      <Pressable onPress={() => setMenuOpen((v) => !v)} style={{ padding: 8, position: 'absolute', top: 15, right: 15, zIndex: 1, backgroundColor, borderRadius: 100 }}>
+      <Pressable onPress={() => setMenuOpen((v) => !v)} style={{ padding: 8, position: 'absolute', top: position?.top, left: position?.left, right: position?.right, bottom: position?.bottom, zIndex: 1, backgroundColor, borderRadius: 100 }}>
         <MoreVertical size={22} color={textColor} />
       </Pressable>
 
       {menuOpen && (
         <>
           <Pressable
-            style={{ position: 'absolute', top: 10, left: 0, right: 0, bottom: 0, zIndex: 1 }}
+            style={{ position: 'absolute', top: position?.top, left: 0, right: 0, bottom: 0 }}
             onPress={close}
           />
           <View

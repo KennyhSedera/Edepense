@@ -1,23 +1,33 @@
 import React, { ReactNode } from "react";
-import { ImageSourcePropType } from "react-native";
+import { ImageSourcePropType, ImageStyle, StyleProp, TextInputProps, TextStyle } from "react-native";
+import { ViewStyle } from "react-native";
 import { InputModeOptions, KeyboardType } from "react-native";
 import { DimensionValue } from "react-native";
 import { SharedValue } from "react-native-reanimated";
 
-export type FieldProps = {
+type FieldProps = {
   label?: string;
   value: string | undefined;
   onChangeText?: (v: string) => void;
   placeholder?: string;
   keyboardType?: KeyboardType;
   multiline?: boolean;
-  style?: any;
+  style?: ViewStyle | TextStyle | ImageStyle;
   compact?: boolean;
   error?: string;
   onFocus?: () => void;
   readOnly?: boolean;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  secureTextEntry?: boolean;
+  inputMode?: InputModeOptions;
+  inputStyle?: ViewStyle | TextStyle | ImageStyle;
 }
+
+export type InputTextProps = Omit<FieldProps, "style" | "inputStyle"> & {
+  secureTextEntry?: boolean;
+  style?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<TextStyle>;
+} & Omit<TextInputProps, "style">;
 
 export type ModalProps = {
   value?: string | null | undefined | number | Date | boolean | object | any | any[] | ImageSourcePropType;
@@ -88,6 +98,44 @@ export type AnimateHeaderProps = {
   ) => ReactNode;
   maxHeight?: number;
   minHeight?: number;
+  marginBottomMax?: number;
+  marginBottomMin?: number;
+  topTitle?: boolean;
 };
 
 export type PriceMode = "unit_price" | "total_price";
+
+export interface ReceiptItem {
+  description: string;
+  amount: string;
+  quantity: string | null;
+  unit: string | null;
+}
+
+export interface ParsedReceipt {
+  rawText: string;
+  total: string | null;
+  currency: string | null;
+  date: string | null;
+  merchant: string | null;
+  observation: string | null;
+  items: ReceiptItem[];
+  isUncertain: boolean;
+  categorie: string | null;
+}
+
+export interface FichierAudioInfo {
+  uri: string;
+  nom: string;
+  tailleOctets: number;
+  dateModification: number;
+}
+
+export interface AudioDepense {
+  uri: string;
+  depenseId: string;
+  description?: string;
+  categorie?: string;
+  montant: number;
+  date: string;
+}

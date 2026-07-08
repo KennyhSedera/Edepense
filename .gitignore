@@ -1,39 +1,93 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# ========================
+# Dependencies
+# ========================
 node_modules/
 
+# ========================
 # Expo
+# ========================
 .expo/
+.expo-shared/
 dist/
 web-build/
 expo-env.d.ts
 
-# Native
-*.orig.*
+# ========================
+# Native builds
+# ========================
+android/
+ios/
+
+# ========================
+# Certificates & signing
+# ========================
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
 *.mobileprovision
 
+# ========================
 # Metro
+# ========================
 .metro-health-check*
 
-# debug
+# ========================
+# Logs
+# ========================
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+pnpm-debug.log*
 
-# macOS
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
+# ========================
+# Environment variables
+# ========================
 .env
+.env.*
+!.env.example
 
-# typescript
+# ========================
+# SQLite databases
+# ========================
+*.db
+*.sqlite
+*.sqlite3
+
+# ========================
+# TypeScript
+# ========================
 *.tsbuildinfo
 
-app-example
+# ========================
+# Tests
+# ========================
+coverage/
+
+# ========================
+# IDE
+# ========================
+.vscode/
+.idea/
+
+# ========================
+# OS
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# Misc
+# ========================
+*.orig.*
+
+# ========================
+# Example app
+# ========================
+app-example/
+
+# ========================
+# Local test data
+# ========================
+datatest.json

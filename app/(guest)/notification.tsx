@@ -1,6 +1,8 @@
 import { Button, Text, View } from 'react-native'
 import React, { } from 'react'
 import { sendNotification } from '@/services/notificationService';
+import { MainHeader } from '@/components/header/header-main';
+import { HeaderWithSearch } from './_layout';
 
 export default function NotificationScreen() {
 
@@ -14,9 +16,12 @@ export default function NotificationScreen() {
   };
 
   return (
-    <View>
+    <MainHeader
+      height={100}
+      header={() => <HeaderWithSearch searchable={false} title="Notification" />}
+    >
       <Text>notification</Text>
       <Button title='Send' onPress={handleSendNotification} />
-    </View>
+    </MainHeader>
   )
 }

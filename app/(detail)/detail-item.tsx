@@ -3,13 +3,15 @@ import React, { useCallback, useState } from 'react'
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useAppColors } from '@/hooks/useAppColors';
 import { DepenseItem } from '@/types/db';
-import { getItemById } from '@/controller/depense';
+import { getItemById } from '@/controller/depense.controller';
 import { styles } from '@/styles/styles';
 import { MiniCard } from './detail-shopping';
-import { formatMoney } from '@/utils/numberFormat';
+import { formatMoney } from '@/utils/number.util';
 import { depenseCoverImage } from '@/constants/image';
 import { getUnitLabel } from '@/constants/type';
 import RenderImage from '@/components/ui/render-image';
+import { MainHeader } from '@/components/header/header-main';
+import { DetailHeader } from './_layout';
 
 export default function DetailItem() {
   const { textColor, backgroundColor, border, labelColor, dangerColor } = useAppColors();
@@ -19,7 +21,7 @@ export default function DetailItem() {
 
   async function loadData(id: string) {
     const data = await getItemById(id);
-    setData(data[0]);
+    setData(data || null);
   }
 
   useFocusEffect(
@@ -29,8 +31,10 @@ export default function DetailItem() {
   )
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContent}>
-
+    <MainHeader
+      height={100}
+      header={() => <DetailHeader title="Détail du produit" />}
+    >
       <RenderImage
         value={data?.image ? { uri: data.image } : depenseCoverImage("Alimentation")}
         onChange={setShowImage}
@@ -95,6 +99,6 @@ export default function DetailItem() {
           style={styles.infoGridHalf}
         />
       </View>
-    </ScrollView>
+    </MainHeader>
   )
 }

@@ -1,28 +1,45 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, ScrollView, Pressable, Dimensions } from "react-native";
-import { LineChart } from "react-native-chart-kit";
+import { View, Text, Pressable } from "react-native";
 import { useAppColors } from "@/hooks/useAppColors";
-import { Depense } from "@/types/db";
+import { Depense, Goal, Provision } from "@/types/db";
 import { router, useFocusEffect } from "expo-router";
-import { getDepenseCurrentMonth } from "@/controller/depense";
-import { getCycleStart, getDepenseParSemaine, getInfosPeriode } from "@/utils/dateFormat";
-import { useAppTheme } from "@/hooks/themeContext";
-import { styles } from "@/styles/styles";
-import QuickAdd from "@/components/ui/QuickAdd";
+import { getDepenseCurrentMonth, trouverDerniereListe } from "@/controller/depense.controller";
+import { getCycleStart, getDepenseParSemaine, getDepensesMoisPrecedent, getInfosPeriode } from "@/utils/date.util";
+import { MainHeader } from "@/components/header/header-main";
+import { HomeHeader } from "./_layout";
+import { useAuth } from "@/contexts/AuthContext";
+
+import BudgetCard from "@/components/home/BudgetCard";
+import DailyBudgetCard from "@/components/home/DailyBudgetCard";
+import DepenseChart from "@/components/home/DepenseChart";
+import QuickActions from "@/components/home/QuickActions";
+import IntelligenceCard from "@/components/home/IntelligenceCard";
+import ProvisionsAlert from "@/components/home/ProvisionsAlert";
+import CategoryBreakdown from "@/components/home/CategoryBreakdown";
+import RecentDepenses from "@/components/home/RecentDepenses";
+import { getProvision } from "@/controller/provision.controller";
+import StreakCard from "@/components/home/StreakCard";
+import { getGoal } from "@/controller/goal.controller";
+import ObjectifEpargne from "@/components/home/ObjectifEpargne";
+import MeteoSuggestion from "@/components/home/MeteoSuggestion";
+import ReutiliserListe from "@/components/home/ReutiliserListe";
+import ComparaisonMoisPrecedent from "@/components/home/ComparaisonMoisPrecedent";
 
 export default function HomeScreen() {
-  const { textColor, backgroundColor, gradient, cardBg, sectionColor, border } = useAppColors();
-  const { user } = useAppTheme();
+  const { textColor, sectionColor, labelColor } = useAppColors();
+  const { user } = useAuth();
 
   const [budgetMensuel, setBudgetMensuel] = useState<number>(0);
-  const [depenses, setDepenses] = React.useState<Depense[]>([]);
-  const [point, setPoint] = useState({
-    click: false,
-    v: 0,
-    x: 0,
-    y: 0,
-  });
-  const [open, setOpen] = useState(false);
+  const [depenses, setDepenses] = useState<Depense[]>([]);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [provisions, setProvisions] = useState<Provision[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+      getProvision().then(setProvisions);
+    }, [])
+  );
 
   useEffect(() => {
     setTimeout(() => {
@@ -38,160 +55,102 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-      setPoint({ click: false, v: 0, x: 0, y: 0, });
     }, [])
   );
 
   const dateDebut = getCycleStart(new Date().toISOString(), 20).toISOString();
-
   const { joursRestants } = getInfosPeriode(dateDebut);
 
   const totalDepense = depenses.reduce((sum, d) => sum + d.montant, 0);
   const reste = budgetMensuel - totalDepense;
-
   const budgetJournalier = Math.floor(reste / joursRestants);
 
   const dataGraphlabel = getDepenseParSemaine(dateDebut, depenses).map((s) => s.id);
   const dataGraphdata = getDepenseParSemaine(dateDebut, depenses).map((s) => s.total);
 
-  const dataGraph = {
-    labels: dataGraphlabel,
-    datasets: [
-      {
-        data: dataGraphdata,
-      },
-    ],
-  };
-
   const predictionFinMois = totalDepense * 1.2;
   const economieConseil = reste > 0 ? Math.floor(reste * 0.1) : 0;
 
-  const pourcentage = (totalDepense / budgetMensuel) * 100;
+  const [objectifPrincipal, setObjectifPrincipal] = useState<Goal | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      getGoal().then((goals) => {
+        // Prend le premier objectif actif, ou le plus proche de l'échéance
+        setObjectifPrincipal(goals.find((g) => !g.montant_cible) ?? null);
+      });
+    }, [])
+  );
 
   return (
-    <ScrollView style={[styles.container]} contentContainerStyle={styles.scrollContent}>
-      <Pressable onPress={() => setPoint({ click: false, v: 0, x: 0, y: 0, })}>
-        <Text style={[styles.title, { color: textColor }]}>
-          Bonjour <Text style={[styles.title, { color: sectionColor, fontWeight: "bold" }]}>{user?.name}</Text>
-        </Text>
+    <MainHeader height={148} header={() => <HomeHeader />}>
+      <View style={{ gap: 16, paddingBottom: 20 }}>
 
-        <View style={[styles.card, styles.infoGridFull,
-        { borderColor: border, gap: 2, marginVertical: 10, backgroundColor }
-        ]}>
-          <Text style={[styles.section, { color: textColor, marginBottom: 10 }]}>
-            📊 Budget Alimentaire
+        <View>
+          <Text style={{ fontSize: 22, fontWeight: "700", color: textColor }}>
+            Bonjour <Text style={{ color: sectionColor }}>{user?.name}</Text> 👋
           </Text>
-
-          <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={{ color: textColor }}>Budget mensuel</Text>
-            <Text style={[styles.big, { color: textColor }]}>{budgetMensuel.toLocaleString()} Ar</Text>
-
-            <Text style={{ color: textColor }}>
-              Dépensé : {totalDepense.toLocaleString()} Ar
-            </Text>
-
-            <Text style={{ color: textColor }}>
-              Restant : {reste.toLocaleString()} Ar
-            </Text>
-          </View>
-
-          <View style={[{ position: "relative", width: "100%", marginVertical: 10 }]}>
-            <Text style={{ color: textColor, fontSize: 10, position: "absolute", top: -5, left: `${Math.min(pourcentage, 100) - 3}%` }}>{pourcentage.toFixed(2)}%</Text>
-            <View style={[styles.progressBar, { backgroundColor: cardBg }]}>
-              <View
-                style={{
-                  width: `${Math.min(pourcentage, 100)}%`,
-                  height: 10,
-                  backgroundColor: pourcentage > 100 ? "#ef4444" : pourcentage > 50 ? "#fbbf24" : "#22c55e",
-                }}
-              />
-            </View>
-          </View>
-
-          <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={{ color: textColor }}>Budget journalier</Text>
-            <Text style={[styles.big, { color: textColor }]}>
-              {budgetJournalier.toLocaleString()} Ar
-            </Text>
-
-            <Text
-              style={{
-                color: budgetJournalier > 0 ? "#22c55e" : "#ef4444",
-                marginTop: 8,
-                fontWeight: "bold",
-              }}
-            >
-              {budgetJournalier > 0
-                ? "✔ OK pour aujourd'hui"
-                : "⚠ Budget insuffisant"}
-            </Text>
-          </View>
+          <Text style={{ fontSize: 13, color: labelColor, marginTop: 2 }}>
+            {joursRestants} jour{joursRestants > 1 ? "s" : ""} restant{joursRestants > 1 ? "s" : ""} ce mois-ci
+          </Text>
         </View>
 
-        <View style={[styles.card, styles.infoGridFull, { gap: 10, backgroundColor, borderColor: border }]}>
-          <Text style={[styles.section, { color: textColor }]}>📈 Dépenses</Text>
+        <MeteoSuggestion />
 
-          <View style={{ backgroundColor, borderRadius: 10, position: 'relative', height: 220 }}>
-            <LineChart
-              data={dataGraph}
-              width={Dimensions.get("window").width - 45}
-              height={220}
-              chartConfig={{
-                backgroundColor: "red",
-                backgroundGradientFrom: gradient.from,
-                backgroundGradientTo: gradient.to,
-                color: () => "#ffffff",
-                labelColor: () => "#ffffff",
-              }}
-              onDataPointClick={(e) => setPoint({ v: e.value, x: e.x, y: e.y, click: true })}
-              bezier
-              style={{ borderRadius: 10 }}
-            />
-            {point.click && <Text style={{ position: 'absolute', zIndex: 1, backgroundColor: cardBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 50, top: point.y, left: point.x, color: textColor }}>{point.v}</Text>}
-          </View>
+        <BudgetCard budgetMensuel={budgetMensuel} totalDepense={totalDepense} reste={reste} />
 
-        </View>
+        <DailyBudgetCard budgetJournalier={budgetJournalier} />
 
-        <View style={[styles.card, styles.infoGridFull, { gap: 2, backgroundColor, borderColor: border }]}>
-          <Text style={[styles.section, { color: textColor }]}>⚡ Actions rapides</Text>
+        <DepenseChart labels={dataGraphlabel} data={dataGraphdata} />
 
-          <Pressable style={[styles.button, { backgroundColor: "transparent", borderColor: sectionColor, borderWidth: 1 }]} onPress={() => router.push("/scan-ticket")}>
-            <Text style={[styles.buttonText, { color: sectionColor }]}>📷 Scanner ticket (OCR)</Text>
-          </Pressable>
+        <StreakCard joursDansLeBudget={2} />
 
-          <Pressable style={styles.buttonSecondary} onPress={() => setOpen(true)}>
-            <Text style={styles.buttonText}>➕ Ajout rapide type WhatsApp</Text>
-          </Pressable>
-          <QuickAdd
-            visible={open}
-            onChange={() => setOpen(false)}
+        <QuickActions quickAddOpen={quickAddOpen} setQuickAddOpen={setQuickAddOpen} />
+
+        <ProvisionsAlert provisions={provisions} />
+
+        <CategoryBreakdown depenses={depenses} />
+
+
+        <ReutiliserListe derniereListeCourses={trouverDerniereListe(depenses)} />
+
+        <RecentDepenses depenses={depenses} />
+
+        {objectifPrincipal && (
+          <ObjectifEpargne
+            nomObjectif={objectifPrincipal.titre}
+            montantCible={objectifPrincipal.montant_cible}
+            montantActuel={objectifPrincipal.montant_actuel}
+            goalId={objectifPrincipal.id}
           />
-        </View>
+        )}
 
-        <View style={[styles.card, styles.infoGridFull, { gap: 10, backgroundColor, borderColor: border }]}>
-          <Text style={[styles.section, { color: textColor }]}>🧠 Intelligence</Text>
+        <ObjectifEpargne
+          nomObjectif={objectifPrincipal?.titre ?? ""}
+          montantCible={objectifPrincipal?.montant_cible ?? 0}
+          montantActuel={objectifPrincipal?.montant_actuel ?? 0}
+          goalId={objectifPrincipal?.id ?? ""}
+        />
 
-          <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={{ color: textColor }}>
-              💡 Économie conseillée : {economieConseil.toLocaleString()} Ar
-            </Text>
+        <ComparaisonMoisPrecedent
+          depensesMoisActuel={depenses}
+          depensesMoisPrecedent={getDepensesMoisPrecedent(depenses, new Date())}
+          jourDuMois={new Date().getDate()}
+        />
 
-            <Text style={{ color: textColor }}>
-              📉 Prévision fin du mois : {predictionFinMois.toLocaleString()} Ar
-            </Text>
+        <IntelligenceCard
+          economieConseil={economieConseil}
+          predictionFinMois={predictionFinMois}
+          budgetMensuel={budgetMensuel}
+        />
 
-            {predictionFinMois > budgetMensuel ? (
-              <Text style={{ color: "#ef4444", marginTop: 8 }}>
-                ⚠ Risque de dépassement
-              </Text>
-            ) : (
-              <Text style={{ color: "#22c55e", marginTop: 8 }}>
-                ✅ Budget maîtrisé
-              </Text>
-            )}
-          </View>
-        </View>
-      </Pressable>
-    </ScrollView >
+        <Pressable onPress={() => router.push("/notes-vocales")}>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: textColor }}>
+            Voir plus
+          </Text>
+        </Pressable>
+
+      </View>
+    </MainHeader>
   );
 }

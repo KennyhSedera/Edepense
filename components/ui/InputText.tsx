@@ -1,6 +1,8 @@
 import { useAppColors } from "@/hooks/useAppColors";
-import { FieldProps } from "@/types/global";
-import { Platform, StyleSheet, TextInput } from "react-native";
+import { InputTextProps } from "@/types/global";
+import { Eye, EyeOff } from "lucide-react-native";
+import { useState } from "react";
+import { Platform, Pressable, StyleSheet, TextInput, TextInputProps, StyleProp, TextStyle, ViewStyle } from "react-native";
 import { Text, View } from "react-native";
 
 export default function Field({
@@ -16,8 +18,12 @@ export default function Field({
   onFocus,
   readOnly,
   autoCapitalize,
-}: FieldProps) {
+  secureTextEntry,
+  inputStyle,
+}: InputTextProps) {
   const { textColor, border, labelColor, inputBg, } = useAppColors();
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleFocus = () => {
     onFocus && onFocus()
@@ -25,22 +31,35 @@ export default function Field({
   return (
     <View style={[compact ? styles.fieldCompact : styles.field, style]}>
       {label && <Text style={[styles.label, { color: labelColor }]}>{label}</Text>}
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={labelColor}
-        keyboardType={keyboardType}
-        multiline={multiline}
-        onFocus={handleFocus}
-        autoCapitalize={autoCapitalize}
-        style={[
-          styles.input,
-          multiline && styles.inputMultiline,
-          { color: error ? "red" : textColor, borderColor: error ? "red" : border, backgroundColor: inputBg },
-        ]}
-        readOnly={readOnly}
-      />
+      <View style={[{ position: "relative" }]}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={labelColor}
+          keyboardType={keyboardType}
+          multiline={multiline}
+          onFocus={handleFocus}
+          autoCapitalize={autoCapitalize}
+          secureTextEntry={secureTextEntry && !showPassword}
+          style={[
+            styles.input,
+            multiline && styles.inputMultiline && { height: "auto" },
+            { color: error ? "red" : textColor, borderColor: error ? "red" : border, backgroundColor: inputBg },
+            inputStyle,
+          ]}
+          readOnly={readOnly}
+        />
+        {secureTextEntry &&
+          <Pressable onPress={() => setShowPassword(!showPassword)} style={{ position: "absolute", top: 15, right: 10 }}>
+            {showPassword ? (
+              <EyeOff size={18} color={labelColor} />
+            ) : (
+              <Eye size={18} color={labelColor} />
+            )}
+          </Pressable>
+        }
+      </View>
       {error && <Text style={{ color: "red" }}>{error}</Text>}
     </View>
   );
@@ -69,6 +88,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === "ios" ? 10 : 8,
     fontSize: 15,
+    overflow: "hidden",
   },
 
   inputMultiline: {

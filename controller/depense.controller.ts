@@ -1,11 +1,16 @@
 import { STORAGE_DEPENSES_KEY } from "@/constants/storage";
 import { Depense, DepenseItem } from "@/types/db";
-import { getCycleStart, getInfosPeriode, getSemaines, toISODate } from "@/utils/dateFormat";
+import { getCycleStart, getInfosPeriode, getSemaines, toISODate } from "@/utils/date.util";
+import { getLocalUser } from "@/utils/token.util";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getUserId } from "./user.controller";
 
 async function getDepense(): Promise<Depense[]> {
   const data = await AsyncStorage.getItem(STORAGE_DEPENSES_KEY);
-  return JSON.parse(data || "[]") as Depense[];
+  const depenses = JSON.parse(data || "[]") as Depense[];
+
+  const uId = await getUserId();
+  return depenses.filter((d: Depense) => d.user_id === uId);
 }
 
 async function getDepenseToday() {
@@ -41,12 +46,15 @@ async function getDepenseCurrentSemaine() {
   return data.filter((d: any) => new Date(d.date) >= new Date(dateDebut) && new Date(d.date) <= new Date(dateFin));
 }
 
-async function setDepense(newDepense: any) {
+async function setDepense(newDepense: Depense) {
   try {
     const existing: Depense[] = await getDepense();
+    const uId = await getUserId();
+
+    newDepense.user_id = uId || "";
     existing.push(newDepense);
     await AsyncStorage.setItem(STORAGE_DEPENSES_KEY, JSON.stringify(existing));
-    await setLastDepenseDate();
+    await setLastDepenseDate(uId || "", newDepense.date);
 
     return JSON.stringify({
       success: true,
@@ -61,8 +69,43 @@ async function setDepense(newDepense: any) {
   }
 }
 
+async function setDepenses(newDepenses: Depense[]) {
+  try {
+    const existing: Depense[] = await getDepense();
+    const uId = await getUserId();
+
+    const depensesAvecUser = newDepenses.map((dep) => ({
+      ...dep,
+      user_id: uId || "",
+    }));
+
+    const updated = [...existing, ...depensesAvecUser];
+    await AsyncStorage.setItem(STORAGE_DEPENSES_KEY, JSON.stringify(updated));
+
+    if (depensesAvecUser.length > 0) {
+      const derniereDate = depensesAvecUser
+        .map((d) => d.date)
+        .sort()
+        .reverse()[0];
+      await setLastDepenseDate(uId || "", derniereDate);
+    }
+
+    return JSON.stringify({
+      success: true,
+      message: `${depensesAvecUser.length} dépense(s) ajoutée(s) avec succès.`,
+      newDepenses: depensesAvecUser,
+    });
+  } catch (error) {
+    return JSON.stringify({
+      success: false,
+      message: "Error adding depenses",
+    });
+  }
+}
+
 async function deleteDepense(id: string) {
   const existing = await getDepense();
+
   const newData = existing.filter((item: any) => (item.id !== id));
 
   await AsyncStorage.setItem(STORAGE_DEPENSES_KEY, JSON.stringify(newData));
@@ -75,6 +118,9 @@ async function deleteDepense(id: string) {
 
 async function updateDepense(data: any, id: string) {
   const existing = await getDepense();
+  const uId = await getUserId();
+
+  data.user_id = uId || "";
   const newData = existing.map((item: any) => (item.id === id ? data : item));
 
   await AsyncStorage.setItem(STORAGE_DEPENSES_KEY, JSON.stringify(newData));
@@ -84,6 +130,27 @@ async function updateDepense(data: any, id: string) {
     message: "Depense mise à jour avec succès.",
     data,
   });
+}
+
+async function removeDepenses(depense: Depense[]) {
+  try {
+    const existing = await getDepense();
+    const idsASupprimer = depense.map((d) => d.id);
+
+    const newData = existing.filter((dep: Depense) => !idsASupprimer.includes(dep.id));
+
+    await AsyncStorage.setItem(STORAGE_DEPENSES_KEY, JSON.stringify(newData));
+
+    return JSON.stringify({
+      success: true,
+      message: `${existing.length - newData.length} dépense(s) supprimée(s) avec succès.`,
+    });
+  } catch (error) {
+    return JSON.stringify({
+      success: false,
+      message: "Error removing depenses",
+    });
+  }
 }
 
 async function removeAllDepenses() {
@@ -97,8 +164,9 @@ async function removeAllDepenses() {
 
 async function getDepenseParSemaine(date: string) {
   const data = await getDepense();
-  const semaine = getSemaines(data[0].date);
+  if (data.length === 0) return [];
 
+  const semaine = getSemaines(data[0].date);
   return semaine.filter((s: any) => s.dateDebut === date);
 }
 
@@ -144,64 +212,46 @@ async function getByFiltered(params: string) {
   return data;
 }
 
-async function getItemById(params: string) {
+async function getItemById(params: string): Promise<DepenseItem | undefined> {
   const depense = await getDepense();
 
-  const matchesSearch = (i: DepenseItem) => i.id === params
+  const matchesSearch = (i: DepenseItem) => i.id === params;
   const items: DepenseItem[] = depense.flatMap((d: Depense) => d.items?.filter(matchesSearch) ?? []);
 
-  return items;
+  return items[0];
 }
+
+const lastExpenseDateKey = (userId: string) => `LAST_EXPENSE_DATE_${userId}`;
 
 async function setLastDepenseDate(
+  userId: string,
   date: string = new Date().toISOString()
 ) {
-  const value =
-    new Date(date)
-      .toISOString()
-      .slice(0, 10);
-
-  await AsyncStorage.setItem(
-    "LAST_EXPENSE_DATE",
-    value
-  );
+  const value = new Date(date).toISOString().slice(0, 10);
+  await AsyncStorage.setItem(lastExpenseDateKey(userId), value);
 }
 
-async function getLastDepenseDate() {
-  return await AsyncStorage.getItem(
-    "LAST_EXPENSE_DATE"
-  );
+async function getLastDepenseDate(userId: string) {
+  return await AsyncStorage.getItem(lastExpenseDateKey(userId));
 }
 
-async function compareLastDepenseDate(
-  date: string
-): Promise<boolean> {
-  const last =
-    await AsyncStorage.getItem(
-      "LAST_EXPENSE_DATE"
-    );
-
-  const current =
-    new Date(date)
-      .toISOString()
-      .slice(0, 10);
-
+async function compareLastDepenseDate(userId: string, date: string): Promise<boolean> {
+  const last = await AsyncStorage.getItem(lastExpenseDateKey(userId));
+  const current = new Date(date).toISOString().slice(0, 10);
   return last === current;
 }
 
-async function hasExpenseToday(): Promise<boolean> {
-
-  const last =
-    await AsyncStorage.getItem(
-      "LAST_EXPENSE_DATE"
-    );
-
-  const today =
-    new Date()
-      .toISOString()
-      .slice(0, 10);
-
+async function hasExpenseToday(userId: string): Promise<boolean> {
+  const last = await AsyncStorage.getItem(lastExpenseDateKey(userId));
+  const today = new Date().toISOString().slice(0, 10);
   return last === today;
 }
 
-export { getDepense, setDepense, deleteDepense, updateDepense, removeAllDepenses, getDepenseParSemaine, getDepenseCurrentMonth, getDepenseById, getByFiltered, getItemById, getLastDepenseDate, setLastDepenseDate, compareLastDepenseDate, hasExpenseToday, getDepenseCurrentSemaine, getDepenseCurrentYear, getDepenseToday, getDepenseYesterday };
+function trouverDerniereListe(depenses: Depense[]): Depense | null {
+  const listes = depenses.filter((d) => (d.items?.length ?? 0) > 1 && d.categorie === "Alimentation");
+  if (listes.length === 0) return null;
+
+  return listes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+}
+
+export { getDepense, setDepense, deleteDepense, updateDepense, removeAllDepenses, getDepenseParSemaine, getDepenseCurrentMonth, getDepenseById, getByFiltered, getItemById, getLastDepenseDate, setLastDepenseDate, compareLastDepenseDate, hasExpenseToday, getDepenseCurrentSemaine, getDepenseCurrentYear, getDepenseToday, getDepenseYesterday, setDepenses, removeDepenses, trouverDerniereListe };

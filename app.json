@@ -41,7 +41,15 @@
           "photosPermission": "Autoriser l'accès aux photos."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Autoriser $(PRODUCT_NAME) à accéder au microphone."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

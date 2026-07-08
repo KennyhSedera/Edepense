@@ -13,9 +13,6 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColorScheme as useSystemColorScheme } from "react-native";
 import { STORAGE_THEME_KEY } from "@/constants/storage";
-import { User } from "@/types/db";
-import { getUser } from "@/controller/user";
-import { getHourNotification } from "@/controller/notification";
 
 export type ThemeType = "light" | "dark";
 
@@ -25,9 +22,6 @@ type ThemeContextType = {
   setThemeMode: (t: ThemeType) => void;
   navigationTheme: Theme;
   isLoading: boolean;
-  user: User | null;
-  hour: number | null;
-  loadUser: () => Promise<void>;
   loadTheme: () => Promise<void>;
 };
 
@@ -38,9 +32,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(
 export function AppThemeProvider({ children }: { children: ReactNode }) {
   const systemTheme = useSystemColorScheme();
   const [theme, setTheme] = useState<ThemeType>("light");
-  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hour, setHour] = useState<number | null>(null);
 
   const loadTheme = async () => {
     try {
@@ -72,24 +64,6 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
     setTheme((t) => (t === "light" ? "dark" : "light"));
   };
 
-  async function loadUser() {
-    const user = await getUser();
-
-    if (user !== null) {
-      setUser(user);
-    }
-
-    const hour = await getHourNotification();
-
-    if (hour !== null) {
-      setHour(hour);
-    }
-  }
-
-  useEffect(() => {
-    loadUser();
-  }, []);
-
   const setThemeMode = async (t: ThemeType) => {
     setTheme(t);
     await AsyncStorage.setItem(STORAGE_THEME_KEY, t);
@@ -103,11 +77,8 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
         theme,
         navigationTheme,
         isLoading,
-        user,
-        hour,
         toggleTheme,
         setThemeMode,
-        loadUser,
         loadTheme,
       }}
     >

@@ -1,51 +1,69 @@
 import { ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import {
   AppThemeProvider,
   useAppTheme,
-} from '@/hooks/themeContext';
-import { StatusBar, } from 'react-native';
+} from '@/contexts/themeContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { StatusBar } from 'react-native';
 import { useEffect } from 'react';
 import * as Notifications from "expo-notifications";
 import { scheduleDailyReminder } from '@/services/notificationService';
-import { getHourNotification, getNotificationEnabled } from '@/controller/notification';
+import { getHourNotification, getNotificationEnabled } from '@/controller/notification.controller';
+import { initDB } from '@/sqlite/init';
 
 function Navigation() {
   const { navigationTheme } = useAppTheme();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-
-  let listener: Notifications.Subscription | null = null;
+  const segments = useSegments();
+  const { user, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
+    if (authLoading || !user) return;
+
     async function init() {
-      const enabled = await getNotificationEnabled();
-      const hour = await getHourNotification();
+      const enabled = await getNotificationEnabled(user!.id);
+      const hour = await getHourNotification(user!.id);
       if (enabled) {
-        await scheduleDailyReminder(hour, 0);
+        await scheduleDailyReminder(user!.id, hour, 0);
       }
     }
     init();
+  }, [user?.id, authLoading]);
+
+  useEffect(() => {
+    const listener = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+
+      const pathname = data?.pathname;
+      const params = data?.params;
+
+      if (!pathname) return;
+
+      requestAnimationFrame(() => {
+        router.push({ pathname, params });
+      });
+    });
+
+    return () => listener.remove();
   }, []);
 
   useEffect(() => {
-    if (listener) listener.remove();
-
-    listener =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        const data = response.notification.request.content.data;
-
-        const pathname = data?.pathname;
-        const params = data?.params;
-
-        if (!pathname) return;
-
-        requestAnimationFrame(() => {
-          router.push({ pathname, params });
-        });
-      });
-
-    return () => listener?.remove();
+    initDB();
   }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === "(auth)" && segments[1] !== "start";
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace("/(auth)/login");
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace("/(tabs)");
+    }
+  }, [isAuthenticated, isLoading, segments]);
 
   return (
     <ThemeProvider value={navigationTheme}>
@@ -57,7 +75,8 @@ function Navigation() {
       <Stack screenOptions={{ headerShown: false }} >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)/edit-profile" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/register" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/start" options={{ headerShown: false }} />
         <Stack.Screen name="(form)" options={{ headerShown: false }} />
         <Stack.Screen name="(detail)" options={{ headerShown: false }} />
         <Stack.Screen name="(guest)" options={{ headerShown: false }} />
@@ -70,7 +89,9 @@ function Navigation() {
 export default function RootLayout() {
   return (
     <AppThemeProvider>
-      <Navigation />
+      <AuthProvider>
+        <Navigation />
+      </AuthProvider>
     </AppThemeProvider>
   );
 }

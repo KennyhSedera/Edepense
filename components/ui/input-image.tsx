@@ -5,19 +5,19 @@ import ImagePikerModal from './ImagePikerModal'
 import { useAppColors } from '@/hooks/useAppColors'
 import { Camera, Trash2, } from 'lucide-react-native'
 import { useFocusEffect } from 'expo-router'
+import RenderImage from './render-image'
 
 export default function InputImage({ value, setValue, label = "Image (optionnel)" }: { value: string | undefined | null, setValue: (v: string) => void, label?: string }) {
   const [show, setShow] = useState(false)
   const { inputBg, border, textColor, sectionColor, labelColor, cardBg, dangerColor } = useAppColors();
   const [url, setUrl] = useState(value);
   const [urlText, setUrlText] = useState("");
+  const [showImage, setShowImage] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       setUrl(value)
-    }, [value],
-    )
-
+    }, [value],)
   )
 
   function onChange(params: string) {
@@ -26,6 +26,11 @@ export default function InputImage({ value, setValue, label = "Image (optionnel)
     setUrlText("");
     setValue(params);
   }
+
+  function onCloseShowImage() {
+    setShowImage(false);
+  }
+
   return (
     <View style={{ width: '100%' }}>
       <ImagePikerModal visible={show} onChange={onChange} value={value} />
@@ -33,10 +38,12 @@ export default function InputImage({ value, setValue, label = "Image (optionnel)
         <Text style={[styles.label, { color: labelColor }]}>{label}</Text>
 
         {url && (
-          <View style={{ position: "relative" }}>
+          <Pressable style={{ position: "relative" }} onPress={() => setShowImage(true)}>
             <Image source={{ uri: url }} style={[styles.previewImage, { borderColor: border }]} />
-          </View>
+          </Pressable>
         )}
+
+        <RenderImage value={url} onChange={onCloseShowImage} visible={showImage} />
 
         <View style={{ flexDirection: "row", alignItems: 'center', gap: 10, justifyContent: "center" }}>
           <TouchableOpacity

@@ -1,3 +1,6 @@
+import React from "react";
+import { ImageSourcePropType } from "react-native";
+
 export type User = {
   id?: string;
   name: string;
@@ -12,13 +15,16 @@ export type User = {
 
   avatar?: string;
 
+  password?: string;
+  password_salt?: string;
+
   created_at?: string;
   updated_at?: string;
 };
 
 export type Provision = {
   id: string;
-  user_id?: string;
+  user_id: string;
 
   nom: string;
 
@@ -57,7 +63,7 @@ export type BudgetTracker = {
 
 export type Goal = {
   id: string;
-  user_id?: string;
+  user_id: string;
 
   titre: string;
 
@@ -78,7 +84,7 @@ export type DepenseItem = {
   name: string;
   quantity: number;
   unit_price: number;
-  image?: string;
+  image?: string | null;
   total_price: number;
   unit?: string;
 };
@@ -89,6 +95,9 @@ export type Depense = {
   categorie?: string;
   description?: string;
   date: string;
+  user_id: string;
+
+  audio_uri?: string;
 
   items?: DepenseItem[];
 };
@@ -105,4 +114,40 @@ export type BudgetState = {
   updateDepense?: (d: Depense) => void;
   setDevise?: (d: string) => void;
   removeAllDepenses?: () => void;
+};
+
+export type UserConnected = {
+  id: string;
+  name: string;
+  email: string;
+  budget_mensuel: number;
+  budget_journalier: number;
+  salaire_mensuel: number;
+  devise: string;
+  date_debut: string;
+  avatar: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export interface ScanResult {
+  merchant: string | null;
+  devise: string;
+  observation: string | null;
+  rawText?: string | null;
+  depense: Depense[];
+  provision: Provision[];
+}
+
+export type Message = {
+  id: string;
+  user_id: string;
+  message: string;
+  sender_type: "app" | "user";
+  type: "text" | "image" | "audio";
+  reponse_id?: string;
+  read: boolean;
+  action?: string | string[] | null | undefined | number | Date | boolean | object | any | any[] | ImageSourcePropType;
+  created_at: string;
+  updated_at: string;
 };

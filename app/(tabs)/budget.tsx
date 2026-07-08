@@ -5,15 +5,17 @@ import { styles } from '@/styles/styles'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { useAppColors } from '@/hooks/useAppColors'
 import { Goal } from '@/types/db'
-import { deleteGoal, getGoal } from '@/controller/goal'
+import { deleteGoal, getGoal } from '@/controller/goal.controller'
 import EmptyData from '@/components/ui/empty-data'
 import { goalCoverImage } from '@/constants/image'
 import { useBudgetStore } from '@/store/budgetStore'
-import { formatDateLong } from '@/utils/dateFormat'
+import { formatDateLong } from '@/utils/date.util'
 import { ToastAndroid } from 'react-native'
-import { formatCompactNumber } from '@/utils/numberFormat';
+import { formatCompactNumber } from '@/utils/number.util';
 import { getGoalType } from '@/constants/type'
 import DeleteModal from '@/components/ui/DeleteModal'
+import { MainHeader } from '@/components/header/header-main'
+import { TabHeader } from './_layout'
 
 export default function Budget() {
   const { sectionColor, border, backgroundColor, textColor, labelColor } = useAppColors();
@@ -58,76 +60,77 @@ export default function Budget() {
   };
 
   return (
-    <View style={[styles.container]}>
+    <MainHeader
+      height={160}
+      header={() => <TabHeader title="Mes objectifs" />}
+      fab={
+        <Pressable
+          onPress={() => router.push("/goal-form")}
+          style={({ pressed }) => [
+            styles.fab,
+            pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] },
+            { backgroundColor: sectionColor, borderColor: border },
+          ]}
+        >
+          <Plus color={"#fff"} size={24} />
+        </Pressable>
+      }
+    >
       <DeleteModal onChange={handleDelete} visible={confirmDelete.show} message={confirmDelete.message} id={confirmDelete.id} />
-      <Pressable
-        onPress={() => router.push("/goal-form")}
-        style={({ pressed }) => [
-          styles.fab,
-          pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] },
-          { backgroundColor: sectionColor, borderColor: border },
-        ]}
-      >
-        <Plus color={"#fff"} size={24} />
-      </Pressable>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        style={{ flex: 1, position: "relative" }}
-      >
-        {budget.length === 0 &&
-          <EmptyData
-            message="Aucune donnée disponible."
-            icon={<CircleDollarSignIcon color={labelColor} size={100} />}
-          />}
-        {filtered.length === 0 && budget.length > 0 && search &&
-          <EmptyData
-            message="Aucune donnée trouvée."
-            icon={<Search color={labelColor} size={100} />}
-          />}
-        <View style={styles.grid}>
-          {filtered.map((goal: Goal) => (
-            <View key={goal.id} style={[styles.card, { backgroundColor, borderColor: border, position: "relative" }]}>
-              <Pressable
-                onPress={() => router.push({ pathname: `/detail-budget`, params: { id: goal.id } })}
-                key={goal.id}
-                style={({ pressed }) => [
-                  pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] },
+
+      {budget.length === 0 &&
+        <EmptyData
+          message="Aucune donnée disponible."
+          icon={<CircleDollarSignIcon color={labelColor} size={50} />}
+        />}
+      {filtered.length === 0 && budget.length > 0 && search &&
+        <EmptyData
+          message="Aucune donnée trouvée."
+          icon={<Search color={labelColor} size={50} />}
+        />}
+      <View style={styles.grid}>
+        {filtered.map((goal: Goal) => (
+          <View key={goal.id} style={[styles.card, { backgroundColor, borderColor: border, position: "relative" }]}>
+            <Pressable
+              onPress={() => router.push({ pathname: `/detail-budget`, params: { id: goal.id } })}
+              key={goal.id}
+              style={({ pressed }) => [
+                pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] },
+              ]}
+            >
+              <Image
+                source={goal.image ? { uri: goal.image } : goalCoverImage(goal.type)}
+                style={[
+                  styles.image,
+                  { borderColor: border },
                 ]}
-              >
-                <Image
-                  source={goal.image ? { uri: goal.image } : goalCoverImage(goal.type)}
-                  style={[
-                    styles.image,
-                    { borderColor: border },
-                  ]}
-                />
-                <View style={styles.cardContent}>
-                  <Text style={[styles.name, { color: textColor }]}>{goal.titre}</Text>
-                  <Text style={[styles.text, { color: textColor }]}>{getGoalType(goal.type)}</Text>
-                  <Text style={styles.price}>{formatCompactNumber(goal.montant_cible, devise)} { }</Text>
-                  <Text style={[styles.date, { color: textColor }]}>{formatDateLong(goal.date_limite)} </Text>
-                </View>
-              </Pressable>
-              <View style={[styles.actions]}>
-                <Pressable
-                  onPress={() => router.push({ pathname: "/goal-form", params: { id: goal.id } })}
-                >
-                  <Edit color={sectionColor} size={20} />
-                </Pressable>
-                <Pressable
-                  onPress={() =>
-                    setConfirmDelete({
-                      show: true,
-                      id: goal.id,
-                      message: `Voulez-vous vraiment supprimer l'objectif "${goal.titre}"?`
-                    })}>
-                  <LucideTrash2 color={"red"} size={22} />
-                </Pressable>
+              />
+              <View style={styles.cardContent}>
+                <Text style={[styles.name, { color: textColor }]}>{goal.titre}</Text>
+                <Text style={[styles.text, { color: textColor }]}>{getGoalType(goal.type)}</Text>
+                <Text style={styles.price}>{formatCompactNumber(goal.montant_cible, devise)} { }</Text>
+                <Text style={[styles.date, { color: textColor }]}>{formatDateLong(goal.date_limite)} </Text>
               </View>
+            </Pressable>
+            <View style={[styles.actions]}>
+              <Pressable
+                onPress={() => router.push({ pathname: "/goal-form", params: { id: goal.id } })}
+              >
+                <Edit color={sectionColor} size={20} />
+              </Pressable>
+              <Pressable
+                onPress={() =>
+                  setConfirmDelete({
+                    show: true,
+                    id: goal.id,
+                    message: `Voulez-vous vraiment supprimer l'objectif "${goal.titre}"?`
+                  })}>
+                <LucideTrash2 color={"red"} size={22} />
+              </Pressable>
             </View>
-          ))}
-        </View>
-      </ScrollView>
-    </View>
+          </View>
+        ))}
+      </View>
+    </MainHeader>
   )
 }

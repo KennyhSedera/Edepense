@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import AnimatedHeader from "@/components/header/animate-header";
 import HeaderDripAnimated from "@/components/header/header-drip-animated";
 import { useAuth } from "@/contexts/AuthContext";
-import Field from "@/components/ui/InputText";
+import Field from "@/components/input/InputText";
 
 export default function LoginScreen() {
   const { textColor, cardBg, sectionColor } = useAppColors();

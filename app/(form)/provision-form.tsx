@@ -1,8 +1,8 @@
 import { MainHeader } from "@/components/header/header-main";
-import InputImage from "@/components/ui/input-image";
-import Field from "@/components/ui/InputText";
-import SelectChips from "@/components/ui/select-chips";
-import SelectChipsMenu from "@/components/ui/select-chips-menu";
+import InputImage from "@/components/input/input-image";
+import Field from "@/components/input/InputText";
+import SelectChips from "@/components/input/select-chips";
+import SelectChipsMenu from "@/components/input/select-chips-menu";
 import { CATEGORIES_PROVISION, DIMENSION, UNITE } from "@/constants/type";
 import { getProvisionById, setProvision, updateProvision } from "@/controller/provision.controller";
 import { useAppColors } from "@/hooks/useAppColors";

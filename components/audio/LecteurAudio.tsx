@@ -5,6 +5,7 @@ import { useAppColors } from "@/hooks/useAppColors";
 import BarAudio, { } from "./BarAudio";
 import { BARHEIGHTS } from "@/constants/type";
 import useAudioPlayer from "@/hooks/useAudioPlayer";
+import BarAudioAnimed from "./BarAudioAnimed";
 
 export function LecteurAudio({ uri }: { uri: string }) {
   const { backgroundColor, border, sectionColor, labelColor } = useAppColors();
@@ -43,7 +44,8 @@ export function LecteurAudio({ uri }: { uri: string }) {
       </TouchableOpacity>
 
       <View style={{ flex: 1 }}>
-        <BarAudio barHeights={BARHEIGHTS} progression={progression} />
+        {/* <BarAudio barHeights={BARHEIGHTS} progression={progression} /> */}
+        <BarAudioAnimed isPlaying={isPlaying} isPaused={!isPlaying} progression={progression} />
       </View>
       <Text style={{ color: labelColor, fontSize: 11 }}>
         {formatDureeLecture(position)}

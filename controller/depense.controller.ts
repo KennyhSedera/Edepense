@@ -1,7 +1,6 @@
 import { STORAGE_DEPENSES_KEY } from "@/constants/storage";
 import { Depense, DepenseItem } from "@/types/db";
 import { getCycleStart, getInfosPeriode, getSemaines, toISODate } from "@/utils/date.util";
-import { getLocalUser } from "@/utils/token.util";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUserId } from "./user.controller";
 

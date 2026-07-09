@@ -9,17 +9,14 @@ import {
 } from 'react-native';
 import { styles } from '@/styles/styles';
 import { useAppColors } from '@/hooks/useAppColors';
-import Field from '@/components/ui/InputText';
+import Field from '@/components/input/InputText';
 import { Depense, DepenseItem } from '@/types/db';
-import InputDate from '@/components/ui/input-date';
+import InputDate from '@/components/input/input-date';
 import { setDepense, setDepenses } from '@/controller/depense.controller';
 import { router } from 'expo-router';
-import CategoriSelector from '@/components/ui/categori-selector';
-import InputImage from '@/components/ui/input-image';
 import { toISODate } from '@/utils/date.util';
 import EmptyData from '@/components/ui/empty-data';
 import { Plus, Trash2, WifiOff } from 'lucide-react-native';
-import SelectChipsMenu from '@/components/ui/select-chips-menu';
 import { CATEGORIES, DIMENSION, UNITE } from '@/constants/type';
 import { formatCompactNumber } from '@/utils/number.util';
 import { sendNotification } from '@/services/notificationService';
@@ -29,7 +26,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAppNet } from '@/hooks/useAppNet';
 import { scanReceiptOffline, sendDataToScan } from '@/utils/scan.ticket.util';
 import { setProvisions } from '@/controller/provision.controller';
-import SelectChips from '@/components/ui/select-chips';
+import SelectChips from '@/components/input/select-chips';
+import InputImage from '@/components/input/input-image';
+import SelectChipsMenu from '@/components/input/select-chips-menu';
 
 export default function ScanTicket() {
   const [image, setImage] = useState<string | null>(null);

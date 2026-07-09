@@ -1,4 +1,4 @@
-import React from "react";
+import React, { JSXElementConstructor, ReactElement, ReactNode } from "react";
 import { ImageSourcePropType } from "react-native";
 
 export type User = {
@@ -135,8 +135,14 @@ export interface ScanResult {
   devise: string;
   observation: string | null;
   rawText?: string | null;
+  textClair?: string | null;
   depense: Depense[];
   provision: Provision[];
+}
+
+type Action = {
+  value: "Copier" | "Modifier" | "Supprimer" | "Ajouter" | "Enregistrer" | "Annuler" | "Valider" | "Telecharger";
+  label: string;
 }
 
 export type Message = {
@@ -147,7 +153,8 @@ export type Message = {
   type: "text" | "image" | "audio";
   reponse_id?: string;
   read: boolean;
-  action?: string | string[] | null | undefined | number | Date | boolean | object | any | any[] | ImageSourcePropType;
+  action?: Action[] | null;
+  data?: any;
   created_at: string;
   updated_at: string;
 };

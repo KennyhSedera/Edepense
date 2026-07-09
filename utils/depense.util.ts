@@ -1,7 +1,8 @@
+import { ANALYSE_PROMPT, GROQ_PROMPT } from "@/constants/prompt";
 import { Depense, Provision } from "@/types/db";
 import { PriceMode } from "@/types/global";
 
-export function parseExpense(
+function parseExpense(
   text: string,
   prix: PriceMode = "unit_price",
   categorie: string = "Alimentation"
@@ -164,79 +165,9 @@ export function parseExpense(
   return { depense, provision };
 }
 
-function GROQ_PROMPT(text: string, prixMode: 'unit_price' | 'total_price'): string {
-  return `
-  Agis comme un extracteur de données, un expert en formatage JSON et un analyste de données de consommation.
-
-  Prends la liste de courses brute fournie ci-dessous, analyse chaque ligne, regroupe et fusionne les produits appartenant à la MÊME CATÉGORIE, puis convertis le tout en un objet JSON standardisé.
-
-  Voici la liste brute à traiter :
-  ${text}
-
-  Consignes strictes d'analyse et de calcul :
-  1. CATÉGORISER : Déduis automatiquement la catégorie logique de chaque produit (ex: "Épicerie", "Légumes", "Céréales", "Légumineuses", etc.) en fonction de son nom.
-  2. MODE DE PRIX IMPOSE : Tous les prix listés par l'utilisateur dans le texte brut doivent obligatoirement être interprétés comme étant des "${prixMode}".
-  3. CALCULS MATHÉMATIQUES CONCORDANTS (applique EXACTEMENT ces formules, ne dévie pas) :
-     - "prix_fourni" : Le montant exact extrait de la liste brute, sans modification.
-     - "type_prix_fourni" : Doit obligatoirement valoir la chaîne exacte "${prixMode}".
-     
-     ${prixMode === 'unit_price' ? `
-     Le mode imposé est "unit_price" (le prix donné par l'utilisateur est un PRIX UNITAIRE) :
-     - "prix_unitaire" = prix_fourni (copie exacte, sans calcul)
-     - "prix_total" = quantite × prix_fourni
-
-     Exemple concret : quantite=3, prix_fourni=1200
-       -> prix_unitaire = 1200
-       -> prix_total = 3 × 1200 = 3600
-     ` : `
-     Le mode imposé est "total_price" (le prix donné par l'utilisateur est un PRIX TOTAL déjà calculé) :
-     - "prix_unitaire" = prix_fourni ÷ quantite
-     - "prix_total" = prix_fourni (copie exacte, sans calcul)
-
-     Exemple concret : quantite=3, prix_fourni=3600
-       -> prix_unitaire = 3600 ÷ 3 = 1200
-       -> prix_total = 3600
-     `}
-
-     - "montant_total_categorie" : Somme exacte de tous les "prix_total" des produits de cette catégorie.
-     - "montant_total_liste" : Somme exacte de tous les "montant_total_categorie".
-
-  4. COMBINER PAR CATÉGORIE : Regroupe les produits par catégorie. Le tableau final "categories_combinees" contient les catégories. Chacune embarque une courte description de la catégorie et la liste de ses produits dans "elements_inclus".
-  5. ÉLÉMENT PROVISION : Évalue pour CHAQUE produit s'il constitue une "provision" (achat de stockage à long terme ou gros volume, ex: Sac de riz) -> true, ou s'il s'agit d'une consommation courante (petite quantité, produit frais) -> false.
-  6. ANALYSE GLOBALE : Rédige une description textuelle globale qui résume l'objectif de la liste de courses et son coût.
-
-  Structure attendue du JSON final :
-  {
-    "description_globale": "Texte décrivant globalement la liste de courses après analyse...",
-    "montant_total_liste": 0,
-    "categories_combinees": [
-      {
-        "categorie": "Nom de la catégorie (ex: Légumes)",
-        "description_categorie": "Une courte phrase résumant l'usage ou le type d'articles de cette catégorie spécifique...",
-        "montant_total_categorie": 0,
-        "elements_inclus": [
-          {
-            "nom": "Nom du produit",
-            "quantite": 0,
-            "unite": "Unité de mesure",
-            "prix_fourni": 0,
-            "prix_unitaire": 0,
-            "type_prix_fourni": "${prixMode}",
-            "prix_total": 0,
-            "est_une_provision": false
-          }
-        ]
-      }
-    ]
-  }
-
-  Retourne UNIQUEMENT le code JSON valide. N'ajoute aucun texte explicatif, aucune introduction, ni aucune conclusion. Ne mets pas de commentaires dans le JSON.
-  `;
-}
-
 const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY;
 
-export async function groq(text: string, priceMode: PriceMode): Promise<any> {
+async function groq(text: string, priceMode: PriceMode): Promise<any> {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -253,14 +184,14 @@ export async function groq(text: string, priceMode: PriceMode): Promise<any> {
 
   const final = data.choices[0].message.content;
 
-  const { depense, provision } = parseDataGroq(final, priceMode);
+  const { depense, provision, textClair } = parseDataGroq(final, priceMode);
 
-  const result = JSON.stringify({ depense, provision }, null, 2);
+  const result = JSON.stringify({ depense, provision, textClair }, null, 2);
 
   return result;
 }
 
-export function parseDataGroq(params: string, priceMode?: PriceMode) {
+function parseDataGroq(params: string, priceMode?: PriceMode) {
 
   function extraireJSON(text: string): string {
     const debut = text.indexOf('{');
@@ -279,9 +210,7 @@ export function parseDataGroq(params: string, priceMode?: PriceMode) {
     const texteNettoye = extraireJSON(params);
     parsed = JSON.parse(texteNettoye);
   } catch (err) {
-    console.error('Erreur extraction/parsing JSON:', err);
-    console.error('Contenu brut reçu:', params);
-    throw new Error("Impossible de parser la réponse de l'IA");
+    return { depense: [], provision: [], textClair: params };
   }
 
   function recalculerPrix(prod: any, prixModeGlobal?: PriceMode) {
@@ -319,7 +248,7 @@ export function parseDataGroq(params: string, priceMode?: PriceMode) {
         categorie: cat.categorie,
         description_categorie: cat.description_categorie,
         montant_total_categorie: cat.montant_total_categorie,
-        elements_inclus: cat.elements_inclus.map((prod: any) => recalculerPrix(prod, priceMode)),
+        elements_inclus: !priceMode ? cat.elements_inclus : cat.elements_inclus.map((prod: any) => recalculerPrix(prod, priceMode)),
       }))
     ),
   };
@@ -360,9 +289,8 @@ export function parseDataGroq(params: string, priceMode?: PriceMode) {
       }))
   );
 
-  return { depense, provision };
+  return { depense, provision, textClair: parsed.textClair };
 }
-
 
 function fusionnerCategoriesDupliquees(categories: any[]): any[] {
   const map = new Map<string, any>();
@@ -381,3 +309,107 @@ function fusionnerCategoriesDupliquees(categories: any[]): any[] {
 
   return Array.from(map.values());
 }
+
+// ANALYSE TEXT
+async function analyseText(text: string) {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: ANALYSE_PROMPT(text) }],
+    }),
+  });
+
+  const data = await response.json();
+
+  const result = data.choices[0].message.content;
+
+  return result;
+}
+
+function extraireJsonDeReponse<T = any>(texte: string): T | null {
+  const matchAvecLangage = texte.match(/```json\s*([\s\S]*?)```/i);
+  if (matchAvecLangage) {
+    try {
+      return JSON.parse(matchAvecLangage[1].trim());
+    } catch (e) {
+      console.warn("Échec parsing JSON (bloc ```json):", e);
+    }
+  }
+
+  const matchGenerique = texte.match(/```\s*([\s\S]*?)```/);
+  if (matchGenerique) {
+    try {
+      return JSON.parse(matchGenerique[1].trim());
+    } catch (e) {
+      console.warn("Échec parsing JSON (bloc générique):", e);
+    }
+  }
+
+  const indexDebut = texte.indexOf("{");
+  if (indexDebut !== -1) {
+    const candidat = texte.slice(indexDebut);
+    try {
+      return JSON.parse(candidat);
+    } catch (e) {
+      console.warn("Échec parsing JSON (extraction brute):", e);
+    }
+  }
+
+  return null;
+}
+
+function extraireTexteEtJson(
+  texte: string
+) {
+  let texteClair = texte.trim();
+
+  const match = texte.match(
+    /(?:---|###)\s*PARTIE\s*1\s*:\s*TEXTE\s*CLAIR\s*(.*?)\s*(?:---|###)\s*PARTIE\s*2\s*:\s*FORMAT\s*JSON/si
+  );
+
+  if (match?.[1]) {
+    texteClair = match[1].trim();
+  } else {
+    const separateurJson = texte.indexOf("```json");
+    if (separateurJson !== -1) {
+      texteClair = texte.slice(0, separateurJson).trim();
+    }
+  }
+
+  const json = extraireJsonDeReponse(texte);
+
+  if (json) {
+    const { depense, provision } = parseDataGroq(JSON.stringify(json));
+
+    return { texteClair, json: { depense, provision } };
+  }
+
+  return { texteClair, json: null };
+}
+
+function extraireTexte(texte: string) {
+
+  let texteClair = texte.trim();
+
+  const match = texte.match(
+    /(?:---|###)\s*PARTIE\s*1\s*:\s*TEXTE\s*CLAIR\s*(.*?)\s*(?:---|###)\s*PARTIE\s*2\s*:\s*FORMAT\s*JSON/si
+  );
+
+  if (match?.[1]) {
+    texteClair = match[1].trim();
+  } else {
+    const separateurJson = texte.indexOf("```json");
+    if (separateurJson !== -1) {
+      texteClair = texte.slice(0, separateurJson).trim();
+    }
+  }
+
+  return texteClair;
+}
+
+export { fusionnerCategoriesDupliquees, analyseText, parseDataGroq, groq, parseExpense, extraireTexteEtJson, extraireTexte };

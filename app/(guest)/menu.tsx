@@ -9,7 +9,7 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { useHours } from '@/hooks/useHour';
 import { ChevronRightIcon } from 'lucide-react-native';
 import { router } from 'expo-router';
-import Toggle from '@/components/ui/Toggle';
+import Toggle from '@/components/input/Toggle';
 import { MainHeader } from '@/components/header/header-main';
 import { HeaderWithSearch } from './_layout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,7 +52,7 @@ export default function Menu() {
         <View style={style.chipsWrap}>
           <Image
             source={user?.avatar ? { uri: user?.avatar } : require("@/assets/images/avatar.png")}
-            style={[style.avatar, { borderColor: border }]}
+            style={[style.avatar, { borderColor: sectionColor }]}
           />
           <View>
             <Text style={[style.title, { color: textColor }]}>{user?.name}</Text>

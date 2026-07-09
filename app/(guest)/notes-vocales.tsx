@@ -42,7 +42,7 @@ export default function ListeNotesVocales() {
   return (
     <MainHeader
       height={100}
-      header={() => <HeaderWithSearch searchable={false} title="Notification" />}
+      header={() => <HeaderWithSearch searchable={false} title="Notes vocales" />}
     >
       {!loading && audios.length === 0
         && (

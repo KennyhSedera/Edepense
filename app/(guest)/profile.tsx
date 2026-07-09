@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatCompactNumber, toOrdinalFr } from '@/utils/number.util';
 import { styles } from '@/styles/styles';
 import { router } from 'expo-router';
-import RenderImage from '@/components/ui/render-image';
+import RenderImage from '@/components/modal/render-image';
 import AnimatedHeader from '@/components/header/animate-header';
 import HeaderProfile from '@/components/header/header-profile';
 import { User, UserConnected } from '@/types/db';

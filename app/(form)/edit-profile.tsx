@@ -6,13 +6,13 @@ import {
 import { router } from 'expo-router';
 import { useAppColors } from '@/hooks/useAppColors';
 import { styles } from '@/styles/styles';
-import Field from '@/components/ui/InputText';
+import Field from '@/components/input/InputText';
 import { getDaysInMonthFromStartDay } from '@/utils/date.util';
 import { getDayFixed } from '../../utils/date.util';
 import AnimatedHeader from '@/components/header/animate-header';
 import HeaderProfile from '@/components/header/header-profile';
-import ImagePikerModal from '@/components/ui/ImagePikerModal';
-import SelectChips from '@/components/ui/select-chips';
+import ImagePikerModal from '@/components/modal/ImagePikerModal';
+import SelectChips from '@/components/input/select-chips';
 import { useAuth } from '@/contexts/AuthContext';
 
 const DEVISES = ['MGA', 'EUR', 'USD', 'GBP'];

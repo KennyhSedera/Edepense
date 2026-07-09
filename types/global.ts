@@ -34,6 +34,7 @@ export type ModalProps = {
   onChange: (data?: string | null | undefined | number | Date | boolean | object | any | any[]) => void;
   placeholder?: string;
   visible: boolean;
+  children?: ReactNode;
 };
 
 export type DeleteModalProps = {

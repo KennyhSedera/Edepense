@@ -6,6 +6,7 @@ import { Apple, Bell, CircleDollarSignIcon, LayoutGrid, Menu, Search, ShoppingBa
 import { styles } from "@/styles/styles";
 import { getUser } from "@/controller/user.controller";
 import { useAppColors } from "@/hooks/useAppColors";
+import { st } from '@/components/header/animate-header';
 
 export function HomeHeader() {
   return (

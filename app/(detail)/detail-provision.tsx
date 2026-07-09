@@ -4,8 +4,8 @@ import { useLocalSearchParams } from 'expo-router/build/hooks'
 import { styles } from '@/styles/styles';
 import { deleteProvision, getProvisionById } from '@/controller/provision.controller';
 import { router, useFocusEffect } from 'expo-router';
-import DeleteModal from '@/components/ui/DeleteModal';
-import MenuButton, { MenuItem } from '@/components/ui/MenuButton';
+import DeleteModal from '@/components/modal/DeleteModal';
+import MenuButton, { MenuItem } from '@/components/input/MenuButton';
 import { LucideEdit, Trash2 } from 'lucide-react-native';
 import { useAppColors } from '@/hooks/useAppColors';
 import { MiniCard } from '@/app/(detail)/detail-shopping';
@@ -14,7 +14,7 @@ import { formatMoney } from '@/utils/number.util';
 import { formatDateLong } from '@/utils/date.util';
 import { depenseCoverImage } from '@/constants/image';
 import { getUnitLabel } from '@/constants/type';
-import RenderImage from '@/components/ui/render-image';
+import RenderImage from '@/components/modal/render-image';
 import { MainHeader } from '@/components/header/header-main';
 import { DetailHeader } from '@/app/(detail)/_layout';
 

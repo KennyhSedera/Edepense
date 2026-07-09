@@ -10,9 +10,9 @@ import { formatMoney } from '@/utils/number.util';
 import { formatDateLong, toISODate } from '@/utils/date.util';
 import { goalCoverImage } from '@/constants/image';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react-native';
-import MenuButton, { MenuItem } from '@/components/ui/MenuButton';
-import DeleteModal from '@/components/ui/DeleteModal';
-import RenderImage from '@/components/ui/render-image';
+import MenuButton, { MenuItem } from '@/components/input/MenuButton';
+import DeleteModal from '@/components/modal/DeleteModal';
+import RenderImage from '@/components/modal/render-image';
 import { MainHeader } from '@/components/header/header-main';
 import { DetailHeader } from './_layout';
 

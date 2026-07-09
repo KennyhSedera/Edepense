@@ -13,7 +13,7 @@ import { formatDateLong } from '@/utils/date.util'
 import { ToastAndroid } from 'react-native'
 import { formatCompactNumber } from '@/utils/number.util';
 import { getGoalType } from '@/constants/type'
-import DeleteModal from '@/components/ui/DeleteModal'
+import DeleteModal from '@/components/modal/DeleteModal'
 import { MainHeader } from '@/components/header/header-main'
 import { TabHeader } from './_layout'
 

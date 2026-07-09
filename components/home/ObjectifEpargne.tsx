@@ -26,7 +26,7 @@ export default function ObjectifEpargne({
   return (
     <Pressable
       onPress={() => router.push({ pathname: "/detail-budget", params: { id: goalId } })}
-      style={[styles.card, styles.infoGridFull, { backgroundColor: gradient.to, borderColor: border, borderRadius: 16, padding: 16, gap: 12 }]}
+      style={[styles.card, styles.infoGridFull, { backgroundColor: `${gradient.to}4f`, borderColor: gradient.to, borderRadius: 16, padding: 16, gap: 12 }]}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -37,19 +37,19 @@ export default function ObjectifEpargne({
       </View>
 
       <View>
-        <View style={{ height: 10, borderRadius: 5, backgroundColor: border, overflow: "hidden" }}>
+        <View style={{ height: 10, borderRadius: 5, backgroundColor: "#ffffff4f", overflow: "hidden" }}>
           <View
             style={{
               width: `${pourcentage}%`,
               height: "100%",
               borderRadius: 5,
-              backgroundColor: sectionColor,
+              backgroundColor: gradient.to,
             }}
           />
         </View>
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
-          <Text style={{ color: labelColor, fontSize: 12 }}>
+          <Text style={{ color: textColor, fontSize: 12 }}>
             {montantActuel.toLocaleString()} / {montantCible.toLocaleString()} Ar
           </Text>
           <Text style={{ color: sectionColor, fontSize: 12, fontWeight: "700" }}>
@@ -59,7 +59,7 @@ export default function ObjectifEpargne({
       </View>
 
       {restant > 0 && (
-        <Text style={{ color: labelColor, fontSize: 12 }}>
+        <Text style={{ color: textColor, fontSize: 12 }}>
           Encore {restant.toLocaleString()} Ar pour atteindre ton objectif
         </Text>
       )}

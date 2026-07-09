@@ -1,5 +1,6 @@
 import { useAppColors } from "@/hooks/useAppColors";
 import { View, Dimensions, StyleSheet, ScrollView } from "react-native";
+import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, {
   Defs,
@@ -13,12 +14,35 @@ import { styles } from "@/styles/styles";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-export function MainHeader({ children, height = 100, header, footer, paddinBottom = 8, fab }: { children: React.ReactNode, height?: number, header: () => React.ReactNode, footer?: () => React.ReactNode, paddinBottom?: number, fab?: React.ReactNode }) {
-  const { gradient: { from, to }, backgroundColor } = useAppColors();
+export function MainHeader({
+  children,
+  height = 100,
+  header,
+  footer,
+  paddinBottom = 8,
+  fab,
+  fabScroll,
+  scrollRef,
+  onScroll,
+  onContentSizeChange,
+  scrollEventThrottle = 16,
+}: {
+  children: React.ReactNode;
+  height?: number;
+  header: () => React.ReactNode;
+  footer?: () => React.ReactNode;
+  paddinBottom?: number;
+  fab?: React.ReactNode;
+  fabScroll?: React.ReactNode;
+  scrollRef?: React.RefObject<ScrollView>;
+  onScroll?: (event: any) => void;
+  onContentSizeChange?: (w: number, h: number) => void;
+  scrollEventThrottle?: number;
+}) {
+  const { gradient: { from, to } } = useAppColors();
   const w = SCREEN_WIDTH;
   const h = height;
   const dripZone = children === undefined ? 0 : 14;
-
   const topY = h - dripZone;
 
   const dripPath = `
@@ -67,15 +91,26 @@ export function MainHeader({ children, height = 100, header, footer, paddinBotto
       </View>
       <View style={{ flex: 1, position: "relative" }}>
         {fab}
-        <ScrollView
+        {fabScroll}
+        <Animated.ScrollView
+          ref={scrollRef as any}
+          onScroll={onScroll}
+          onContentSizeChange={onContentSizeChange}
+          scrollEventThrottle={scrollEventThrottle}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10,
+          }}
           contentContainerStyle={{
             paddingTop: height + paddinBottom,
             paddingBottom: 30,
             paddingHorizontal: 8,
           }}
-        >{children}</ScrollView>
+        >
+          {children}
+        </Animated.ScrollView>
       </View>
-      {footer &&
+      {footer && (
         <LinearGradient
           colors={[from, to]}
           start={{ x: 0, y: 0 }}
@@ -92,7 +127,8 @@ export function MainHeader({ children, height = 100, header, footer, paddinBotto
           >
             {footer()}
           </View>
-        </LinearGradient>}
+        </LinearGradient>
+      )}
     </View>
   );
 }

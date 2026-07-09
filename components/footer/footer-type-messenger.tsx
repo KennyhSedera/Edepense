@@ -2,21 +2,25 @@ import { View, Text, Pressable, } from 'react-native'
 import React, { useEffect } from 'react'
 import { styles } from '@/styles/styles'
 import { Camera, Mic, SendHorizonalIcon, Trash2Icon, } from 'lucide-react-native'
-import Field from '../ui/InputText'
+import Field from '../input/InputText'
 import { useAppColors } from '@/hooks/useAppColors'
-import ImagePikerModal from '../ui/ImagePikerModal'
+import ImagePikerModal from '../modal/ImagePikerModal'
 import useVoiceRecord from '@/hooks/useVoiceRecord'
 import { supprimerAudio } from '@/utils/voice.util'
 import BarAnimed from '../audio/BarAnimed'
-import { useFocusEffect, useNavigation } from 'expo-router'
+import { useNavigation } from 'expo-router'
 
-export default function FooterTypeMessenger({ setImage, setText, setSound }: { setImage?: (uri: string) => void, setText?: (text: string) => void, setSound?: (uri: string) => void }) {
+export default function FooterTypeMessenger({ setImage, setText, setSound, text }: { setImage?: (uri: string) => void, setText?: (text: string) => void, setSound?: (uri: string) => void, text?: string }) {
   const { gradient: { to, from }, isDark, labelColor, dangerColor, border, sectionColor, textColor } = useAppColors();
   const { duree, barAnims, isRecording, isPaused, audio, formatDuree, stopRecording, startRecording, setAudio } = useVoiceRecord(32);
   const [message, setMessage] = React.useState('');
   const [uriImage, setUriImage] = React.useState("");
   const [visible, setVisible] = React.useState(false);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    setMessage(text as string);
+  }, [text]);
 
   function onChangeUri(params: string) {
     setUriImage(params);

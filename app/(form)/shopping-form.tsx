@@ -12,17 +12,17 @@ import { Trash2, Plus } from "lucide-react-native";
 import { useAppColors } from "@/hooks/useAppColors";
 import type { Depense, DepenseItem } from "@/types/db";
 import { formatDateStringForDisplay, toISODate } from "@/utils/date.util";
-import DatePickerCalendar from '@/components/ui/DatePickerCalendar';
-import Field from "@/components/ui/InputText";
+import DatePickerCalendar from '@/components/modal/DatePickerCalendar';
+import Field from "@/components/input/InputText";
 import { getDepenseById, setDepense, updateDepense } from "@/controller/depense.controller";
 import { styles } from "@/styles/styles";
-import InputImage from "@/components/ui/input-image";
 import { CATEGORIES, DIMENSION, UNITE } from "@/constants/type";
-import SelectChips from "@/components/ui/select-chips";
-import SelectChipsMenu from "@/components/ui/select-chips-menu";
+import SelectChips from "@/components/input/select-chips";
 import { MainHeader } from "@/components/header/header-main";
 import { FormHeader } from "./_layout";
 import { useAuth } from "@/contexts/AuthContext";
+import InputImage from "@/components/input/input-image";
+import SelectChipsMenu from "@/components/input/select-chips-menu";
 
 type ItemForm = {
   id: string;
@@ -79,9 +79,9 @@ export default function DepenseForm() {
         name: item.name || "",
         quantity: item.quantity?.toString() || "0",
         unit_price: item.unit_price?.toString() || "0",
-        image: item.image,
+        image: item.image ?? undefined,
         unit: item.unit,
-        total_price: item.total_price
+        total_price: item.total_price,
       })) || []
     );
   }

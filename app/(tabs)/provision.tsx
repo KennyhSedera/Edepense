@@ -11,7 +11,7 @@ import { formatDateLong } from '@/utils/date.util';
 import { depenseCoverImage } from '@/constants/image';
 import EmptyData from '@/components/ui/empty-data';
 import { formatCompactNumber } from '@/utils/number.util';
-import DeleteModal from '@/components/ui/DeleteModal';
+import DeleteModal from '@/components/modal/DeleteModal';
 import { getUnitLabel } from '@/constants/type';
 import { MainHeader } from '@/components/header/header-main';
 import { TabHeader } from './_layout';

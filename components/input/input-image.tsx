@@ -1,11 +1,11 @@
 import { View, Text, Pressable, TouchableOpacity, Image, TextInput } from 'react-native'
 import React, { useCallback, useState } from 'react'
 import { styles } from '@/styles/styles'
-import ImagePikerModal from './ImagePikerModal'
+import ImagePikerModal from '@/components/modal/ImagePikerModal'
 import { useAppColors } from '@/hooks/useAppColors'
 import { Camera, Trash2, } from 'lucide-react-native'
 import { useFocusEffect } from 'expo-router'
-import RenderImage from './render-image'
+import RenderImage from '@/components/modal/render-image'
 
 export default function InputImage({ value, setValue, label = "Image (optionnel)" }: { value: string | undefined | null, setValue: (v: string) => void, label?: string }) {
   const [show, setShow] = useState(false)

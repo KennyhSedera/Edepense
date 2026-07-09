@@ -5,12 +5,12 @@ import {
 } from 'react-native';
 import { useAppColors } from '@/hooks/useAppColors';
 import { styles } from '@/styles/styles';
-import Field from '@/components/ui/InputText';
+import Field from '@/components/input/InputText';
 import { setUser } from '@/controller/user.controller';
 import AnimatedHeader from '@/components/header/animate-header';
 import HeaderProfile from '@/components/header/header-profile';
-import ImagePikerModal from '@/components/ui/ImagePikerModal';
-import SelectChips from '@/components/ui/select-chips';
+import ImagePikerModal from '@/components/modal/ImagePikerModal';
+import SelectChips from '@/components/input/select-chips';
 import * as Crypto from "expo-crypto";
 import { hashPassword } from '@/utils/criptage.util';
 import { useAuth } from '@/contexts/AuthContext';

@@ -3,7 +3,6 @@ import {
   Image,
   Text,
   View,
-  ScrollView,
   ToastAndroid,
 } from "react-native";
 import React, { useCallback, useMemo, useState } from "react";
@@ -19,8 +18,8 @@ import { depenseCoverImage } from "@/constants/image";
 import { styles } from "@/styles/styles";
 import EmptyData from "@/components/ui/empty-data";
 import { formatCompactNumber } from '@/utils/number.util';
-import DeleteModal from "@/components/ui/DeleteModal";
-import SelectDate from "@/components/ui/select-date";
+import DeleteModal from "@/components/modal/DeleteModal";
+import SelectDate from "@/components/input/select-date";
 import { MainHeader } from "@/components/header/header-main";
 import { TabHeader } from "./_layout";
 

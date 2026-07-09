@@ -9,7 +9,7 @@ import { MiniCard } from './detail-shopping';
 import { formatMoney } from '@/utils/number.util';
 import { depenseCoverImage } from '@/constants/image';
 import { getUnitLabel } from '@/constants/type';
-import RenderImage from '@/components/ui/render-image';
+import RenderImage from '@/components/modal/render-image';
 import { MainHeader } from '@/components/header/header-main';
 import { DetailHeader } from './_layout';
 

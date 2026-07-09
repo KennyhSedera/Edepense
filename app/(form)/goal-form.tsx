@@ -1,4 +1,4 @@
-import Field from "@/components/ui/InputText";
+import Field from "@/components/input/InputText";
 import { useAppColors } from "@/hooks/useAppColors";
 import { styles } from "@/styles/styles";
 import { formatDateLong, toISODate } from "@/utils/date.util";
@@ -11,11 +11,11 @@ import {
   ToastAndroid,
 } from "react-native";
 
-import InputDate from "@/components/ui/input-date";
+import InputDate from "@/components/input/input-date";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { getGoalById, setGoal, updateGoal } from "@/controller/goal.controller";
 import { Goal } from "@/types/db";
-import InputImage from "@/components/ui/input-image";
+import InputImage from "@/components/input/input-image";
 import { MainHeader } from "@/components/header/header-main";
 import { FormHeader } from "./_layout";
 import { useAuth } from "@/contexts/AuthContext";

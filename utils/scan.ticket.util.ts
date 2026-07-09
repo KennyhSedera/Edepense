@@ -1,95 +1,19 @@
 import * as FileSystem from 'expo-file-system';
-import { parseDataGroq } from "./depense.util";
-import { ScanResult } from "@/types/db";
+import { extraireTexte, extraireTexteEtJson, parseDataGroq } from "./depense.util";
+import { Depense, Provision, ScanResult } from "@/types/db";
 import { normalizeCurrency } from "./number.util";
 import { ParsedReceipt, ReceiptItem } from "@/types/global";
 import TextRecognition from "@react-native-ml-kit/text-recognition";
+import { GEMINI_RECEIPT_PROMPT } from '@/constants/prompt';
 
 // With Groq
 export const GROQ_KEYS = [
   process.env.EXPO_PUBLIC_GROQ_API_KEY_2,
 ].filter(Boolean) as string[];
-
 export const GROQ_VISION_MODELS = [
   'meta-llama/llama-4-scout-17b-16e-instruct',
   'qwen/qwen3.6-27b',
 ];
-
-export function GEMINI_RECEIPT_PROMPT(): string {
-  return `
-  Agis comme un extracteur de données, un expert en OCR et un analyste de tickets de caisse.
-
-  Analyse l'image du ticket de caisse fournie, extrais chaque article, regroupe et fusionne les produits appartenant à la MÊME CATÉGORIE, puis convertis le tout en un objet JSON standardisé.
-
-  Consignes strictes d'analyse et de calcul :
-
-  1. VÉRIFICATION : Confirme d'abord qu'il s'agit bien d'un ticket de caisse/reçu lisible. Si ce n'est pas le cas, retourne quand même la structure JSON avec les valeurs à null/0 et "categories_combinees": [].
-
-  2. CATÉGORISER : Déduis automatiquement la catégorie logique de chaque produit visible sur le ticket (ex: "Épicerie", "Légumes", "Boissons", "Transport", etc.) en fonction de son nom.
-
-  3. EXTRACTION FIDÈLE DES PRIX (règle stricte, ne calcule QUE si nécessaire) :
-     - "prix_fourni" : Le montant exact tel qu'affiché sur le ticket pour cette ligne (recopie-le sans modification).
-     - "type_prix_fourni" : Indique "unit_price" si le montant affiché sur le ticket est un prix unitaire, ou "total_price" si c'est déjà un prix total pour cette ligne — déduis-le du format visible sur le ticket (présence d'une quantité multipliée, d'un prix au kg, etc.).
-     - Si le ticket affiche À LA FOIS le prix unitaire ET le prix total pour une ligne (ex: "2 x 1200 = 2400"), utilise directement les deux valeurs lues, sans recalculer.
-     - Si le ticket n'affiche qu'UNE seule valeur :
-       * Si "type_prix_fourni" = "unit_price" -> "prix_unitaire" = prix_fourni, puis calcule "prix_total" = quantite × prix_fourni
-       * Si "type_prix_fourni" = "total_price" -> "prix_total" = prix_fourni, puis calcule "prix_unitaire" = prix_fourni ÷ quantite
-
-     Exemple concret (ticket affichant "3 Tsaramaso 1200 Ar/u"):
-       -> quantite = 3, prix_fourni = 1200, type_prix_fourni = "unit_price"
-       -> prix_unitaire = 1200
-       -> prix_total = 3 × 1200 = 3600
-
-     - "montant_total_categorie" : Somme exacte de tous les "prix_total" des produits de cette catégorie.
-     - "montant_total_liste" : Somme exacte de tous les "montant_total_categorie". Si un total global est imprimé sur le ticket, il doit correspondre à cette somme (sinon, priorise la somme calculée à partir des lignes).
-
-  4. COMBINER PAR CATÉGORIE : Regroupe les produits par catégorie. Le tableau final "categories_combinees" contient les catégories. Chacune embarque une courte description de la catégorie et la liste de ses produits dans "elements_inclus".
-
-  5. ÉLÉMENT PROVISION : Évalue pour CHAQUE produit s'il constitue une "provision" (achat de stockage à long terme ou gros volume, ex: Sac de riz) -> true, ou s'il s'agit d'une consommation courante (petite quantité, produit frais) -> false.
-
-  6. INFORMATIONS DU TICKET : Extrais également :
-     - "merchant" : nom du commerce ou émetteur visible sur le ticket, ou null si illisible.
-     - "date" : date du ticket convertie au format "yyyy-mm-dd", ou null si absente.
-     - "observation" : remarque utile visible (ex: "PAYÉ", "Espèces", "Reçu n°1234"), ou null.
-     - "rawText" : tout le texte visible sur le ticket, retranscrit fidèlement ligne par ligne.
-
-  7. ANALYSE GLOBALE : Rédige une description textuelle globale qui résume le contenu du ticket et son coût.
-
-  Structure attendue du JSON final :
-  {
-    "merchant": "Nom du commerce ou null",
-    "date": "yyyy-mm-dd ou null",
-    "observation": "Remarque utile ou null",
-    "rawText": "Texte brut complet du ticket",
-    "description_globale": "Texte décrivant globalement le ticket après analyse...",
-    "montant_total_liste": 0,
-    "categories_combinees": [
-      {
-        "categorie": "Nom de la catégorie (ex: Légumes)",
-        "description_categorie": "Une courte phrase résumant l'usage ou le type d'articles de cette catégorie spécifique...",
-        "montant_total_categorie": 0,
-        "elements_inclus": [
-          {
-            "nom": "Nom du produit",
-            "quantite": 0,
-            "unite": "Unité de mesure",
-            "prix_fourni": 0,
-            "prix_unitaire": 0,
-            "type_prix_fourni": "unit_price",
-            "prix_total": 0,
-            "est_une_provision": false
-          }
-        ]
-      }
-    ]
-  }
-
-  IMPORTANT - RÈGLE DE FUSION STRICTE : Si plusieurs produits/lignes appartiennent à la même catégorie, ils DOIVENT être regroupés dans un SEUL objet de "categories_combinees" avec le même nom de "categorie", et ajoutés ensemble dans le tableau "elements_inclus" de cet objet unique. Ne crée JAMAIS deux entrées séparées dans "categories_combinees" portant le même nom de catégorie.
-
-  Retourne UNIQUEMENT le code JSON valide. N'ajoute aucun texte explicatif, aucune introduction, ni aucune conclusion. Ne mets pas de commentaires dans le JSON.
-  `;
-}
-
 export async function callGroqVisionWithRetry(
   base64: string | null,
   text: string,
@@ -144,10 +68,9 @@ export async function callGroqVisionWithRetry(
           if (!data.error) {
             const text = data.choices[0].message.content;
 
-            const { depense, provision } = parseDataGroq(text);
-            const result = JSON.stringify({ depense, provision }, null, 2);
+            const { depense, provision, textClair } = parseDataGroq(text);
 
-            return result;
+            return { depense, provision, textClair };
           }
 
           const errorCode = data.error?.code ?? response.status;
@@ -187,48 +110,12 @@ export async function callGroqVisionWithRetry(
           continue keyLoop;
         }
       }
-
       await new Promise((r) => setTimeout(r, 300));
     }
-
     console.warn(`[${model}] Épuisé sur toutes les clés. Modèle suivant...`);
   }
-
   return { error: { code: 503, message: 'Toutes les clés/modèles Groq Vision indisponibles' } };
 }
-
-export async function scanReceipt(base64: string, prompt: string, uri: string) {
-  let result = await callGroqVisionWithRetry(base64, prompt, 2);
-
-  if (result.error || result === null || result === undefined) {
-    console.warn('Groq Vision indisponible, fallback vers Gemini...');
-    result = await callGeminiWithRetry(base64, prompt, 2);
-  }
-
-  if (result.error || result === null || result === undefined) {
-    console.warn('Gemini indisponible, fallback vers OCR...');
-    result = await scanReceiptOffline(uri);
-  }
-
-  return result;
-}
-
-export async function sendDataToScan(uri: string): Promise<ScanResult> {
-  const base64 = await FileSystem.readAsStringAsync(uri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-
-  let res: any;
-
-  try {
-    res = await scanReceipt(base64, GEMINI_RECEIPT_PROMPT(), uri);
-  } catch (error) {
-    console.warn(error);
-  }
-
-  return res;
-}
-
 
 // With Gemini
 export const GEMINI_KEYS = [
@@ -239,13 +126,11 @@ export const GEMINI_KEYS = [
   // process.env.EXPO_PUBLIC_GEMINI_API_KEY_5,
   process.env.EXPO_PUBLIC_GEMINI_API_KEY_6,
 ];
-
 export const GEMINI_MODELS = [
   'gemini-2.5-flash',
   // 'gemini-2.5-flash-lite',
   // 'gemini-1.5-flash',
 ];
-
 export async function callGeminiWithRetry(base64: string | null, text: string, maxRetries = 2): Promise<any> {
   const parts: any[] = [];
 
@@ -278,10 +163,10 @@ export async function callGeminiWithRetry(base64: string | null, text: string, m
           const data = await response.json();
 
           if (!data.error) {
-            const { depense, provision } = parseDataGroq(text);
-            const result = JSON.stringify({ depense, provision }, null, 2);
+            const text = data.contents[0].parts[1].text;
 
-            return result;
+            const { depense, provision, textClair } = parseDataGroq(text);
+            return { depense, provision, textClair };
           }
 
           const errorCode = data.error.code;
@@ -322,23 +207,18 @@ export async function callGeminiWithRetry(base64: string | null, text: string, m
           break;
         }
       }
-
       await new Promise((r) => setTimeout(r, 300));
     }
-
     console.warn(`[${model}] Épuisé sur toutes les clés. Modèle suivant...`);
   }
-
   return { error: { code: 429, message: 'Toutes les requêtes ont expiré ou ont été rejetées.' } };
 }
 
 
 // Offline
 function nettoyerOCR(rawText: string): string {
-  // Corrige les "0" mal lus comme "o"/"O" dans un contexte numérique (ex: "199,0o" -> "199,00")
   return rawText.replace(/(\d)[oO](?=\D|$)/g, '$10').replace(/[oO](\d)/g, '0$1');
 }
-
 export function parseReceipt(rawTextBrut: string): ParsedReceipt {
   const rawText = nettoyerOCR(rawTextBrut);
   const lines = rawText.split('\n');
@@ -439,8 +319,6 @@ export function parseReceipt(rawTextBrut: string): ParsedReceipt {
   const merchant = extractMerchant(lines);
   const items = extractItems(lines, rawText);
 
-  // const totalFinal = items.length === 1 && estUneFactureFormelle(rawText) ? items[0].amount : total;
-
   total = extractTotal(rawText);
   return {
     rawText,
@@ -454,11 +332,9 @@ export function parseReceipt(rawTextBrut: string): ParsedReceipt {
     categorie: deduireCategorie(rawText, merchant),
   };
 }
-
 function estUneFactureFormelle(rawText: string): boolean {
   return /(recu\s*n|montant total|facture postpaid|mode de r[eè]glement)/i.test(rawText);
 }
-
 function extraireLignesAvecDevise(lines: string[]): { description: string; amount: string }[] {
   const pattern = /\bAr\s*(\d{1,3}(?:[\s]\d{3})*(?:[.,]\d{2})?)\b/gi;
   const results: { description: string; amount: string }[] = [];
@@ -477,21 +353,6 @@ function extraireLignesAvecDevise(lines: string[]): { description: string; amoun
 
   return results;
 }
-
-function scoreMontant(line: string, value: string): number {
-  let score = 0;
-
-  if (/(total|payer|montant)/i.test(line)) score += 50;
-  if (/\$|ar|mga/i.test(line)) score += 20;
-  score += line.length < 40 ? 10 : 0;
-  const n = parseFloat(value);
-
-  if (n < 10) score -= 20;
-  if (n > 1000000) score -= 100;
-
-  return score;
-}
-
 function extractMerchant(lines: string[]): string | null {
   const noise = /^(ks|photos?|une,?\s*\d*|page\s*\d*)$/i;
 
@@ -509,7 +370,6 @@ function extractMerchant(lines: string[]): string | null {
   }
   return null;
 }
-
 function deduireCategorie(rawText: string, merchant: string | null): string {
   const texte = `${rawText} ${merchant ?? ''}`.toLowerCase();
   if (/(accessbank|banque|depot|versement)/i.test(texte)) return "Banque";
@@ -526,7 +386,6 @@ function deduireCategorie(rawText: string, merchant: string | null): string {
 
   return 'Autre';
 }
-
 export async function scanReceiptOffline(uri: string): Promise<ScanResult> {
   const text = await textRecognize(uri);
   const parsed = parseReceipt(text);
@@ -566,12 +425,10 @@ export async function scanReceiptOffline(uri: string): Promise<ScanResult> {
     provision: [],
   };
 }
-
 interface LigneArticle {
   quantite: number;
   description: string;
 }
-
 function extraireLignesArticles(lines: string[]): LigneArticle[] {
   const pattern = /^(\d+)\s*[xX]\s*(.+)$/;
   const articles: LigneArticle[] = [];
@@ -584,7 +441,6 @@ function extraireLignesArticles(lines: string[]): LigneArticle[] {
   }
   return articles;
 }
-
 function extrairePrixIsoles(lines: string[]): number[] {
   // Ligne composée uniquement d'un symbole monétaire + un nombre
   const pattern = /^[\$€]?\s*(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?)\s*$/;
@@ -599,7 +455,6 @@ function extrairePrixIsoles(lines: string[]): number[] {
   }
   return prix;
 }
-
 function extractItems(lines: string[], rawText: string): ReceiptItem[] {
   if (estUneFactureFormelle(rawText)) {
     const ligneMontantTotal = lines.find((l) => /montant total/i.test(l));
@@ -657,18 +512,15 @@ function extractItems(lines: string[], rawText: string): ReceiptItem[] {
 
   return [];
 }
-
 function cleanLeadingZeros(value: string): string {
   const [intPart, decPart] = value.split('.');
   const cleanedInt = intPart.replace(/^0+(?=\d)/, '') || '0';
   return decPart ? `${cleanedInt}.${decPart}` : cleanedInt;
 }
-
 const MONTHS_FR: Record<string, string> = {
   jan: '01', fév: '02', mar: '03', avr: '04', mai: '05', juin: '06',
   juil: '07', août: '08', sep: '09', oct: '10', nov: '11', déc: '12',
 };
-
 function normalizeDate(rawText: string): string | null {
   const dateNumeric = rawText.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
   if (dateNumeric) {
@@ -688,12 +540,10 @@ function normalizeDate(rawText: string): string | null {
 
   return null;
 }
-
 async function textRecognize(uri: string): Promise<string> {
   const result = await TextRecognition.recognize(uri);
   return result.text;
 }
-
 function extractTotal(rawText: string): string | null {
   const text = rawText.toLowerCase();
 
@@ -726,7 +576,6 @@ function extractTotal(rawText: string): string | null {
 
   return Math.max(...numbers).toFixed(2);
 }
-
 function extractNumbers(rawText: string): number[] {
   const lines = rawText.split('\n');
 
@@ -757,3 +606,38 @@ function extractNumbers(rawText: string): number[] {
 
   return results;
 }
+
+
+// Function principal
+export async function scanReceipt(base64: string, prompt: string, uri: string) {
+  let result = await callGroqVisionWithRetry(base64, prompt, 2);
+
+  if (result.error || result === null || result === undefined) {
+    console.warn('Groq Vision indisponible, fallback vers Gemini...');
+    result = await callGeminiWithRetry(base64, prompt, 2);
+  }
+
+  if (result.error || result === null || result === undefined) {
+    console.warn('Gemini indisponible, fallback vers OCR...');
+    result = await scanReceiptOffline(uri);
+  }
+
+  return result;
+}
+
+export async function sendDataToScan(uri: string): Promise<ScanResult> {
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+
+  let res: any;
+
+  try {
+    res = await scanReceipt(base64, GEMINI_RECEIPT_PROMPT(), uri);
+  } catch (error) {
+    console.warn(error);
+  }
+
+  return res;
+}
+

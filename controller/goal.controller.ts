@@ -1,6 +1,5 @@
 import { STORAGE_GOAL_KEY } from "@/constants/storage";
 import { Goal } from "@/types/db";
-import { getLocalUser } from "@/utils/token.util";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUserId } from "./user.controller";
 

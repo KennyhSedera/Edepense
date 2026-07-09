@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text } from "react-native";
 import { Wallet } from "lucide-react-native";
 import { useAppColors } from "@/hooks/useAppColors";
+import { styles } from "@/styles/styles";
 
 interface BudgetCardProps {
   budgetMensuel: number;
@@ -20,8 +21,17 @@ export default function BudgetCard({ budgetMensuel, totalDepense, reste }: Budge
         padding: 20,
         backgroundColor: sectionColor,
         gap: 4,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      <View style={[styles.bloomLayer, { height: 200, width: 200, top: -70, right: -60, opacity: 0.06 }]} />
+      <View style={[styles.bloomLayer, { height: 140, width: 140, top: -40, right: -30, opacity: 0.1 }]} />
+      <View style={[styles.bloomLayer, { height: 80, width: 80, top: -10, right: 0, opacity: 0.15 }]} />
+
+      <View style={[styles.bloomLayer, { height: 120, width: 120, bottom: -40, left: -30, opacity: 0.08 }]} />
+
+
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <Wallet color="rgba(255,255,255,0.9)" size={16} />
         <Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, fontWeight: "500" }}>

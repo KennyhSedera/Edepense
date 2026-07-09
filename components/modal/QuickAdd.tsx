@@ -2,8 +2,8 @@ import { useAppColors } from "@/hooks/useAppColors";
 import { styles } from "@/styles/styles";
 import React, { useEffect, useState } from "react";
 import { Modal, View, Text, Pressable, ToastAndroid, ActivityIndicator } from "react-native";
-import Field from "./InputText";
-import SelectChips from "./select-chips";
+import Field from "../input/InputText";
+import SelectChips from "../input/select-chips";
 import { CATEGORIES } from "@/constants/type";
 import { groq, parseExpense } from "@/utils/depense.util";
 import { ModalProps, PriceMode } from "@/types/global";
@@ -12,7 +12,7 @@ import { sendNotification } from "@/services/notificationService";
 import { setDepense, setDepenses } from "@/controller/depense.controller";
 import { setProvisions } from "@/controller/provision.controller";
 import NetInfo from '@react-native-community/netinfo';
-import EmptyData from "./empty-data";
+import EmptyData from "../ui/empty-data";
 import { useAppNet } from "@/hooks/useAppNet";
 
 export default function QuickAdd({ visible, onChange }: ModalProps) {

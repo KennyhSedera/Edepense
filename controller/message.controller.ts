@@ -16,8 +16,6 @@ async function getMessages() {
       data.map(async (d) => {
         if (d.type !== "audio") { return d; }
         const existe = await verifierAudio(d.message);
-        console.log(existe);
-
         return existe.exists ? d : null;
       })
     )
@@ -27,6 +25,15 @@ async function getMessages() {
     await AsyncStorage.setItem(`${MESSAGE_KEY}_${uId}`, JSON.stringify(newData));
   }
   return newData;
+}
+
+export async function getMessagesPaginated(offset = 0, limit = 20): Promise<Message[]> {
+  const all = await getMessages();
+  const total = all.length;
+  const end = total - offset;
+  const start = Math.max(0, end - limit);
+  if (end <= 0) return [];
+  return all.slice(start, end);
 }
 
 async function sendMessage(params: Message) {
@@ -160,4 +167,13 @@ async function updateMessages(messages: Message[]) {
   return JSON.stringify({ success: true, message: "Messages mis à jour avec succès.", messages: newData });
 }
 
-export { getMessages, sendMessage, removeMessage, removeMessages, readMessage, readMessages, updateMessages, readAllMessages, removeAllMessages };
+async function updateMessage(message: Message) {
+  const uId = await getUserId();
+  const data = await getMessages();
+  const newData = data.map((d: any) => (d.id === message.id ? message : d)) as Message[];
+  await AsyncStorage.setItem(`${MESSAGE_KEY}_${uId}`, JSON.stringify(newData));
+
+  return JSON.stringify({ success: true, message: "Message mis à jour avec succès.", messages: newData });
+}
+
+export { getMessages, sendMessage, removeMessage, removeMessages, readMessage, readMessages, updateMessages, readAllMessages, removeAllMessages, updateMessage };

@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { styles } from '@/styles/styles'
 import { useAppColors } from '@/hooks/useAppColors';
 import { formatDateLong } from '@/utils/date.util';
-import DatePickerCalendar from '@/components/ui/DatePickerCalendar';
+import DatePickerCalendar from '@/components/modal/DatePickerCalendar';
 
 export default function InputDate({ label, value, onChange, onFocus, error }: any) {
   const { textColor, border, labelColor, inputBg, } = useAppColors();

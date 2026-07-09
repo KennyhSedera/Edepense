@@ -39,8 +39,8 @@ export default function BarAudio({ progression, barHeights, backgroundColor }: {
                 position: "absolute",
                 bottom: 0,
                 left: 0,
-                width: "100%",
-                height: `${fill}%`,
+                width: `${fill}%`,
+                height: `100%`,
                 backgroundColor: backgroundColor || sectionColor,
               }}
             />

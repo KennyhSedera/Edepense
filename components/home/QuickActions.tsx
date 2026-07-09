@@ -3,7 +3,7 @@ import { View, Text, Pressable } from "react-native";
 import { Camera, MessageSquarePlus, Mic } from "lucide-react-native";
 import { router } from "expo-router";
 import { useAppColors } from "@/hooks/useAppColors";
-import QuickAdd from "@/components/ui/QuickAdd";
+import QuickAdd from "@/components/modal/QuickAdd";
 
 interface QuickActionsProps {
   quickAddOpen: boolean;

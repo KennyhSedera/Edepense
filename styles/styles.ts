@@ -133,5 +133,9 @@ export const styles = StyleSheet.create({
   loadingText: { color: "#666" },
 
   // Linear gradient
-  linearGradient: { flexDirection: "row", height: "auto", minHeight: 50, shadowColor: "#000", shadowOffset: { width: 0, height: 2, }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5, borderTopRightRadius: 20, borderTopLeftRadius: 20, paddingVertical: 10 }
+  linearGradient: { flexDirection: "row", height: "auto", minHeight: 50, shadowColor: "#000", shadowOffset: { width: 0, height: 2, }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5, borderTopRightRadius: 20, borderTopLeftRadius: 20, paddingVertical: 10 },
+
+  // decorators
+  bloom: { height: 100, width: 100, borderRadius: 100, backgroundColor: "rgba(255,255,255,0.1)", position: "absolute", zIndex: -1 },
+  bloomLayer: { position: "absolute", borderRadius: 999, backgroundColor: "#ffffff", },
 });

@@ -60,6 +60,7 @@ export function MainHeader({
 
   return (
     <View style={{ flex: 1 }}>
+      {/* Header */}
       <View style={[st.headerAnimated]}>
         <Svg
           width={w}
@@ -89,6 +90,8 @@ export function MainHeader({
           </View>
         </SafeAreaView>
       </View>
+
+      {/* Body */}
       <View style={{ flex: 1, position: "relative" }}>
         {fab}
         {fabScroll}
@@ -110,6 +113,8 @@ export function MainHeader({
           {children}
         </Animated.ScrollView>
       </View>
+
+      {/* Footer */}
       {footer && (
         <LinearGradient
           colors={[from, to]}

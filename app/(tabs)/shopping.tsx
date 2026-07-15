@@ -97,8 +97,8 @@ export default function ShoppingScreen() {
     return filteredDepenses.reduce((acc, d) => acc + d.montant, 0);
   }, [filteredDepenses]);
 
-  const handleDelete = async (action: string, id: string) => {
-    if (action === "delete") {
+  const handleDelete = async (action?: string, id?: string) => {
+    if (action === "delete" && id) {
       const res = await deleteDepense(id);
       const data = JSON.parse(res);
       if (data.success) {
@@ -110,7 +110,7 @@ export default function ShoppingScreen() {
     setConfirmDelete({ show: false, id: "", message: "" });
   };
 
-  const handleDeleteMany = async (action: string) => {
+  const handleDeleteMany = async (action?: string) => {
     if (action === "delete") {
       const res = await removeDepenses(selected);
       const data = JSON.parse(res);
@@ -188,7 +188,8 @@ export default function ShoppingScreen() {
       {/* GRID */}
       <View style={styles.grid}>
         {filteredDepenses.map((depense: Depense) => {
-          const isSelected = selected.includes(depense);
+          const isSelected = selected.find(d => d.id === depense.id);
+          const num = selected.findIndex((i) => i.id === depense.id) + 1;
 
           return (
             <Pressable
@@ -197,7 +198,7 @@ export default function ShoppingScreen() {
               onPress={() => handlePress(depense)}
               onLongPress={() => handleSelection(depense)}
             >
-              {isSelected && <View style={{ position: "absolute", top: 3, right: 3, zIndex: 1, backgroundColor: successColor, borderRadius: 100, padding: 3 }}><CheckCircle color={"#fff"} size={16} /></View>}
+              {isSelected && <View style={[styles.centered, { position: "absolute", top: 3, right: 3, zIndex: 1, backgroundColor: successColor, borderRadius: 100, width: 30, height: 30 }]}><Text style={{ color: "#fff" }}>{num}</Text></View>}
               <Image
                 source={depenseCoverImage(depense?.categorie || "Loisirs")}
                 style={[

@@ -3,6 +3,7 @@ import { getUserId } from "./user.controller";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Message } from "@/types/db";
 import { supprimerAudio, verifierAudio } from "@/utils/voice.util";
+import { supprimerImage } from "@/utils/image.util";
 
 async function getMessages() {
   const uId = await getUserId();
@@ -68,6 +69,32 @@ async function removeAllMessages() {
       if (d.type === "audio") {
         await supprimerAudio(d.message);
       }
+      if (d.type === "image") {
+        await supprimerImage(d.message);
+      }
+    })
+  );
+
+  await AsyncStorage.removeItem(`${MESSAGE_KEY}_${uId}`);
+
+  return JSON.stringify({
+    success: true,
+    message: "Tous les messages supprimés avec succès.",
+  });
+}
+
+async function removeAllMessageByUId() {
+  const uId = await getUserId();
+  const data = await getMessages();
+
+  await Promise.all(
+    data.map(async (d) => {
+      if (d.type === "audio") {
+        await supprimerAudio(d.message);
+      }
+      if (d.type === "image") {
+        await supprimerImage(d.message);
+      }
     })
   );
 
@@ -89,6 +116,9 @@ async function removeMessages(ids: string[]) {
     messagesASupprimer.map(async (d) => {
       if (d.type === "audio") {
         await supprimerAudio(d.message);
+      }
+      if (d.type === "image") {
+        await supprimerImage(d.message);
       }
     })
   );
@@ -115,6 +145,9 @@ async function removeMessage(id: string) {
 
   if (message?.type === "audio") {
     await supprimerAudio(message.message);
+  }
+  if (message?.type === "image") {
+    await supprimerImage(message.message);
   }
 
   const newData = data.filter((d) => d.id !== id);
@@ -167,13 +200,13 @@ async function updateMessages(messages: Message[]) {
   return JSON.stringify({ success: true, message: "Messages mis à jour avec succès.", messages: newData });
 }
 
-async function updateMessage(message: Message) {
+async function updateMessage(message: Message, id: string) {
   const uId = await getUserId();
   const data = await getMessages();
-  const newData = data.map((d: any) => (d.id === message.id ? message : d)) as Message[];
+  const newData = data.map((d: any) => (d.id === id ? message : d)) as Message[];
   await AsyncStorage.setItem(`${MESSAGE_KEY}_${uId}`, JSON.stringify(newData));
 
   return JSON.stringify({ success: true, message: "Message mis à jour avec succès.", messages: newData });
 }
 
-export { getMessages, sendMessage, removeMessage, removeMessages, readMessage, readMessages, updateMessages, readAllMessages, removeAllMessages, updateMessage };
+export { getMessages, sendMessage, removeMessage, removeMessages, readMessage, readMessages, updateMessages, readAllMessages, removeAllMessages, updateMessage, removeAllMessageByUId };

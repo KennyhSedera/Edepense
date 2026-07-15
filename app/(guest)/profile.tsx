@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
-  const { textColor, cardBg, border, sectionColor, labelColor, gradient } = useAppColors();
+  const { textColor, cardBg, border, dangerColor, labelColor, gradient } = useAppColors();
   const [avatar, setAvatar] = React.useState("");
   const [value, setValue] = React.useState<UserConnected | null>();
   const [visible, setVisible] = React.useState({
@@ -44,6 +44,7 @@ export default function ProfileScreen() {
           title={value?.name}
           subtitle={value?.email}
           isback
+          avatarClicked={() => setVisible({ show: true, value: avatar ?? require("@/assets/images/avatar.png") })}
         />
       )}
     >
@@ -85,8 +86,8 @@ export default function ProfileScreen() {
         <View style={[styles.card, { width: "100%", backgroundColor: cardBg, borderColor: border }]}>
           {[
             { icon: 'create-outline', label: 'Modifier le profil', color: textColor, onPress: () => router.push('/edit-profile') },
-            { icon: 'settings-outline', label: 'Paramètres budget', color: textColor, onPress: () => { } },
-            { icon: 'log-out-outline', label: 'Se déconnecter', color: '#E24B4A', onPress: () => logout() },
+            { icon: 'settings-outline', label: 'Paramètres', color: textColor, onPress: () => router.push('/setting') },
+            { icon: 'log-out-outline', label: 'Se déconnecter', color: dangerColor, onPress: () => logout() },
           ].map((item, i, arr) => (
             <TouchableOpacity
               key={item.label}

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
-import { Camera, MessageSquarePlus, Mic } from "lucide-react-native";
+import { Camera, MessageCirclePlus } from "lucide-react-native";
 import { router } from "expo-router";
 import { useAppColors } from "@/hooks/useAppColors";
 import QuickAdd from "@/components/modal/QuickAdd";
@@ -55,19 +55,19 @@ export default function QuickActions({ quickAddOpen, setQuickAddOpen }: QuickAct
       <View style={{ flexDirection: "row", gap: 10 }}>
         <ActionTile
           icon={<Camera color={sectionColor} size={22} />}
-          label={"Scanner\nun ticket"}
+          label={"Scanner un ticket"}
           onPress={() => router.push("/scan-ticket")}
         />
         <ActionTile
-          icon={<MessageSquarePlus color={sectionColor} size={22} />}
-          label={"Ajout\nrapide"}
+          icon={<MessageCirclePlus color={sectionColor} size={22} />}
+          label={"Ajout rapide"}
           onPress={() => router.push("/type-whatsapp")}
         />
-        <ActionTile
+        {/* <ActionTile
           icon={<Mic color={sectionColor} size={22} />}
           label={"Note\nvocale"}
           onPress={() => router.push("/voice-recorder")}
-        />
+        /> */}
       </View>
 
       <QuickAdd visible={quickAddOpen} onChange={() => setQuickAddOpen(false)} />

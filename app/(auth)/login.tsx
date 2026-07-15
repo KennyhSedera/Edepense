@@ -83,7 +83,7 @@ export default function LoginScreen() {
               returnKeyType="next"
               error={errors.email}
               onFocus={() => setErrors({ ...errors, email: "" })}
-              inputStyle={{ backgroundColor: 'transparent' }}
+              inputStyle={{ backgroundColor: 'transparent', overflow: 'hidden' }}
               style={{ marginBottom: 32 }}
             />
           </Animated.View>

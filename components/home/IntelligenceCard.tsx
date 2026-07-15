@@ -29,13 +29,13 @@ export default function IntelligenceCard({
         <View>
           <Text style={{ color: labelColor, fontSize: 12 }}>Économie conseillée</Text>
           <Text style={{ color: textColor, fontSize: 16, fontWeight: "700" }}>
-            {economieConseil.toLocaleString()} Ar
+            {economieConseil.toFixed(2)} Ar
           </Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
           <Text style={{ color: labelColor, fontSize: 12 }}>Prévision fin de mois</Text>
           <Text style={{ color: textColor, fontSize: 16, fontWeight: "700" }}>
-            {predictionFinMois.toLocaleString()} Ar
+            {predictionFinMois.toFixed(2)} Ar
           </Text>
         </View>
       </View>

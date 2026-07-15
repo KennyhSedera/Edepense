@@ -1,13 +1,17 @@
 import * as FileSystem from 'expo-file-system';
-import { extraireTexte, extraireTexteEtJson, parseDataGroq } from "./depense.util";
-import { Depense, Provision, ScanResult } from "@/types/db";
-import { normalizeCurrency } from "./number.util";
-import { ParsedReceipt, ReceiptItem } from "@/types/global";
+import { parseDataGroq } from "./depense.util";
+import { Depense, DepenseItem, ScanResult } from "@/types/db";
 import TextRecognition from "@react-native-ml-kit/text-recognition";
 import { GEMINI_RECEIPT_PROMPT } from '@/constants/prompt';
+import { ParsedReceipt, ReceiptItem } from '@/types/global';
+import { CATEGORY_EMOJIS } from '@/constants/type';
+import { normalizeCurrency } from './number.util';
+import { formatDateLong, toISODate } from './date.util';
+import { categorieDominante, enrichirArticles } from './produit-matcher';
 
 // With Groq
 export const GROQ_KEYS = [
+  process.env.EXPO_PUBLIC_GROQ_API_KEY,
   process.env.EXPO_PUBLIC_GROQ_API_KEY_2,
 ].filter(Boolean) as string[];
 export const GROQ_VISION_MODELS = [
@@ -119,17 +123,16 @@ export async function callGroqVisionWithRetry(
 
 // With Gemini
 export const GEMINI_KEYS = [
-  // process.env.EXPO_PUBLIC_GEMINI_API_KEY_1,
-  // process.env.EXPO_PUBLIC_GEMINI_API_KEY_2,
-  // process.env.EXPO_PUBLIC_GEMINI_API_KEY_3,
-  // process.env.EXPO_PUBLIC_GEMINI_API_KEY_4,
-  // process.env.EXPO_PUBLIC_GEMINI_API_KEY_5,
+  process.env.EXPO_PUBLIC_GEMINI_API_KEY_1,
+  process.env.EXPO_PUBLIC_GEMINI_API_KEY_2,
+  process.env.EXPO_PUBLIC_GEMINI_API_KEY_3,
+  process.env.EXPO_PUBLIC_GEMINI_API_KEY_4,
+  process.env.EXPO_PUBLIC_GEMINI_API_KEY_5,
   process.env.EXPO_PUBLIC_GEMINI_API_KEY_6,
 ];
 export const GEMINI_MODELS = [
   'gemini-2.5-flash',
-  // 'gemini-2.5-flash-lite',
-  // 'gemini-1.5-flash',
+  'gemini-2.5-flash-lite',
 ];
 export async function callGeminiWithRetry(base64: string | null, text: string, maxRetries = 2): Promise<any> {
   const parts: any[] = [];
@@ -215,7 +218,50 @@ export async function callGeminiWithRetry(base64: string | null, text: string, m
 }
 
 
-// Offline
+// Function principal
+export async function scanReceipt(base64: string, prompt: string, uri: string) {
+  let result = await callGroqVisionWithRetry(base64, prompt, 2);
+
+  if (result.error || result === null || result === undefined) {
+    console.warn('Groq Vision indisponible, fallback vers Gemini...');
+    result = await callGeminiWithRetry(base64, prompt, 2);
+  }
+
+  if (result.error || result === null || result === undefined) {
+    console.warn('Gemini indisponible, fallback vers OCR...');
+    result = await scanReceiptOffline(uri);
+  }
+
+  return result;
+}
+
+export async function sendDataToScan(uri: string): Promise<ScanResult> {
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+
+  let res: any;
+
+  try {
+    res = await scanReceipt(base64, GEMINI_RECEIPT_PROMPT(), uri);
+  } catch (error) {
+    console.warn(error);
+  }
+
+  return res;
+}
+
+
+// Function offline OCR
+async function textRecognize(uri: string): Promise<string> {
+  const result = await TextRecognition.recognize(uri);
+  return result.text;
+}
+export async function scanReceiptOffline(uri: string): Promise<ScanResult> {
+  const text = await textRecognize(uri);
+  const result = await scanReceiptOfflineText(text);
+  return result;
+}
 function nettoyerOCR(rawText: string): string {
   return rawText.replace(/(\d)[oO](?=\D|$)/g, '$10').replace(/[oO](\d)/g, '0$1');
 }
@@ -234,14 +280,12 @@ export function parseReceipt(rawTextBrut: string): ParsedReceipt {
   }[] = [];
 
   const isMessyReceipt = /destqhelion|impaye|exp[eé]diteur|destinataire|colis|transport/i.test(rawText);
-
   const isBank = /banque|virement|compte|access|deposit/i.test(rawText);
 
   const lignesMontant = lines.filter(line => /(total|montant|paiement|pay[eé]|à payer|a payer|net à payer)/i.test(line));
 
   for (const line of lignesMontant) {
     const match = line.match(/(\d{1,3}(?:\s\d{3})*(?:[.,]\d{2})?)/);
-
     if (match) {
       total = cleanLeadingZeros(match[1].replace(/\s/g, '').replace(',', '.'));
       break;
@@ -259,11 +303,7 @@ export function parseReceipt(rawTextBrut: string): ParsedReceipt {
       if (nombre < 1 || nombre > 1000000) continue;
       if (/^\d{9,12}$/.test(valeur)) continue;
 
-      candidates.push({
-        value: m[2],
-        currency: m[1].toUpperCase(),
-        line
-      });
+      candidates.push({ value: m[2], currency: m[1].toUpperCase(), line });
     }
 
     while ((m = numberBeforeCurrency.exec(line)) !== null) {
@@ -271,11 +311,7 @@ export function parseReceipt(rawTextBrut: string): ParsedReceipt {
       const nombre = parseFloat(valeur);
       if (nombre < 1 || nombre > 1000000) continue;
       if (/^\d{9,12}$/.test(valeur)) continue;
-      candidates.push({
-        value: m[1],
-        currency: m[2].toUpperCase(),
-        line
-      });
+      candidates.push({ value: m[1], currency: m[2].toUpperCase(), line });
     }
   }
 
@@ -283,14 +319,10 @@ export function parseReceipt(rawTextBrut: string): ParsedReceipt {
     let filtered = [...candidates];
     filtered = filtered.filter(c => {
       const n = parseFloat(c.value.replace(/\s/g, '').replace(',', '.'));
-
       if (n < 1) return false;
       if (n > 1000000) return false;
-
       if (isMessyReceipt && n > 100000) return false;
-
       if (isBank && n < 100) return false;
-
       return true;
     });
 
@@ -302,7 +334,6 @@ export function parseReceipt(rawTextBrut: string): ParsedReceipt {
       if (/total|montant|paiement|payer|a payer/i.test(c.line)) score += 100;
       if (/^\s*[\$€aAr]+\s*\d/i.test(c.line)) score += 60;
       if (n > 100000) score -= 200;
-
       return { ...c, score };
     });
 
@@ -320,18 +351,14 @@ export function parseReceipt(rawTextBrut: string): ParsedReceipt {
   const items = extractItems(lines, rawText);
 
   total = extractTotal(rawText);
+
   return {
-    rawText,
-    total,
-    currency,
-    date,
-    merchant,
-    items,
-    isUncertain,
+    rawText, total, currency, date, merchant, items, isUncertain,
     observation: null,
     categorie: deduireCategorie(rawText, merchant),
   };
 }
+
 function estUneFactureFormelle(rawText: string): boolean {
   return /(recu\s*n|montant total|facture postpaid|mode de r[eè]glement)/i.test(rawText);
 }
@@ -376,54 +403,15 @@ function deduireCategorie(rawText: string, merchant: string | null): string {
   if (/(garderie|école|universite|université|frais scolaire)/i.test(texte)) return "Education";
   if (/(socks|shirt|pants|shoe|t-shirt)/i.test(texte)) return "Vêtements";
   if (/(transport|expediteur|destinataire|colis)/i.test(texte)) return "Transport";
-  if (/(orange|telma|airtel|postpaid|forfait|recharge|credit.*telephon)/i.test(texte)) 'Téléphonie';
+  if (/(orange|telma|airtel|postpaid|forfait|recharge|credit.*telephon)/i.test(texte)) return 'Téléphonie';
   if (/orange money/i.test(rawText)) return 'Téléphonie';
   if (/(jirama|electricit|eau|facture.*logement|loyer)/i.test(texte)) return 'Logement';
   if (/(pharmacie|clinique|hopital|medecin|medicament)/i.test(texte)) return 'Santé';
   if (/(taxi|bus|transport|carburant|essence|gasoil)/i.test(texte)) return 'Transport';
   if (/(expediteur|destinataire|transport|colis)/i.test(rawText)) return "Transport";
-  if (/access|banque|deposit|voucher|compte/i.test(rawText)) "Banque";
+  if (/access|banque|deposit|voucher|compte/i.test(rawText)) return "Banque";
 
   return 'Autre';
-}
-export async function scanReceiptOffline(uri: string): Promise<ScanResult> {
-  const text = await textRecognize(uri);
-  const parsed = parseReceipt(text);
-
-  const itemsFormates = parsed.items.map((item, index) => ({
-    id: `${Date.now()}_${index}`,
-    name: item.description,
-    quantity: Number(item.quantity ?? 1),
-    unit: item.unit ?? "piece",
-    unit_price: Number(item.amount) || 0,
-    total_price: Number(item.amount) || 0,
-    image: uri,
-  }));
-
-  const montantCalcule = itemsFormates.length > 0
-    ? itemsFormates.reduce((acc, it) => acc + it.total_price, 0)
-    : Number(parsed.total ?? 0);
-
-  const depense = [
-    {
-      id: Date.now().toString(),
-      description: parsed.merchant ?? "Ticket",
-      montant: montantCalcule,
-      date: parsed.date ?? new Date().toISOString(),
-      categorie: parsed.categorie ?? "Autre",
-      user_id: "",
-      items: itemsFormates,
-    },
-  ];
-
-  return {
-    merchant: parsed.merchant,
-    devise: parsed.currency ?? "AR",
-    observation: parsed.observation,
-    rawText: parsed.rawText,
-    depense,
-    provision: [],
-  };
 }
 interface LigneArticle {
   quantite: number;
@@ -442,7 +430,6 @@ function extraireLignesArticles(lines: string[]): LigneArticle[] {
   return articles;
 }
 function extrairePrixIsoles(lines: string[]): number[] {
-  // Ligne composée uniquement d'un symbole monétaire + un nombre
   const pattern = /^[\$€]?\s*(\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?)\s*$/;
   const prix: number[] = [];
 
@@ -540,26 +527,13 @@ function normalizeDate(rawText: string): string | null {
 
   return null;
 }
-async function textRecognize(uri: string): Promise<string> {
-  const result = await TextRecognition.recognize(uri);
-  return result.text;
-}
 function extractTotal(rawText: string): string | null {
-  const text = rawText.toLowerCase();
-
   const priorityKeywords = [
-    'total',
-    'montant total',
-    'net à payer',
-    'à payer',
-    'a payer',
-    'paiement',
-    'payé'
+    'total', 'montant total', 'net à payer', 'à payer', 'a payer', 'paiement', 'payé'
   ];
 
   const lines = rawText.split('\n');
 
-  // 1. priorité ligne "TOTAL"
   for (const line of lines) {
     if (priorityKeywords.some(k => line.toLowerCase().includes(k))) {
       const match = line.match(/(\d{1,3}(?:[\s]\d{3})*(?:[.,]\d{2})?)/);
@@ -569,36 +543,26 @@ function extractTotal(rawText: string): string | null {
     }
   }
 
-  // 2. fallback → max des montants
   const numbers = extractNumbers(rawText);
-
   if (numbers.length === 0) return null;
 
   return Math.max(...numbers).toFixed(2);
 }
 function extractNumbers(rawText: string): number[] {
   const lines = rawText.split('\n');
-
-  const regex =
-    /(\d{1,3}(?:[\s]\d{3})*(?:[.,]\d{2})?|\d{1,6}[.,]\d{2})/g;
-
+  const regex = /(\d{1,3}(?:[\s]\d{3})*(?:[.,]\d{2})?|\d{1,6}[.,]\d{2})/g;
   const results: number[] = [];
 
   for (const line of lines) {
     let match;
-
     while ((match = regex.exec(line)) !== null) {
-      let value = match[1]
-        .replace(/\s/g, '')
-        .replace(',', '.');
-
+      let value = match[1].replace(/\s/g, '').replace(',', '.');
       const num = parseFloat(value);
 
-      // ❌ filtre anti bruit
       if (isNaN(num)) continue;
       if (num <= 0) continue;
-      if (num > 5_000_000) continue; // évite gros IDs
-      if (/^\d{7,}$/.test(value)) continue; // IDs longs
+      if (num > 5_000_000) continue;
+      if (/^\d{7,}$/.test(value)) continue;
 
       results.push(num);
     }
@@ -606,38 +570,278 @@ function extractNumbers(rawText: string): number[] {
 
   return results;
 }
+type ItemPattern = {
+  regex: RegExp;
+  extract: (m: RegExpMatchArray) => ReceiptItem | null;
+};
+const USER_ITEM_PATTERNS: ItemPattern[] = [
+  {
+    regex: /^[•\-\*]?\s*(.+?)\s*\(x(\d+(?:[.,]\d+)?)\)\s*[—\-–]\s*([\d\s]+(?:[.,]\d{2})?)/i,
+    extract: (m) => ({
+      description: m[1].trim(),
+      amount: m[3].replace(/\s/g, '').replace(',', '.'),
+      quantity: m[2].replace(',', '.'),
+      unit: null,
+    }),
+  },
+  // "T-shirt x1 19$"  |  "Riz x2 5000 ar"
+  {
+    regex: /^[•\-\*]?\s*(.+?)\s+x\s*(\d+(?:[.,]\d+)?)\s+([\d\s]+(?:[.,]\d{2})?)/i,
+    extract: (m) => ({
+      description: m[1].trim(),
+      amount: m[3].replace(/\s/g, '').replace(',', '.'),
+      quantity: m[2].replace(',', '.'),
+      unit: null,
+    }),
+  },
+  // "2 T-shirt 19$"  |  "1 Riz 5000 ar"  (quantité en début de ligne)
+  {
+    regex: /^[•\-\*]?\s*(\d+(?:[.,]\d+)?)\s+(.+?)\s+([\d\s]+(?:[.,]\d{2})?)\s*(\$|€|ar\b|mga|ariary)?$/i,
+    extract: (m) => ({
+      description: m[2].trim(),
+      amount: m[3].replace(/\s/g, '').replace(',', '.'),
+      quantity: m[1].replace(',', '.'),
+      unit: null,
+    }),
+  },
+  // "T-shirt: 19$"  |  "Riz - 5000 ar"  (pas de quantité → défaut 1)
+  {
+    regex: /^[•\-\*]?\s*(.+?)\s*[:\-—–]\s*([\d\s]+(?:[.,]\d{2})?)\s*(\$|€|ar\b|mga|ariary)?$/i,
+    extract: (m) => ({
+      description: m[1].trim(),
+      amount: m[2].replace(/\s/g, '').replace(',', '.'),
+      quantity: '1',
+      unit: null,
+    }),
+  },
+  // "T-shirt 19$"  (juste nom + prix collé, dernier recours)
+  {
+    regex: /^[•\-\*]?\s*(.+?)\s+([\d\s]+(?:[.,]\d{2})?)\s*(\$|€|ar\b|mga|ariary)$/i,
+    extract: (m) => ({
+      description: m[1].trim(),
+      amount: m[2].replace(/\s/g, '').replace(',', '.'),
+      quantity: '1',
+      unit: null,
+    }),
+  },
+];
+const excludeUserLine = /(montant total|sous[\s\-]total|total\s*:|^total\b)/i;
+function extractItemsFromUserText(lines: string[]): ReceiptItem[] {
+  const items: ReceiptItem[] = [];
 
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim();
+    if (trimmed.length < 3) continue;
+    if (excludeUserLine.test(trimmed)) continue;
 
-// Function principal
-export async function scanReceipt(base64: string, prompt: string, uri: string) {
-  let result = await callGroqVisionWithRetry(base64, prompt, 2);
+    for (const { regex, extract } of USER_ITEM_PATTERNS) {
+      const match = trimmed.match(regex);
+      if (!match) continue;
 
-  if (result.error || result === null || result === undefined) {
-    console.warn('Groq Vision indisponible, fallback vers Gemini...');
-    result = await callGeminiWithRetry(base64, prompt, 2);
+      const item = extract(match);
+      if (!item || item.description.length < 2) continue;
+
+      const n = parseFloat(item.amount);
+      if (isNaN(n) || n <= 0) continue;
+
+      items.push(item);
+      break;
+    }
   }
 
-  if (result.error || result === null || result === undefined) {
-    console.warn('Gemini indisponible, fallback vers OCR...');
-    result = await scanReceiptOffline(uri);
+  return items;
+}
+function extractTotalFromUserText(rawText: string): string | null {
+  const match = rawText.match(/(?:montant total|total)\D{0,15}(\d{1,3}(?:[\s]\d{3})*(?:[.,]\d{2})?)/i);
+  return match ? match[1].replace(/\s/g, '').replace(',', '.') : null;
+}
+function extractCurrencyFromUserText(rawText: string): string | null {
+  if (/\$/.test(rawText)) return 'USD';
+  if (/€/.test(rawText)) return 'EUR';
+  if (/\b(ar|ariary|mga)\b/i.test(rawText)) return 'MGA';
+  return null;
+}
+export interface ParsedUserText extends ParsedReceipt {
+  needsAIFallback: boolean;
+}
+export function parseUserText(rawTextBrut: string): ParsedUserText {
+  const rawText = rawTextBrut; // pas de nettoyerOCR : pas de bruit de scan ici
+  const lines = rawText.split('\n');
+
+  const items = extractItemsFromUserText(lines);
+
+  // Aucun item détecté mais le texte contient des chiffres → probablement
+  // du langage naturel libre, pas un format semi-structuré → fallback IA
+  const needsAIFallback = items.length === 0 && /\d/.test(rawText);
+
+  const total = extractTotalFromUserText(rawText) ??
+    (items.length > 0
+      ? items.reduce((acc, it) => acc + parseFloat(it.amount) * parseFloat(it.quantity ?? '1'), 0).toFixed(2)
+      : null);
+
+  const currency = extractCurrencyFromUserText(rawText);
+  const date = normalizeDate(rawText);
+
+  return {
+    rawText,
+    total,
+    currency,
+    date,
+    merchant: null,
+    items,
+    isUncertain: !date || needsAIFallback,
+    observation: null,
+    categorie: deduireCategorie(rawText, null),
+    needsAIFallback,
+  };
+}
+function getCategoryEmoji(categorie: string): string {
+  return CATEGORY_EMOJIS[categorie] ?? "📦";
+}
+function formatMontant(montant: number, devise: string = "Ar"): string {
+  return `${montant.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${devise}`;
+}
+function formatItemLine(item: DepenseItem, devise: string = "Ar"): string {
+  const quantitePart =
+    item.quantity && item.unit
+      ? ` (x${item.quantity} ${item.unit})`
+      : item.quantity
+        ? ` (x${item.quantity})`
+        : "";
+
+  return `  • ${item.name}${quantitePart} — ${formatMontant(item.total_price, devise)}`;
+}
+export function formatDepenseAsText(depenses: Depense[], devise: string = "Ar"): string {
+  const groupes = new Map<string, DepenseItem[]>();
+
+  for (const depense of depenses ?? []) {
+    const cat = depense.categorie ?? "";
+    for (const item of depense.items ?? []) {
+      if (!groupes.has(cat)) groupes.set(cat, []);
+      groupes.get(cat)!.push(item);
+    }
   }
 
-  return result;
+  const blocs: string[] = [];
+
+  for (const [categorie, items] of groupes) {
+    const emoji = getCategoryEmoji(categorie);
+    const lignes = items.map((item) => formatItemLine(item, devise)).join("\n");
+    blocs.push(`${emoji} ${categorie}\n${lignes}`);
+  }
+
+  return blocs.join("\n\n");
 }
 
-export async function sendDataToScan(uri: string): Promise<ScanResult> {
-  const base64 = await FileSystem.readAsStringAsync(uri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
+// SCAN — OCR
+export async function scanReceiptOfflineText(text: string): Promise<any> {
+  const parsed = parseReceipt(text);
 
-  let res: any;
+  const itemsFormates = parsed.items.map((item, index) => ({
+    id: `${Date.now()}_${index}`,
+    name: item.description,
+    quantity: Number(item.quantity ?? 1),
+    unit: item.unit ?? "piece",
+    unit_price: Number(item.amount) || 0,
+    total_price: Number(item.amount) || 0,
+    image: "",
+  }));
 
-  try {
-    res = await scanReceipt(base64, GEMINI_RECEIPT_PROMPT(), uri);
-  } catch (error) {
-    console.warn(error);
+  const montantCalcule = itemsFormates.length > 0
+    ? itemsFormates.reduce((acc, it) => acc + it.total_price, 0)
+    : Number(parsed.total ?? 0);
+
+  let depense: Depense[] = [
+    {
+      id: Date.now().toString(),
+      description: parsed.merchant ?? "Ticket",
+      montant: montantCalcule,
+      date: parsed.date ?? new Date().toISOString(),
+      categorie: parsed.categorie ?? "Autre",
+      user_id: "",
+      items: itemsFormates,
+    },
+  ];
+
+  const montantTotal = depense.reduce((total, d) => total + d.montant, 0);
+  const textDepense = formatDepenseAsText(depense, parsed.currency ?? "AR");
+
+  let textClair = "";
+
+  if (montantTotal > 0) {
+    textClair = ` 🛒 Résumé de la Liste de Courses.\n\n${textDepense} \n\n💰 Montant total: ${montantTotal.toFixed(2)} ${parsed.currency ?? "AR"} \n📆 Date: ${formatDateLong(toISODate(new Date()))}`;
+  } else {
+    textClair = `💡 Oups ! Cette image ne semble pas correspondre à un reçu ou à une facture. Pouvez-vous vérifier votre document ?`;
+    depense = [];
   }
 
-  return res;
+  return {
+    textClair,
+    merchant: parsed.merchant,
+    devise: parsed.currency ?? "AR",
+    observation: parsed.observation,
+    rawText: parsed.rawText,
+    depense,
+    provision: [],
+  };
 }
 
+// SCAN — TEXTE UTILISATEUR
+export async function scanUserText(text: string): Promise<any> {
+  const parsed = parseUserText(text);
+
+  if (parsed.needsAIFallback) {
+    return { needsAIFallback: true, rawText: text };
+  }
+
+  const articlesEnrichis = enrichirArticles(parsed.items);
+
+  const itemsFormates = articlesEnrichis.map((item, index) => ({
+    id: `${Date.now()}_${index}`,
+    name: item.produit?.name ?? item.description,
+    quantity: Number(item.quantity ?? 1),
+    unit: item.unit ?? "piece",
+    unit_price: Number(item.amount) || 0,
+    total_price: Number(item.amount) || 0,
+    image: "",
+  }));
+
+  const categorie = categorieDominante(articlesEnrichis) !== 'Autre'
+    ? categorieDominante(articlesEnrichis)
+    : deduireCategorie(parsed.rawText, parsed.merchant);
+
+
+  const montantCalcule = itemsFormates.length > 0
+    ? itemsFormates.reduce((acc, it) => acc + it.total_price * it.quantity, 0)
+    : Number(parsed.total ?? 0);
+
+  const depense: Depense[] = [
+    {
+      id: Date.now().toString(),
+      description: parsed.merchant ?? "Liste de courses",
+      montant: montantCalcule,
+      date: parsed.date ?? new Date().toISOString(),
+      categorie: parsed.categorie ?? "Autre",
+      user_id: "",
+      items: itemsFormates,
+    },
+  ];
+
+  const textDepense = formatDepenseAsText(depense, parsed.currency ?? "AR");
+  const textClair = ` 🛒 Résumé de la Liste de Courses.\n\n${textDepense} \n\n💰 Montant total: ${montantCalcule.toFixed(2)} ${parsed.currency ?? "AR"} \n📆 Date: ${formatDateLong(depense[0].date || toISODate(new Date()))}`;
+
+  return {
+    textClair,
+    merchant: parsed.merchant,
+    devise: parsed.currency ?? "AR",
+    observation: parsed.observation,
+    rawText: parsed.rawText,
+    depense,
+    provision: [],
+  };
+}
+
+// DISPATCHER UNIQUE
+export async function scanText(text: string, source: 'ocr' | 'user' = 'ocr'): Promise<any> {
+  return source === 'user' ? scanUserText(text) : scanReceiptOfflineText(text);
+}

@@ -1,11 +1,13 @@
+import { genererBlocCategories } from "./categorie-prompt";
+
 // TYPE MESSAGE
 function ANALYSE_PROMPT(text: string): string {
   return ` Agis en tant qu'analyste de données financières et expert en traitement de données. Ta mission est d'analyser le texte fourni par l'utilisateur pour extraire les dépenses, les achats ou les listes de courses.
 
   ### Instructions de filtrage (Cas hors-sujet) :
   - Lorsque le texte contient une salutation (ex: "Bonjour", "Salut", "Hi", ...), un remerciement (ex: "Merci", "Merci beaucoup", "Merci beaucoup !" ...), un compliment ou une demande de recommandation de produit, adopte un ton chaleureux et bienveillant. Réponds avec des mots doux, de l'empathie et des conseils personnalisés selon la situation mais dans la dommaine des finances et des achats. Et on ne reponds pas avec le format au-dessous.
-  - Si le texte n'a AUCUN rapport avec des dépenses, des achats, des courses ou du shopping (ex: un texte littéraire, une histoire, etc.), renvoie STRICTEMENT ce message : "Désolé, ce texte ne semble pas contenir de données relatives à des dépenses ou à des achats."
-  - Si le texte est une simple question ou une demande d'aide directe de l'utilisateur, réponds à sa question normalement.
+  - Si non si le texte n'a AUCUN rapport avec des dépenses, des achats, des courses ou du shopping (ex: un texte littéraire, une histoire, etc.), renvoie STRICTEMENT ce message : "Désolé, ce texte ne semble pas contenir de données relatives à des dépenses ou à des achats."
+  - Si non si le texte est une simple question ou une demande d'aide directe de l'utilisateur, réponds à sa question normalement.
 
     NB : Mettre des emojis ou des caractères spéciaux dans les reponses. Et on evite le reponses pour les erreurs ou reponse destinées aux utilisateurs de n'est pas précisé qu'il y a la 2 em partie en JSON.
 
@@ -13,21 +15,7 @@ function ANALYSE_PROMPT(text: string): string {
   1. Analyse chaque article, sa quantité, son unité, et le prix associé.
   2. Détermine si le prix fourni est un prix unitaire ou un prix total, puis calcule la valeur manquante.
   3. CATÉGORISATION AVANCÉE ET NORMALISÉE : Les catégories doivent être suffisamment précises pour être utiles dans une analyse financière. Évite les catégories trop générales ou ambiguës. Utilise une catégorie principale parmi cette liste lorsqu'elle correspond :
-  - Fruits(banane, pomme, orange, mangue, ananas, etc.)
-  - Légumes(carotte, tomate, oignon, pomme de terre, salade, haricot vert, etc.)
-  - Viandes(zébu, porc, poulet, viande hachée, saucisse, etc.)
-  - Poissons et Fruits de mer (poisson, crevette, calamar, crustacé, etc.)
-  - Produits laitiers (lait, fromage, yaourt, beurre, etc.)
-  - Épicerie sèche (riz, pâtes, farine, sucre, huile, sel, épices, café, thé, etc.)
-  - Boissons (eau, jus, soda, bière, boissons diverses)
-  - Snacks et Confiseries (biscuits, bonbons, chocolat, chips)
-  - Produits ménagers (savon, lessive, détergent, papier toilette, etc.)
-  - Hygiène et Beauté (shampoing, dentifrice, cosmétique, etc.)
-  - Aliments pour animaux (viande pour animaux, graines pour animaux, etc.)
-  - Vêtements et Accessoires (vetements, chaussures, accessoires, etc.)
-  - Jouets et Jouets (jouets, jeux, etc.)
-  - Education et Loisirs (livres, jeux video, livres de poche, etc.)
-  - Autres
+${genererBlocCategories()}
   RÈGLES IMPORTANTES :
   - Deux catégories ne doivent JAMAIS avoir des noms différents mais représenter la même chose.
     Exemple interdit :
@@ -110,8 +98,8 @@ function GROQ_PROMPT(text: string, prixMode: 'unit_price' | 'total_price'): stri
 
   ### Instructions de filtrage (Cas hors-sujet) :
   - Lorsque le texte contient une salutation (ex: "Bonjour", "Salut", "Hi", ...), un remerciement (ex: "Merci", "Merci beaucoup", "Merci beaucoup !" ...), un compliment ou une demande de recommandation de produit, adopte un ton chaleureux et bienveillant. Réponds avec des mots doux, de l'empathie et des conseils personnalisés selon la situation mais dans la dommaine des finances et des achats. Et on ne reponds pas avec le format au-dessous.
-  - Si le texte n'a AUCUN rapport avec des dépenses, des achats, des courses ou du shopping (ex: un texte littéraire, une histoire, etc.), renvoie STRICTEMENT ce message : "Désolé, ce texte ne semble pas contenir de données relatives à des dépenses ou à des achats."
-  - Si le texte est une simple question ou une demande d'aide directe de l'utilisateur, réponds à sa question normalement.
+  - Si non si le texte n'a AUCUN rapport avec des dépenses, des achats, des courses ou du shopping (ex: un texte littéraire, une histoire, etc.), renvoie STRICTEMENT ce message : "Désolé, ce texte ne semble pas contenir de données relatives à des dépenses ou à des achats."
+  - Si non le texte est une simple question ou une demande d'aide directe de l'utilisateur, réponds à sa question normalement.
 
     NB : Mettre des emojis ou des caractères spéciaux dans les reponses. Et on evite le reponses pour les erreurs ou reponse destinées aux utilisateurs de n'est pas précisé qu'il y a la 2 em partie en JSON.
 
@@ -120,21 +108,7 @@ function GROQ_PROMPT(text: string, prixMode: 'unit_price' | 'total_price'): stri
 
   Consignes strictes d'analyse et de calcul :
   1. CATÉGORISATION AVANCÉE ET NORMALISÉE : Les catégories doivent être suffisamment précises pour être utiles dans une analyse financière. Évite les catégories trop générales ou ambiguës. Utilise une catégorie principale parmi cette liste lorsqu'elle correspond :
-  - Fruits(banane, pomme, orange, mangue, ananas, etc.)
-  - Légumes(carotte, tomate, oignon, pomme de terre, salade, haricot vert, etc.)
-  - Viandes(zébu, porc, poulet, viande hachée, saucisse, etc.)
-  - Poissons et Fruits de mer (poisson, crevette, calamar, crustacé, etc.)
-  - Produits laitiers (lait, fromage, yaourt, beurre, etc.)
-  - Épicerie sèche (riz, pâtes, farine, sucre, huile, sel, épices, café, thé, etc.)
-  - Boissons (eau, jus, soda, bière, boissons diverses)
-  - Snacks et Confiseries (biscuits, bonbons, chocolat, chips)
-  - Produits ménagers (savon, lessive, détergent, papier toilette, etc.)
-  - Hygiène et Beauté (shampoing, dentifrice, cosmétique, etc.)
-  - Aliments pour animaux (viande pour animaux, graines pour animaux, etc.)
-  - Vêtements et Accessoires (vetements, chaussures, accessoires, etc.)
-  - Jouets et Jouets (jouets, jeux, etc.)
-  - Education et Loisirs (livres, jeux video, livres de poche, etc.)
-  - Autres
+${genererBlocCategories()}
   RÈGLES IMPORTANTES :
   - Deux catégories ne doivent JAMAIS avoir des noms différents mais représenter la même chose.
     Exemple interdit :
@@ -256,7 +230,7 @@ function GEMINI_RECEIPT_PROMPT(): string {
   Catégories : Regrouper les articles par catégorie, précédée d'un émoji pertinent (ex: 🥦, 🥩, 🧃).
   Articles & Détails : Afficher chaque produit sur une seule ligne sous la forme :
   • [Nom de l'article] (x[Quantité]) — [Prix total]
-  Total : Terminer par une ligne séparée avec l'émoji 💰 sous la forme : 💰 Montant Total de la Liste : [Valeur] € avec  date avec emoji calandar de format: ex: 10 Juin 2023 au dessous. 
+  Total : Terminer par une ligne séparée avec l'émoji 💰 sous la forme : 💰 Montant Total de la Liste : [Valeur] € avec  date avec emoji calandar de format: ex:📆 10 Juin 2023 au dessous mais la date aujourd'hui s'il contient pas de date.
   Exemple de rendu :
   🥦 Fruits & Légumes
   • Pommes de terre (x2 kg) — 3,00 €
@@ -277,7 +251,7 @@ function GEMINI_RECEIPT_PROMPT(): string {
   }
   Format du champ textClair : Renvoyez exactement le message suivant :
 
-  "Oups ! Cette image ne semble pas correspondre à un reçu ou à une facture.
+  "💡Oups ! Cette image ne semble pas correspondre à un reçu ou à une facture.
   Pouvez-vous vérifier votre document ?"
 
   Cas 3 : L'image est un document valide mais illisible
@@ -304,21 +278,7 @@ function GEMINI_RECEIPT_PROMPT(): string {
   1. VÉRIFICATION : Confirme d'abord qu'il s'agit bien d'un ticket de caisse/reçu lisible. Si ce n'est pas le cas, retourne quand même la structure JSON avec les valeurs à null/0 et "categories_combinees": [].
 
   2. CATÉGORISATION AVANCÉE ET NORMALISÉE : Les catégories doivent être suffisamment précises pour être utiles dans une analyse financière. Évite les catégories trop générales ou ambiguës. Utilise une catégorie principale parmi cette liste lorsqu'elle correspond :
-  - Fruits(banane, pomme, orange, mangue, ananas, etc.)
-  - Légumes(carotte, tomate, oignon, pomme de terre, salade, haricot vert, etc.)
-  - Viandes(zébu, porc, poulet, viande hachée, saucisse, etc.)
-  - Poissons et Fruits de mer (poisson, crevette, calamar, crustacé, etc.)
-  - Produits laitiers (lait, fromage, yaourt, beurre, etc.)
-  - Épicerie sèche (riz, pâtes, farine, sucre, huile, sel, épices, café, thé, etc.)
-  - Boissons (eau, jus, soda, bière, boissons diverses)
-  - Snacks et Confiseries (biscuits, bonbons, chocolat, chips)
-  - Produits ménagers (savon, lessive, détergent, papier toilette, etc.)
-  - Hygiène et Beauté (shampoing, dentifrice, cosmétique, etc.)
-  - Aliments pour animaux (viande pour animaux, graines pour animaux, etc.)
-  - Vêtements et Accessoires (vetements, chaussures, accessoires, etc.)
-  - Jouets et Jouets (jouets, jeux, etc.)
-  - Education et Loisirs (livres, jeux video, livres de poche, etc.)
-  - Autres
+${genererBlocCategories()}
   RÈGLES IMPORTANTES :
   - Deux catégories ne doivent JAMAIS avoir des noms différents mais représenter la même chose.
     Exemple interdit :

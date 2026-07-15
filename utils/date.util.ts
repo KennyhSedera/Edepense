@@ -8,7 +8,7 @@ export function toISODate(d: Date) {
 }
 
 export function formatDateForDisplay(isoDate: string) {
-  const parts = isoDate.split("-");
+  const parts = isoDate.split(/[-/]/);
   if (parts.length !== 3) return isoDate;
   const [year, month, day] = parts;
   return `${day}/${month}/${year}`;
@@ -20,7 +20,7 @@ export const MOIS_FR = [
 ];
 
 export function formatDateStringForDisplay(isoDate: string) {
-  const parts = isoDate.split("-");
+  const parts = isoDate.split(/[-/]/);
   if (parts.length !== 3) return isoDate;
   const [year, month, day] = parts;
   const monthIndex = parseInt(month, 10) - 1;
@@ -41,7 +41,7 @@ export function buildYearRange(centerYear: number, span: number) {
 }
 
 export function formatDateLong(isoDate: string) {
-  const parts = isoDate.split("-");
+  const parts = isoDate.split(/[-/]/);
   if (parts.length !== 3) return isoDate;
   const [year, month, day] = parts;
   const monthName = MOIS_FR[parseInt(month, 10) - 1] ?? month;

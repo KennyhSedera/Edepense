@@ -15,10 +15,10 @@ import DeleteModal from '@/components/modal/DeleteModal';
 import { getUnitLabel } from '@/constants/type';
 import { MainHeader } from '@/components/header/header-main';
 import { TabHeader } from './_layout';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProvisionScreen() {
   const { sectionColor, border, backgroundColor, labelColor, textColor, dangerColor, successColor } = useAppColors();
-  const { devise } = useBudgetStore();
   const [provision, setProvision] = useState<Provision[]>([]);
   const [filtered, setFiltered] = useState<Provision[]>([]);
   const [selected, setSelected] = useState<Provision[]>([]);
@@ -27,6 +27,7 @@ export default function ProvisionScreen() {
     id: "",
     message: "",
   });
+  const { user } = useAuth();
 
   const { search }: { search: string } = useLocalSearchParams();
 
@@ -44,7 +45,7 @@ export default function ProvisionScreen() {
   );
 
 
-  const handleDelete = async (action: string, id: string) => {
+  const handleDelete = async (action?: string, id?: string) => {
     if (action === "delete" && id) {
       let res: any = {};
       if (selected.length > 0) {
@@ -149,7 +150,7 @@ export default function ProvisionScreen() {
                 <View style={styles.cardContent}>
                   <Text style={[styles.name, { color: textColor }]}>{provision.nom}</Text>
                   <Text style={[styles.text, { color: textColor }]}>{provision.quantite_initiale} {getUnitLabel(provision.unite)}</Text>
-                  <Text style={styles.price}>{formatCompactNumber(provision.prix_total, devise)} </Text>
+                  <Text style={styles.price}>{formatCompactNumber(provision.prix_total, user?.devise)} </Text>
                   <Text style={[styles.date, { color: textColor }]}>{formatDateLong(provision.date_achat)} </Text>
                 </View>
 

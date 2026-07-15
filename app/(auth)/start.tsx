@@ -96,7 +96,7 @@ export default function WelcomeScreen() {
             <ArrowRight size={20} color="#fff" strokeWidth={2.5} />
           </Pressable>
           <Text style={[s.ctaFooter, { color: textColor }]}>
-            Gratuit • Sans engagement • 100% hors-ligne compatible
+            Gratuit • Sans engagement • En-ligne ou hors-ligne compatible
           </Text>
         </Animated.View>
       </View>

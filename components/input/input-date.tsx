@@ -25,7 +25,7 @@ export default function InputDate({ label, value, onChange, onFocus, error }: an
       <Pressable style={[styles.field]} onPress={openDatePicker}>
         <Text style={[styles.label, { color: labelColor }]}>{label}</Text>
         <Text style={[styles.input, { backgroundColor: inputBg, color: error ? "red" : textColor, borderColor: error ? "red" : border, paddingVertical: 12 }]}>{formatDateLong(value)}</Text>
-        {error && <Text style={{ color: "red" }}>{error}</Text>}
+        {error && <Text style={styles.error}>{error}</Text>}
       </Pressable>
     </View>
   )

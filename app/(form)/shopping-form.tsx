@@ -37,7 +37,7 @@ type ItemForm = {
 export default function DepenseForm() {
 
   const [montant, setMontant] = useState("");
-  const [categorie, setCategorie] = useState("Alimentation");
+  const [categorie, setCategorie] = useState("Légumes");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(toISODate(new Date()));
   const [showCustomDateInput, setShowCustomDateInput] = useState(false);
@@ -254,7 +254,6 @@ export default function DepenseForm() {
     >
       <DatePickerCalendar value={date} onChange={(v: string) => handleConfirmDate(v)} visible={dateModalVisible} />
 
-      {/* CHAMPS PRINCIPAUX */}
       <View style={[styles.card, styles.infoGridFull, { backgroundColor: cardBg, borderColor: border, padding: 12 }]}>
         <Field
           label="Montant *"
@@ -267,11 +266,12 @@ export default function DepenseForm() {
           readOnly
         />
 
-        <SelectChips
+        <SelectChipsMenu
           label="Catégorie *"
           data={CATEGORIES}
           value={categorie}
           setValue={setCategorie}
+          position={{ top: -20, right: 0, left: 0, }}
         />
 
         <Field

@@ -1,9 +1,11 @@
+import { LucideIcon } from "lucide-react-native";
 import React, { ReactNode } from "react";
 import { ImageSourcePropType, ImageStyle, StyleProp, TextInputProps, TextStyle } from "react-native";
 import { ViewStyle } from "react-native";
 import { InputModeOptions, KeyboardType } from "react-native";
 import { DimensionValue } from "react-native";
 import { SharedValue } from "react-native-reanimated";
+import { Message } from "./db";
 
 type FieldProps = {
   label?: string;
@@ -40,7 +42,7 @@ export type ModalProps = {
 export type DeleteModalProps = {
   id?: string;
   visible: boolean;
-  onChange: (action: string, id: string) => void;
+  onChange: (action?: string | undefined, id?: string | undefined) => void | Promise<void>;
   message?: string;
 }
 
@@ -139,4 +141,36 @@ export interface AudioDepense {
   categorie?: string;
   montant: number;
   date: string;
+}
+
+export type SelectOption<T extends string = string> = {
+  label: string;
+  value: T;
+};
+
+export interface InputSelectProps<T extends string = string> {
+  label?: string;
+  value: T;
+  options: SelectOption<T>[];
+  onChange: (value: T) => void;
+  placeholder?: string;
+  error?: string;
+  onFocus?: () => void;
+}
+
+export type CardMenuProps = {
+  title: string,
+  color?: string,
+  iconColor?: string,
+  onPress: () => void
+  Icon: LucideIcon | React.ComponentType<any>,
+}
+
+export type FooterMessageProps = {
+  text?: string,
+  textToResponse?: Message | null,
+  setImage?: (uri: string) => void,
+  setText?: (text: string) => void,
+  setSound?: (uri: string) => void,
+  onClearResponse?: () => void
 }

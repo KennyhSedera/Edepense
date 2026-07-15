@@ -1,14 +1,18 @@
-import { router, Tabs, useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { router, Tabs, useRouter } from "expo-router";
+import React, { useState } from "react";
 import { Image, Pressable, StatusBar, Text, TextInput, View } from "react-native";
 import CustomTabBar from "@/components/ui/CustomTabBar";
 import { Apple, Bell, CircleDollarSignIcon, LayoutGrid, Menu, Search, ShoppingBasket } from "lucide-react-native";
 import { styles } from "@/styles/styles";
-import { getUser } from "@/controller/user.controller";
 import { useAppColors } from "@/hooks/useAppColors";
-import { st } from '@/components/header/animate-header';
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 export function HomeHeader() {
+  const { unreadCount } = useNotifications();
+  const { dangerColor, white } = useAppColors();
+  const router = useRouter();
+
   return (
     <View style={{ width: "100%" }}>
       <View
@@ -35,6 +39,18 @@ export function HomeHeader() {
         <View style={{ flexDirection: "row", gap: 16 }}>
           <Pressable onPress={() => router.push("/notification")}>
             <Bell size={22} color={"white"} />
+            {unreadCount > 0 && (
+              <View style={{
+                position: "absolute", top: -6, right: -6,
+                backgroundColor: dangerColor, borderRadius: 10,
+                minWidth: 18, height: 18, alignItems: "center", justifyContent: "center",
+                paddingHorizontal: 3,
+              }}>
+                <Text style={{ color: white, fontSize: 10, fontWeight: "bold" }}>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </Text>
+              </View>
+            )}
           </Pressable>
 
           <Pressable onPress={() => router.push("/menu")}>
@@ -67,7 +83,7 @@ export function HomeHeader() {
           <Text
             style={{
               flex: 1,
-              padding: 8,
+              padding: 10,
               fontSize: 16,
               color: "#ececec",
             }}
@@ -79,7 +95,11 @@ export function HomeHeader() {
   )
 }
 
-export function TabHeader({ title }: { title: string }) {
+export function TabHeader({ title }: { title: string, }) {
+  const { user } = useAuth();
+  const image = user?.avatar;
+  const { sectionColor } = useAppColors();
+
   const [search, setSearch] = useState("");
   return (
     <View
@@ -96,7 +116,7 @@ export function TabHeader({ title }: { title: string }) {
       <View style={[styles.itemTopRow, { justifyContent: "space-between", paddingHorizontal: 5 }]}>
         <Text style={[styles.title, { color: "white" }]}>{title}</Text>
         <Image
-          source={require("@/assets/images/logo.png")}
+          source={image ? { uri: image } : require("@/assets/images/logo.png")}
           style={{
             width: 32,
             height: 32,
@@ -104,6 +124,8 @@ export function TabHeader({ title }: { title: string }) {
             objectFit: "cover",
             backgroundColor: "white",
             padding: 4,
+            borderWidth: 1,
+            borderColor: sectionColor,
           }}
         />
       </View>
@@ -131,7 +153,7 @@ export function TabHeader({ title }: { title: string }) {
           }}
           style={{
             flex: 1,
-            padding: 8,
+            padding: 6,
             fontSize: 16,
             color: "white",
           }}
@@ -152,30 +174,22 @@ export default function TabLayout() {
       />
       <Tabs
         initialRouteName="index"
-        screenOptions={{
-          headerShown: false,
-        }}
-        tabBar={(props) => (
-          <CustomTabBar {...props} />
-        )}
+        screenOptions={{ headerShown: false, }}
+        tabBar={(props) => (<CustomTabBar {...props} />)}
       >
         <Tabs.Screen
           name="index"
           options={{
             title: "Accueil",
-            tabBarIcon: ({ color, focused }) => (
-              <LayoutGrid size={focused ? 34 : 24} color={color} />
-            ),
+            tabBarIcon: ({ color, focused }) => (<LayoutGrid size={focused ? 34 : 24} color={color} />),
             tabBarActiveTintColor: tintColor,
           }}
         />
         <Tabs.Screen
           name="shopping"
           options={{
-            title: "Courses",
-            tabBarIcon: ({ color, focused }) => (
-              <ShoppingBasket size={focused ? 39 : 24} color={color} />
-            ),
+            title: "Achats",
+            tabBarIcon: ({ color, focused }) => (<ShoppingBasket size={focused ? 39 : 24} color={color} />),
             tabBarActiveTintColor: tintColor,
 
           }}
@@ -186,20 +200,14 @@ export default function TabLayout() {
             title: "Provisions",
             tabBarIcon: ({ color, focused }) => (<Apple size={focused ? 36 : 24} color={color} />),
             tabBarActiveTintColor: tintColor,
-            tabBarIconStyle: {
-              color: textColor,
-              fontSize: 16,
-            },
+            tabBarIconStyle: { color: textColor, fontSize: 16, },
           }}
         />
         <Tabs.Screen
-          name="budget"
+          name="goal"
           options={{
-            title: "Budget",
-            tabBarIcon: ({ color, focused }) => (
-              <CircleDollarSignIcon size={focused ? 34 : 24
-              } color={color} />
-            ),
+            title: "Objetifs",
+            tabBarIcon: ({ color, focused }) => (<CircleDollarSignIcon size={focused ? 34 : 24} color={color} />),
             tabBarActiveTintColor: tintColor,
           }}
         />

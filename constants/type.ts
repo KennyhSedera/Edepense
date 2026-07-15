@@ -1,4 +1,5 @@
-import { Calendar, ListChecks, MessageSquareText, PiggyBank, ScanLine, Sparkles, TrendingUp, Wallet } from "lucide-react-native";
+import { GoalFrequency } from "@/types/db";
+import { Calendar, ListChecks, MessageSquareText, PiggyBank, ScanLine, Sparkles, TrendingUp, Wallet, X, XCircle } from "lucide-react-native";
 import { Dimensions } from "react-native";
 
 function getGoalType(type: string) {
@@ -15,14 +16,22 @@ function getGoalType(type: string) {
 
   return t;
 }
-
 const CATEGORIES = [
-  "Alimentation",
-  "Transport",
-  "Santé",
-  "Loisirs",
-  "Logement",
-  "Autre",
+  "Fruits",
+  "Légumes",
+  "Viandes",
+  "Poissons et Fruits de mer",
+  "Produits laitiers",
+  "Épicerie sèche",
+  "Boissons",
+  "Snacks et Confiseries",
+  "Produits ménagers",
+  "Hygiène et Beauté",
+  "Aliments pour animaux",
+  "Vêtements et Accessoires",
+  "Jouets et Jeux",
+  "Education et Loisirs",
+  "Autres",
 ];
 
 const CATEGORIES_PROVISION = [
@@ -109,4 +118,47 @@ const BARHEIGHTSMESSAGE = [
 
 const PAGE_SIZE = 10;
 
-export { getGoalType, getUnitLabel, CATEGORIES, CATEGORIES_PROVISION, UNITE, ITEMS_DATE, DIMENSION, FEATURESWELCOME, BARHEIGHTS, BARHEIGHTSMESSAGE, PAGE_SIZE };
+const CATEGORY_EMOJIS: Record<string, string> = {
+  "Fruits & Légumes": "🥦",
+  "Fruits": "🍏",
+  "Légumes": "🥕",
+  "Alimentation": "🍏",
+  "Boissons": "🥤",
+  "Viandes": "🥩",
+  "Viande & Poisson": "🥩",
+  "Épicerie": "🛒",
+  "Produits laitiers": "🧀",
+  "Hygiène": "🧼",
+  "Banque": "🏦",
+  "Education": "🎓",
+  "Vêtements": "👕",
+  "Vêtements et Accessoires": "👕",
+  "Sante": "🏥",
+  "Transport": "🚗",
+  "Téléphonie": "📱",
+  "Logement": "🏠",
+  "Santé": "🏥",
+  "Autre": "📦",
+};
+
+
+const GOAL_TYPE: { value: "epargne" | "reduction_depense"; title: string }[] = [
+  { value: "epargne", title: "Epargné" },
+  { value: "reduction_depense", title: "Réduction dépense" },
+];
+
+const GOAL_FREQUENCE: { value: GoalFrequency; title: string }[] = [
+  { value: "unique", title: "Unique" },
+  { value: "journalier", title: "Journalier" },
+  { value: "hebdomadaire", title: "Hebdomadaire" },
+  { value: "mensuel", title: "Mensuel" },
+];
+
+const GOAL_SOURCE: { value: string; label: string }[] = [
+  { label: "Salaire", value: "salaire" },
+  { label: "Budget Journalier", value: "budget_journalier" },
+  { label: "Budget Hebdomadaire", value: "budget_hebdomadaire" },
+  { label: "Budjet Mensuel", value: "budget_mensuel" },
+];
+
+export { getGoalType, getUnitLabel, CATEGORIES, CATEGORIES_PROVISION, UNITE, ITEMS_DATE, DIMENSION, FEATURESWELCOME, BARHEIGHTS, BARHEIGHTSMESSAGE, PAGE_SIZE, CATEGORY_EMOJIS, GOAL_FREQUENCE, GOAL_SOURCE, GOAL_TYPE };

@@ -29,6 +29,7 @@ import { setProvisions } from '@/controller/provision.controller';
 import SelectChips from '@/components/input/select-chips';
 import InputImage from '@/components/input/input-image';
 import SelectChipsMenu from '@/components/input/select-chips-menu';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 export default function ScanTicket() {
   const [image, setImage] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function ScanTicket() {
   const { isOnline } = useAppNet();
   const { user } = useAuth();
   const [categories, setCategories] = useState(CATEGORIES);
+  const { addNotification } = useNotifications();
 
   const itemsTotal = items.reduce((total, item) => total + (parseFloat(item.unit_price?.toString()) * parseFloat(item.quantity?.toString()) || 0), 0);
 
@@ -80,6 +82,12 @@ export default function ScanTicket() {
             body: `${parsedResponse.newDepenses.length} nouvelles dépenses ont été ajoutées avec le scan du ticket !`,
             route: "/(detail)/detail-shopping",
             params: { id: parsedResponse.newDepenses[0].id, },
+          });
+          await addNotification({
+            type: "depense_new",
+            title: "💰 Nouvelle dépense ajoutée",
+            message: `${parsedResponse.newDepenses.length} nouvelles dépenses ont été ajoutées avec le scan du ticket !`,
+            data: { id: parsedResponse.newDepenses[0].id, pathName: "/(detail)/detail-shopping", },
           });
           ToastAndroid.show(parsedResponse.message, ToastAndroid.SHORT);
           router.push({ pathname: "/(tabs)", });
@@ -122,7 +130,7 @@ export default function ScanTicket() {
       setItems(depenseItems);
 
     } catch (error) {
-      console.error("Scan error:", error);
+      console.warn("Scan error:", error);
 
       Alert.alert(
         "Erreur",

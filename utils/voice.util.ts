@@ -3,6 +3,7 @@ import { GROQ_KEYS } from "./scan.ticket.util";
 import * as FileSystem from 'expo-file-system';
 import { Depense } from "@/types/db";
 import { getDepense } from "@/controller/depense.controller";
+import { DOSSIER_AUDIOS } from "@/constants/storage";
 
 async function transcribe(uri: string, maxRetries = 1): Promise<string> {
   const extension = uri.split('.').pop() || 'm4a';
@@ -73,8 +74,6 @@ async function transcribe(uri: string, maxRetries = 1): Promise<string> {
 
   throw new Error('Impossible de transcrire l\'audio (toutes les clés épuisées)');
 }
-
-const DOSSIER_AUDIOS = `${FileSystem.documentDirectory}audios/`;
 
 async function assurerDossierExiste() {
   const infos = await FileSystem.getInfoAsync(DOSSIER_AUDIOS);
@@ -179,7 +178,7 @@ async function listerFichiersAudioBruts(): Promise<FichierAudioInfo[]> {
         uri,
         nom,
         tailleOctets: detail.exists ? (detail.size ?? 0) : 0,
-        dateModification: detail.exists ? (detail.modificationTime ?? 0) : 0,
+        dateModification: detail.exists ? (detail.modificationTime ?? 0) * 1000 : 0,
       };
     })
   );

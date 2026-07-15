@@ -32,6 +32,7 @@ export default function GlobalSearch() {
       handleSearch();
     }, [search])
   );
+
   const hasNoResults =
     depense.length <= 0 &&
     provision.length <= 0 &&
@@ -119,7 +120,6 @@ export default function GlobalSearch() {
             if (!r.data) return null
 
             const text = r.data.categorie || r.data.name || r.data.nom || r.data.titre || r.data.label || r.data.type || r.data.libelle || r.data.title;
-            console.log(r.id);
 
             const type = r.type === "depense" ? "Dépense" : r.type === "provision" ? "Provision" : r.type === "budget" ? "Budget" : r.type === "item" ? "Article" : "";
 
@@ -256,7 +256,7 @@ export default function GlobalSearch() {
                 <CameraOff color={labelColor} size={18} /></View>}
               <View style={[{ width: "80%", gap: 5 }]}>
                 <Text style={[styles.name, { color: textColor }]}>{g.titre}</Text>
-                <Text style={[styles.category, { color: textColor }]}>{formatMoney(g.montant_cible)}</Text>
+                <Text style={[styles.category, { color: textColor }]}>{formatMoney(g?.montant_cible || 0)}</Text>
               </View>
             </Pressable>
           ))}

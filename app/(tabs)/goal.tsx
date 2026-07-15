@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, Text, View } from 'react-native'
+import { Image, Pressable, Text, View } from 'react-native'
 import React, { useCallback, useState } from 'react'
 import { CircleDollarSignIcon, Edit, LucideTrash2, Plus, Search } from 'lucide-react-native'
 import { styles } from '@/styles/styles'
@@ -8,7 +8,6 @@ import { Goal } from '@/types/db'
 import { deleteGoal, getGoal } from '@/controller/goal.controller'
 import EmptyData from '@/components/ui/empty-data'
 import { goalCoverImage } from '@/constants/image'
-import { useBudgetStore } from '@/store/budgetStore'
 import { formatDateLong } from '@/utils/date.util'
 import { ToastAndroid } from 'react-native'
 import { formatCompactNumber } from '@/utils/number.util';
@@ -16,8 +15,9 @@ import { getGoalType } from '@/constants/type'
 import DeleteModal from '@/components/modal/DeleteModal'
 import { MainHeader } from '@/components/header/header-main'
 import { TabHeader } from './_layout'
+import { useAuth } from '@/contexts/AuthContext'
 
-export default function Budget() {
+export default function GoalScreen() {
   const { sectionColor, border, backgroundColor, textColor, labelColor } = useAppColors();
   const { search }: { search: string } = useLocalSearchParams();
   const [confirmDelete, setConfirmDelete] = useState({
@@ -25,12 +25,11 @@ export default function Budget() {
     id: "",
     message: "",
   });
+  const { user } = useAuth();
 
 
   const [budget, setBudget] = useState<Goal[]>([]);
   const [filtered, setFiltered] = useState<Goal[]>([]);
-
-  const { devise } = useBudgetStore();
 
   const loadData = async (search: string) => {
     const data: Goal[] = await getGoal();
@@ -45,7 +44,7 @@ export default function Budget() {
     }, [search])
   )
 
-  const handleDelete = async (action: string, id: string) => {
+  const handleDelete = async (action?: string, id?: string) => {
     if (action === "delete" && id) {
       const res = await deleteGoal(id);
       const data = JSON.parse(res);
@@ -92,7 +91,7 @@ export default function Budget() {
         {filtered.map((goal: Goal) => (
           <View key={goal.id} style={[styles.card, { backgroundColor, borderColor: border, position: "relative" }]}>
             <Pressable
-              onPress={() => router.push({ pathname: `/detail-budget`, params: { id: goal.id } })}
+              onPress={() => router.push({ pathname: `/detail-goal`, params: { id: goal.id } })}
               key={goal.id}
               style={({ pressed }) => [
                 pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] },
@@ -108,8 +107,8 @@ export default function Budget() {
               <View style={styles.cardContent}>
                 <Text style={[styles.name, { color: textColor }]}>{goal.titre}</Text>
                 <Text style={[styles.text, { color: textColor }]}>{getGoalType(goal.type)}</Text>
-                <Text style={styles.price}>{formatCompactNumber(goal.montant_cible, devise)} { }</Text>
-                <Text style={[styles.date, { color: textColor }]}>{formatDateLong(goal.date_limite)} </Text>
+                <Text style={styles.price}>{formatCompactNumber(goal?.montant_cible || 0, user?.devise)} { }</Text>
+                <Text style={[styles.date, { color: textColor }]}>{formatDateLong(goal?.date_limite || "")} </Text>
               </View>
             </Pressable>
             <View style={[styles.actions]}>

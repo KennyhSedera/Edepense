@@ -11,6 +11,7 @@ import * as Notifications from "expo-notifications";
 import { scheduleDailyReminder } from '@/services/notificationService';
 import { getHourNotification, getNotificationEnabled } from '@/controller/notification.controller';
 import { initDB } from '@/sqlite/init';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 
 function Navigation() {
   const { navigationTheme } = useAppTheme();
@@ -90,7 +91,9 @@ export default function RootLayout() {
   return (
     <AppThemeProvider>
       <AuthProvider>
-        <Navigation />
+        <NotificationProvider>
+          <Navigation />
+        </NotificationProvider>
       </AuthProvider>
     </AppThemeProvider>
   );

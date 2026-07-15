@@ -18,6 +18,7 @@ type Props = {
   title?: string;
   subtitle?: string;
   action?: (v?: string | number | object | null | undefined | boolean) => void;
+  avatarClicked?: () => void;
   children?: React.ReactNode;
   isback: boolean;
 };
@@ -28,6 +29,7 @@ export default function HeaderProfile({
   title = "Modifier mon profil",
   subtitle = "Informations personnelles",
   action,
+  avatarClicked,
   children,
   isback = true,
 }: Props) {
@@ -105,7 +107,7 @@ export default function HeaderProfile({
         ]}
       >
 
-        <View style={{ alignItems: "center", justifyContent: "center", position: "relative", }}>
+        <Pressable onPress={avatarClicked} style={{ alignItems: "center", justifyContent: "center", position: "relative", }}>
           {action && <Pressable onPress={action} style={{ position: "absolute", bottom: 20, right: 5, zIndex: 1, padding: 5, backgroundColor: sectionColor, borderRadius: 100, borderWidth: 1, borderColor: "#fff" }}>
             <CameraIcon size={16} color="#fff" />
           </Pressable>}
@@ -116,7 +118,7 @@ export default function HeaderProfile({
               { marginBottom: 10, borderWidth: 3, borderColor: sectionColor, backgroundColor: "#fff", },
             ]}
           />
-        </View>
+        </Pressable>
         <Animated.Text
           style={[
             { color: "#fff", fontWeight: "700", },

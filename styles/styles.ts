@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   field: { marginBottom: 14 },
   fieldCompact: { marginBottom: 10 },
   label: { fontSize: 12, fontWeight: "500", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 },
-  input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: Platform.OS === "ios" ? 10 : 8, fontSize: 15 },
+  input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: Platform.OS === "ios" ? 10 : 8, fontSize: 15, overflow: "hidden" },
   inputMultiline: { minHeight: 70, textAlignVertical: "top" },
   rawTextArea: { minHeight: 100, textAlignVertical: "top", maxHeight: 200 },
   urlInput: { flex: 1, marginRight: 8 },
@@ -91,10 +91,11 @@ export const styles = StyleSheet.create({
   itemsBox: { marginTop: 8, paddingTop: 5, borderTopWidth: 1, borderTopColor: "#334155" },
   itemsTitle: { color: "#94a3b8", fontSize: 12, marginBottom: 3 },
   itemText: { color: "#cbd5e1", fontSize: 11 },
+  itemModal: { alignItems: "center", paddingVertical: 10, justifyContent: "flex-start", flexDirection: "row", gap: 10 },
 
   // Image
   image: { width: "100%", height: 100, borderRadius: 10, borderWidth: 1, backgroundColor: "#fff", overflow: "hidden" },
-  previewImage: { width: "100%", minHeight: 160, borderRadius: 12, borderWidth: 1, marginBottom: 10 },
+  previewImage: { width: "100%", minHeight: 160, borderRadius: 10, borderWidth: 1, marginBottom: 10 },
   logo: { width: 32, height: 32, borderRadius: 100, objectFit: "cover", backgroundColor: "white", padding: 4 },
 
   // Typography
@@ -138,4 +139,10 @@ export const styles = StyleSheet.create({
   // decorators
   bloom: { height: 100, width: 100, borderRadius: 100, backgroundColor: "rgba(255,255,255,0.1)", position: "absolute", zIndex: -1 },
   bloomLayer: { position: "absolute", borderRadius: 999, backgroundColor: "#ffffff", },
+
+  // Sheet input select
+  error: { color: "red", fontSize: 12, fontWeight: "600", marginLeft: 8, marginTop: 2 },
+  sheet: { borderRadius: 14, borderWidth: 1, maxHeight: 320, paddingVertical: 6, },
+  option: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14, },
+  overlaySelected: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", padding: 24, },
 });

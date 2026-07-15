@@ -40,5 +40,8 @@ export function useAppColors() {
     successColor: colors.successColor,
     focusedColor: colors.focusedColor,
     itemBg: colors.itemBg,
+    info: colors.info,
+    warning: colors.warning,
+    white: colors.white,
   };
 }

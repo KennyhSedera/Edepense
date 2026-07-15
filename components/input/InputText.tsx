@@ -1,8 +1,9 @@
 import { useAppColors } from "@/hooks/useAppColors";
+import { styles } from "@/styles/styles";
 import { InputTextProps } from "@/types/global";
 import { Eye, EyeOff } from "lucide-react-native";
 import { useState } from "react";
-import { Platform, Pressable, StyleSheet, TextInput, TextInputProps, StyleProp, TextStyle, ViewStyle } from "react-native";
+import { Pressable, TextInput, } from "react-native";
 import { Text, View } from "react-native";
 
 export default function Field({
@@ -31,7 +32,7 @@ export default function Field({
   return (
     <View style={[compact ? styles.fieldCompact : styles.field, style]}>
       {label && <Text style={[styles.label, { color: labelColor }]}>{label}</Text>}
-      <View style={[{ position: "relative" }]}>
+      <View style={[{ position: "relative", overflow: "hidden", borderRadius: 8 }]}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -60,39 +61,7 @@ export default function Field({
           </Pressable>
         }
       </View>
-      {error && <Text style={{ color: "red" }}>{error}</Text>}
+      {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  field: {
-    marginBottom: 14,
-  },
-
-  fieldCompact: {
-    marginBottom: 10,
-  },
-
-  label: {
-    fontSize: 12,
-    fontWeight: "500",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === "ios" ? 10 : 8,
-    fontSize: 15,
-    overflow: "hidden",
-  },
-
-  inputMultiline: {
-    minHeight: 70,
-    textAlignVertical: "top",
-  },
-});

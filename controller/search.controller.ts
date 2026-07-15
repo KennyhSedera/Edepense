@@ -101,8 +101,6 @@ async function addRecentSearch(type: RecentType, id: string) {
     ...filtered,
   ].slice(0, MAX_RECENT);
 
-  console.log(updated);
-
   await AsyncStorage.setItem(recentKey(uId), JSON.stringify(updated));
 }
 
@@ -125,8 +123,6 @@ async function clearRecentSearchId(id: string) {
 // Recharge les données complètes de chaque entrée récente (pour affichage)
 async function getRecentSearchWithData() {
   const recent = await getRecentSearch();
-
-  console.log(recent);
 
   if (!recent.length) return [];
 

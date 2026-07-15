@@ -1,3 +1,5 @@
+import * as FileSystem from 'expo-file-system';
+
 const STORAGE_THEME_KEY = "APP_THEME";
 const STORAGE_BUDGET_KEY = "APP_BUDGET";
 const STORAGE_PROVISION_KEY = "APP_PROVISION";
@@ -13,6 +15,14 @@ const DAILY_KEY = "daily_notification_id";
 const LAST_EXPENSE_DATE_KEY = "last_expense_date";
 const CURRENT_SEARCH_KEY = "CURRENT_SEARCH";
 const MESSAGE_KEY = "message";
+const DOSSIER_AUDIOS = `${FileSystem.documentDirectory}audios/`;
+const DOSSIER_IMAGES = `${FileSystem.documentDirectory}images/`;
+const STORAGE_TODO_KEY = "todos";
+const STORAGE_LISTE_COURSE_KEY = "liste_courses";
+const STORAGE_PROVISION_CONSOMMATION_KEY = "provision_consommations";
+
+const LAST_CHECK_KEY = (goalId: string) => `goal_last_check_${goalId}`;
+const NOTIFICATION_APP_KEY = (userId: string) => `notifications_${userId}`;
 
 export {
   STORAGE_THEME_KEY,
@@ -30,4 +40,12 @@ export {
   LAST_EXPENSE_DATE_KEY,
   CURRENT_SEARCH_KEY,
   MESSAGE_KEY,
+  DOSSIER_AUDIOS,
+  DOSSIER_IMAGES,
+  STORAGE_TODO_KEY,
+  STORAGE_LISTE_COURSE_KEY,
+  STORAGE_PROVISION_CONSOMMATION_KEY,
+
+  LAST_CHECK_KEY,
+  NOTIFICATION_APP_KEY,
 };

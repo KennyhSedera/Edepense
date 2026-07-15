@@ -18,15 +18,15 @@ export default function ObjectifEpargne({
   montantActuel,
   goalId,
 }: ObjectifEpargneProps) {
-  const { cardBg, border, textColor, labelColor, sectionColor, gradient } = useAppColors();
+  const { textColor, labelColor, sectionColor } = useAppColors();
 
   const pourcentage = montantCible > 0 ? Math.min((montantActuel / montantCible) * 100, 100) : 0;
   const restant = Math.max(montantCible - montantActuel, 0);
 
   return (
     <Pressable
-      onPress={() => router.push({ pathname: "/detail-budget", params: { id: goalId } })}
-      style={[styles.card, styles.infoGridFull, { backgroundColor: `${gradient.to}4f`, borderColor: gradient.to, borderRadius: 16, padding: 16, gap: 12 }]}
+      onPress={() => router.push({ pathname: "/detail-goal", params: { id: goalId } })}
+      style={[styles.card, styles.infoGridFull, { backgroundColor: `${sectionColor}4f`, borderColor: sectionColor, borderRadius: 16, padding: 16, gap: 12 }]}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -43,7 +43,7 @@ export default function ObjectifEpargne({
               width: `${pourcentage}%`,
               height: "100%",
               borderRadius: 5,
-              backgroundColor: gradient.to,
+              backgroundColor: sectionColor,
             }}
           />
         </View>

@@ -22,8 +22,9 @@ export default function MenuModal({
         style={[styles.overlay, { justifyContent: "flex-end" }]}
         onPress={onChange}
       >
-        <View style={[styles.modal, { backgroundColor, borderColor: isDark ? border : textColor }]}>
-          <View style={{ flexDirection: "row", justifyContent: "center", width: "100%", marginBottom: 10 }}><View style={{ height: 6, width: '20%', backgroundColor: `${textColor}50`, borderRadius: 10 }} /></View>
+        <View style={[styles.modal, { backgroundColor, borderColor: isDark ? border : textColor, paddingBottom: 10 }]}>
+          <View style={{ flexDirection: "row", justifyContent: "center", width: "100%", marginBottom: 10 }}><View style={{ height: 6, width: '20%', backgroundColor: `${textColor}50`, borderRadius: 10 }} />
+          </View>
           {children}
         </View>
       </Pressable>

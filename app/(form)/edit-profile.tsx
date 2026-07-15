@@ -115,6 +115,7 @@ export default function EditProfileScreen() {
           scrollY={scrollY}
           avatar={avatar}
           action={handleSetVisible}
+          avatarClicked={handleSetVisible}
           title="Modification de mon profil"
           subtitle=""
           isback
@@ -173,7 +174,6 @@ export default function EditProfileScreen() {
           onFocus={() => setErrors({ ...errors, budgetMensuel: '' })}
         />
 
-        {/* Budget journalier calculé automatiquement */}
         <View style={styles.field}>
           <Text style={[styles.label, { color: labelColor }]}>Budget journalier (calculé)</Text>
           <View style={[styles.input, { backgroundColor: border + '33', borderColor: border }]}>

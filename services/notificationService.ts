@@ -1,5 +1,6 @@
 import { DAILY_KEY, SCHEDULE_LOCK_KEY } from '@/constants/storage';
 import { hasExpenseToday, setLastDepenseDate } from '@/controller/depense.controller';
+import { getUserId } from '@/controller/user.controller';
 import { SendNotifProps } from '@/types/global';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
@@ -27,7 +28,7 @@ export async function scheduleDailyReminder(userId: string, hour = 20, minute = 
   const granted = await requestNotificationPermission();
   if (!granted) return null;
 
-  const already = await hasExpenseToday();
+  const already = await hasExpenseToday(userId);
   if (already) return null;
 
   const lock = `${hour}:${minute}`;
@@ -89,5 +90,6 @@ export async function sendNotification({ params, route, title, body }: SendNotif
 }
 
 export async function onExpenseAdded() {
-  await setLastDepenseDate();
+  const Uid = await getUserId();
+  await setLastDepenseDate(Uid as string, new Date().toISOString());
 }

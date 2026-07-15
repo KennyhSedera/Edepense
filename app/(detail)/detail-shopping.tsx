@@ -45,8 +45,8 @@ export default function DepenseDetail() {
 
   const items = depense?.items || [];
 
-  const handleDelete = async (action: string, id: string) => {
-    if (action === "delete") {
+  const handleDelete = async (action?: string, id?: string) => {
+    if (action === "delete" && id) {
       const res = await deleteDepense(id);
       const data = JSON.parse(res);
       if (data.success) {

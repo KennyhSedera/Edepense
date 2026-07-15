@@ -49,6 +49,7 @@ export default function InputImage({ value, setValue, label = "Image (optionnel)
           <TouchableOpacity
             style={[styles.button, {
               borderColor: border, backgroundColor: inputBg,
+              borderWidth: 1,
               width: url ? '48%' : '100%',
             }]}
             onPress={() => setShow(!show)}

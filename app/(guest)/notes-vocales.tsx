@@ -6,20 +6,25 @@ import EmptyData from '@/components/ui/empty-data';
 import { Mic, MicOffIcon, Trash2Icon } from 'lucide-react-native';
 import { LecteurAudio } from '@/components/audio/LecteurAudio';
 import { FichierAudioInfo } from '@/types/global';
-import { listerFichiersAudioBruts, supprimerAudio } from '@/utils/voice.util';
+import { calculerEspaceAudiosMo, listerFichiersAudioBruts, supprimerAudio } from '@/utils/voice.util';
 import { MainHeader } from '@/components/header/header-main';
 import { HeaderWithSearch } from './_layout';
 import { styles } from '@/styles/styles';
+import { formatDateLong } from '@/utils/date.util';
 
 export default function ListeNotesVocales() {
   const { textColor, labelColor, cardBg, border, dangerColor } = useAppColors();
   const [audios, setAudios] = useState<FichierAudioInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [espaceMo, setEspaceMo] = useState(0);
 
   function loadAudios() {
     setLoading(true);
     listerFichiersAudioBruts()
       .then(setAudios)
+      .finally(() => setLoading(false));
+    calculerEspaceAudiosMo()
+      .then(setEspaceMo)
       .finally(() => setLoading(false));
   }
 
@@ -44,6 +49,10 @@ export default function ListeNotesVocales() {
       height={100}
       header={() => <HeaderWithSearch searchable={false} title="Notes vocales" />}
     >
+      {espaceMo > 0 && <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <Text style={{ color: textColor, fontWeight: '600', fontSize: 13 }}>Espace occupé : {espaceMo.toFixed(2)} Mo</Text>
+        <Text><Mic size={20} color={labelColor} /></Text>
+      </View>}
       {!loading && audios.length === 0
         && (
           <EmptyData
@@ -71,7 +80,7 @@ export default function ListeNotesVocales() {
               {item.nom || 'Note vocale'}
             </Text>
             <Text style={{ color: labelColor, fontSize: 12 }}>
-              {new Date(item.dateModification).toLocaleDateString('fr-FR')}
+              {formatDateLong(new Date(item.dateModification).toISOString())}
             </Text>
           </View>
 

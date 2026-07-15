@@ -30,6 +30,7 @@ export default function useVoiceRecord(barLength?: number) {
       }
     }
 
+
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

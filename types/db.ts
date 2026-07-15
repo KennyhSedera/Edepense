@@ -1,6 +1,3 @@
-import React, { JSXElementConstructor, ReactElement, ReactNode } from "react";
-import { ImageSourcePropType } from "react-native";
-
 export type User = {
   id?: string;
   name: string;
@@ -25,25 +22,26 @@ export type User = {
 export type Provision = {
   id: string;
   user_id: string;
-
   nom: string;
-
   quantite_initiale: number;
   quantite_restante: number;
-
   categorie?: string;
-
   image?: string;
-
   unite: string;
-
   prix_total: number;
   prix_unitaire: number;
-
   consommation_estimee_par_jour?: number;
-
+  alerte_stock_envoyee?: boolean;
   date_achat: string;
   created_at: string;
+};
+
+export type ProvisionConsommation = {
+  id: string;
+  provision_id: string;
+  user_id: string;
+  quantite: number;
+  date: string;
 };
 
 export type BudgetTracker = {
@@ -61,21 +59,24 @@ export type BudgetTracker = {
   jour_actuel: number;
 };
 
+export type GoalFrequency = "unique" | "journalier" | "hebdomadaire" | "mensuel";
+
 export type Goal = {
   id: string;
   user_id: string;
-
   titre: string;
+  type: "epargne" | "reduction_depense";
+  frequence?: GoalFrequency;
 
-  montant_cible: number;
+  montant_regulier?: number;
+  source?: string;
+
+  montant_cible?: number;
   montant_actuel: number;
 
-  date_limite: string;
+  image?: string | null;
 
-  type: "epargne" | "reduction_depense";
-
-  image?: string;
-
+  date_limite?: string;
   created_at: string;
 };
 
@@ -102,18 +103,16 @@ export type Depense = {
   items?: DepenseItem[];
 };
 
-export type BudgetState = {
-  devise: string;
-  budgetJournalier: number;
-  budgetMensuel: number;
-  depenses: Depense[];
-
-  setBudget: (b: number) => void;
-  addDepense: (d: Depense) => void;
-  removeDepense?: (id: string) => void;
-  updateDepense?: (d: Depense) => void;
-  setDevise?: (d: string) => void;
-  removeAllDepenses?: () => void;
+export type Budget = {
+  id: string;
+  budgetName: string;
+  budgetTotal: number;
+  budgetRestant: number;
+  budgetDateReinitialise: string;
+  budgetImage?: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type UserConnected = {
@@ -140,8 +139,8 @@ export interface ScanResult {
   provision: Provision[];
 }
 
-type Action = {
-  value: "Copier" | "Modifier" | "Supprimer" | "Ajouter" | "Enregistrer" | "Annuler" | "Valider" | "Telecharger";
+export type Action = {
+  value: "Copier" | "Modifier" | "Supprimer" | "Annuler" | "Valider" | "Voir";
   label: string;
 }
 
@@ -158,3 +157,66 @@ export type Message = {
   created_at: string;
   updated_at: string;
 };
+
+export type Todo = {
+  id: string;
+  titre: string;
+  description?: string;
+  completed: boolean;
+  date_echeance?: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CourseItem = {
+  id: string;
+  nom: string;
+  quantite?: number;
+  unite?: string;
+  achete: boolean;
+  produit_id?: string;
+};
+
+export type ListeCourse = {
+  id: string;
+  titre: string;
+  items: CourseItem[];
+  user_id: string;
+  date_achat?: string | undefined;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NotificationType =
+  | "budget_alert"
+  | "budget_reminder"
+  | "depense_alert"
+  | "depense_reminder"
+  | "depense_new"
+  | "provision_new"
+  | "provision_alert"
+  | "provision_reminder"
+  | "goal_achieved"
+  | "goal_reminder"
+  | "todo_reminder"
+  | "system"
+  | "info";
+
+export interface NotificationData {
+  pathName?: string;
+  id?: string;
+  [key: string]: any;
+}
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  read: boolean;
+  data?: NotificationData;
+  created_at: string;
+  updated_at: string;
+}

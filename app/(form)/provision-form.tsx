@@ -35,6 +35,7 @@ export default function ProvisionForm() {
     unite: "kg",
     categorie: "légumes",
     image: "",
+    consommation_estimee_par_jour: undefined,
     created_at: toISODate(new Date()),
   });
   const [qteRestant, setQteRestant] = useState(0);
@@ -57,7 +58,9 @@ export default function ProvisionForm() {
       unite: d?.unite || "",
       prix_total: d?.quantite_initiale * d?.prix_unitaire,
       prix_unitaire: d?.prix_unitaire,
-      image: d?.image
+      image: d?.image,
+      consommation_estimee_par_jour: d?.consommation_estimee_par_jour,
+      categorie: d?.categorie,
     });
     setQteRestant(d?.quantite_restante || 0);
     setQteInitiale(d?.quantite_initiale || 0);
@@ -69,7 +72,7 @@ export default function ProvisionForm() {
     }
   }, [id]);
 
-  const { sectionColor, border, cardBg, inputBg, textColor } = useAppColors();
+  const { sectionColor, border, cardBg, inputBg, textColor, labelColor } = useAppColors();
 
   const validate = () => {
     const errors: Record<string, string> = {};
@@ -77,10 +80,10 @@ export default function ProvisionForm() {
       errors.nom = "Le nom est requis";
     }
     if (!data.quantite_initiale) {
-      errors.quantite_initiale = "La quantité est requise";
+      errors.quantite_initiale = "La quantité est requise";
     }
     if (!data.unite) {
-      errors.unite = "L'unité est requise";
+      errors.unite = "L'unité est requise";
     }
     if (!data.prix_unitaire) {
       errors.prix_unitaire = "Le prix unitaire est requis";
@@ -118,7 +121,9 @@ export default function ProvisionForm() {
       prix_total: qte * prix,
       date_achat: new Date().toISOString(),
       created_at: new Date().toISOString(),
-      consommation_estimee_par_jour: 0,
+      consommation_estimee_par_jour: data.consommation_estimee_par_jour
+        ? Number(data.consommation_estimee_par_jour)
+        : undefined,
       categorie: data.categorie,
     };
 
@@ -179,10 +184,10 @@ export default function ProvisionForm() {
 
         <View style={[styles.infoGrid]}>
           <Field
-            label="Quantité"
+            label="Quantité"
             value={data.quantite_initiale.toString()}
             onChangeText={(e) => setData({ ...data, quantite_initiale: Number(e) })}
-            placeholder="Quantité"
+            placeholder="Quantité"
             keyboardType="numeric"
             error={error.quantite_initiale}
             style={styles.infoGridHalf}
@@ -215,6 +220,17 @@ export default function ProvisionForm() {
           error={error.prix_total}
           onFocus={() => setError({ ...error, prix_total: '' })}
         />
+
+        <Field
+          label="Consommation estimée par jour (optionnel)"
+          value={data.consommation_estimee_par_jour?.toString() || ""}
+          onChangeText={(e) => setData({ ...data, consommation_estimee_par_jour: e ? Number(e) : undefined })}
+          placeholder={`Ex: 0.5 ${data.unite}/jour`}
+          keyboardType="numeric"
+        />
+        <Text style={{ color: labelColor, fontSize: 12, marginTop: -8 }}>
+          Sert uniquement d'estimation de départ tant qu'il n'y a pas encore d'historique de consommation réelle.
+        </Text>
 
       </View>
 

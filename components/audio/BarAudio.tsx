@@ -47,6 +47,7 @@ export default function BarAudio({ progression, barHeights, backgroundColor }: {
           </View>
         );
       })}
+      {progression > 0 && <View style={{ width: 10, height: 10, borderRadius: 20, backgroundColor: "#fff", position: "absolute", left: `${progression}%` }} />}
     </View>
   )
 }

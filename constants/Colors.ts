@@ -22,7 +22,10 @@ export const Colors = {
     dangerColor: "#ef4444",
     successColor: "#57C785",
     focusedColor: "#2A7B9B",
-    itemBg: "#ffffff"
+    itemBg: "#ffffff",
+    info: "#00a2ff",
+    warning: "#ffcc00",
+    white: "#ffffff",
   },
   dark: {
     text: '#ECEDEE',
@@ -45,5 +48,8 @@ export const Colors = {
     successColor: "#57C785",
     focusedColor: "#00ccff",
     itemBg: "#252525",
+    info: "#00a2ff",
+    warning: "#ffcc00",
+    white: "#ffffff",
   },
 };

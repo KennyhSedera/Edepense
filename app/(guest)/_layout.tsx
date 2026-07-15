@@ -108,7 +108,11 @@ export default function GuestLayout() {
       <Stack.Screen name='notification' />
       <Stack.Screen name='profile' />
       <Stack.Screen name='setting' />
+      <Stack.Screen name='budget' />
       <Stack.Screen name='notes-vocales' />
+      <Stack.Screen name='image-enregistrer' />
+      <Stack.Screen name='todo-screen' />
+      <Stack.Screen name='course-screen' />
     </Stack>
   )
 }

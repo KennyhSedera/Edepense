@@ -127,4 +127,10 @@ export async function updateUserController(id: string, data: Partial<UserConnect
   }
 }
 
+export async function getUserById(id: string) {
+  const users = await getAllUser();
+  const user = users.find((u) => u.id === id);
+
+  return user as UserConnected;
+}
 export async function getUserId() { return await getLocalUser().then((u) => u?.id).catch(() => null) }

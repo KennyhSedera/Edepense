@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, Image, ScrollView } from "react-native";
+import { View, Text, Image, ScrollView } from "react-native";
 import { useAppColors } from "@/hooks/useAppColors";
 import { Depense, Goal, Provision } from "@/types/db";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { getDepenseCurrentMonth, trouverDerniereListe } from "@/controller/depense.controller";
 import { getCycleStart, getDayFixed, getDepenseParSemaine, getDepensesMoisPrecedent, getInfosPeriode } from "@/utils/date.util";
 import { MainHeader } from "@/components/header/header-main";
 import { HomeHeader } from "./_layout";
 import { useAuth } from "@/contexts/AuthContext";
-
 import BudgetCard from "@/components/home/BudgetCard";
 import DailyBudgetCard from "@/components/home/DailyBudgetCard";
 import DepenseChart from "@/components/home/DepenseChart";
@@ -89,8 +88,8 @@ export default function HomeScreen() {
 
         const goal = epargnes.length > 0
           ? epargnes.reduce((closest, current) => {
-            const pourcentageClosest = closest.montant_cible > 0 ? closest.montant_actuel / closest.montant_cible : 0;
-            const pourcentageCurrent = current.montant_cible > 0 ? current.montant_actuel / current.montant_cible : 0;
+            const pourcentageClosest = closest.montant_cible && closest.montant_actuel > 0 ? closest.montant_actuel / closest.montant_cible : 0;
+            const pourcentageCurrent = current.montant_cible && current.montant_cible > 0 ? current.montant_actuel / current.montant_cible : 0;
             return pourcentageCurrent > pourcentageClosest ? current : closest;
           })
           : null;
@@ -101,7 +100,7 @@ export default function HomeScreen() {
 
   return (
     <MainHeader
-      height={148}
+      height={160}
       scrollRef={scrollViewRef}
       onScroll={onScroll}
       fabScroll={
@@ -152,7 +151,7 @@ export default function HomeScreen() {
         {objectifPrincipal?.id && (
           <ObjectifEpargne
             nomObjectif={objectifPrincipal.titre}
-            montantCible={objectifPrincipal.montant_cible}
+            montantCible={objectifPrincipal.montant_cible || 0}
             montantActuel={objectifPrincipal.montant_actuel}
             goalId={objectifPrincipal.id}
           />
@@ -169,13 +168,6 @@ export default function HomeScreen() {
           predictionFinMois={predictionFinMois}
           budgetMensuel={budgetMensuel}
         />
-
-        <Pressable onPress={() => router.push("/notes-vocales")} style={[styles.addItemButton, { borderColor: sectionColor }]}>
-          <Text style={{ fontSize: 16, fontWeight: "700", color: sectionColor }}>
-            Mes notes vocales
-          </Text>
-        </Pressable>
-
       </View>
     </MainHeader>
   );

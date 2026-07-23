@@ -33,13 +33,17 @@ export default function ProvisionForm() {
     prix_total: 0,
     prix_unitaire: 0,
     unite: "kg",
-    categorie: "légumes",
+    categorie: "Légumes",
     image: "",
     consommation_estimee_par_jour: undefined,
     created_at: toISODate(new Date()),
   });
   const [qteRestant, setQteRestant] = useState(0);
   const [qteInitiale, setQteInitiale] = useState(0);
+
+  const [qteInitialeText, setQteInitialeText] = useState("1");
+  const [prixUnitaireText, setPrixUnitaireText] = useState("0");
+  const [consommationText, setConsommationText] = useState("");
 
   const [error, setError] = useState<Record<string, string>>({});
 
@@ -64,6 +68,10 @@ export default function ProvisionForm() {
     });
     setQteRestant(d?.quantite_restante || 0);
     setQteInitiale(d?.quantite_initiale || 0);
+
+    setQteInitialeText(d?.quantite_initiale?.toString() || "0");
+    setPrixUnitaireText(d?.prix_unitaire?.toString() || "0");
+    setConsommationText(d?.consommation_estimee_par_jour?.toString() || "");
   }
 
   React.useEffect(() => {
@@ -72,20 +80,29 @@ export default function ProvisionForm() {
     }
   }, [id]);
 
-  const { sectionColor, border, cardBg, inputBg, textColor, labelColor } = useAppColors();
+  const { sectionColor, border, cardBg, labelColor } = useAppColors();
+
+  const sanitizeDecimal = (text: string) => {
+    let cleaned = text.replace(/[^0-9.]/g, "");
+    const parts = cleaned.split(".");
+    if (parts.length > 2) {
+      cleaned = parts[0] + "." + parts.slice(1).join("");
+    }
+    return cleaned;
+  };
 
   const validate = () => {
     const errors: Record<string, string> = {};
     if (!data.nom) {
       errors.nom = "Le nom est requis";
     }
-    if (!data.quantite_initiale) {
+    if (!qteInitialeText || Number(qteInitialeText) <= 0) {
       errors.quantite_initiale = "La quantité est requise";
     }
     if (!data.unite) {
       errors.unite = "L'unité est requise";
     }
-    if (!data.prix_unitaire) {
+    if (!prixUnitaireText || Number(prixUnitaireText) <= 0) {
       errors.prix_unitaire = "Le prix unitaire est requis";
     }
 
@@ -99,8 +116,9 @@ export default function ProvisionForm() {
       return;
     }
 
-    const qte = Number(data.quantite_initiale);
-    const prix = Number(data.prix_unitaire);
+    const qte = Number(qteInitialeText);
+    const prix = Number(prixUnitaireText);
+    const consommationEstimee = consommationText ? Number(consommationText) : undefined;
     const isEdit = !!id;
 
     const deltaQte = isEdit ? qte - qteInitiale : qte;
@@ -121,9 +139,7 @@ export default function ProvisionForm() {
       prix_total: qte * prix,
       date_achat: new Date().toISOString(),
       created_at: new Date().toISOString(),
-      consommation_estimee_par_jour: data.consommation_estimee_par_jour
-        ? Number(data.consommation_estimee_par_jour)
-        : undefined,
+      consommation_estimee_par_jour: consommationEstimee,
       categorie: data.categorie,
     };
 
@@ -185,10 +201,10 @@ export default function ProvisionForm() {
         <View style={[styles.infoGrid]}>
           <Field
             label="Quantité"
-            value={data.quantite_initiale.toString()}
-            onChangeText={(e) => setData({ ...data, quantite_initiale: Number(e) })}
+            value={qteInitialeText}
+            onChangeText={(e) => setQteInitialeText(sanitizeDecimal(e))}
             placeholder="Quantité"
-            keyboardType="numeric"
+            keyboardType="decimal-pad"
             error={error.quantite_initiale}
             style={styles.infoGridHalf}
             onFocus={() => setError({ ...error, quantite_initiale: '' })}
@@ -205,17 +221,17 @@ export default function ProvisionForm() {
 
         <Field
           label="Prix unitaire"
-          value={data.prix_unitaire.toString()}
-          onChangeText={(e) => setData({ ...data, prix_unitaire: Number(e) })}
+          value={prixUnitaireText}
+          onChangeText={(e) => setPrixUnitaireText(sanitizeDecimal(e))}
           placeholder="Prix unitaire"
-          keyboardType="numeric"
+          keyboardType="decimal-pad"
           error={error.prix_unitaire}
           onFocus={() => setError({ ...error, prix_unitaire: '' })}
         />
 
         <Field
           label="Prix total"
-          value={(data.prix_unitaire * data.quantite_initiale).toString()}
+          value={((Number(qteInitialeText) || 0) * (Number(prixUnitaireText) || 0)).toString()}
           readOnly
           error={error.prix_total}
           onFocus={() => setError({ ...error, prix_total: '' })}
@@ -223,10 +239,10 @@ export default function ProvisionForm() {
 
         <Field
           label="Consommation estimée par jour (optionnel)"
-          value={data.consommation_estimee_par_jour?.toString() || ""}
-          onChangeText={(e) => setData({ ...data, consommation_estimee_par_jour: e ? Number(e) : undefined })}
+          value={consommationText}
+          onChangeText={(e) => setConsommationText(sanitizeDecimal(e))}
           placeholder={`Ex: 0.5 ${data.unite}/jour`}
-          keyboardType="numeric"
+          keyboardType="decimal-pad"
         />
         <Text style={{ color: labelColor, fontSize: 12, marginTop: -8 }}>
           Sert uniquement d'estimation de départ tant qu'il n'y a pas encore d'historique de consommation réelle.

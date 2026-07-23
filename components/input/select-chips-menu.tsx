@@ -49,7 +49,7 @@ export default function SelectChipsMenu({ data, value, setValue, label, style, p
 
       <MenuModal visible={menuOpen} onChange={close}>
         <Text style={[styles.label, { color: textColor, fontSize: 16, margin: 10, textAlign: "center" }]}>Choisir {label ? label : "une option"}</Text>
-        <View style={[styles.card, styles.infoGridFull, { padding: 10, borderRadius: 10, backgroundColor: inputBg, marginVertical: 10, borderColor: border }]}>
+        <View style={[styles.card, styles.infoGridFull, { padding: 8, borderRadius: 10, backgroundColor: inputBg, marginVertical: 10, borderColor: border }]}>
           <MenuContext.Provider value={{ close }}>
             <>
               {data && <SelectChips data={data} value={value} setValue={selectText} />}

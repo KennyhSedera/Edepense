@@ -3,11 +3,11 @@ import { User, UserConnected } from "@/types/db";
 import { verifyPassword } from "@/utils/criptage.util";
 import { createLocalSession, getLocalUser, setLocalUser } from "@/utils/token.util";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Crypto from 'expo-crypto';
 
 export async function getUser(id: string) {
   const data = await getAllUser();
   const user = data.find((u) => u.id === id);
-
   return user
 }
 
@@ -65,6 +65,12 @@ export async function removeAllUser() {
   await AsyncStorage.removeItem(STORAGE_USER_KEY);
 }
 
+export async function removeUser(id: string) {
+  const users = await getAllUser();
+  const newData = users.filter((u) => u.id !== id);
+  await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(newData));
+}
+
 export async function getBudgetMensuel(id: string) {
   try {
     const user = await getUser(id);
@@ -102,9 +108,6 @@ export async function loginController(email: string, password: string) {
 
 export async function updateUserController(id: string, data: Partial<UserConnected>) {
   try {
-    const fields = Object.keys(data).map((k) => `${k} = ?`).join(", ");
-    const values = Object.values(data);
-
     const users = await getAllUser();
     const user = users.find((u) => u.id === id);
 
@@ -113,8 +116,9 @@ export async function updateUserController(id: string, data: Partial<UserConnect
     }
 
     const updated = { ...user, ...data };
+    const updatedUsers = users.map((u) => (u.id === id ? updated : u)); // 👈 remplace SEULEMENT cet utilisateur
 
-    await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify([updated]));
+    await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(updatedUsers));
 
     const { password: _pw, password_salt: _salt, ...safeUser } = updated;
 
@@ -122,7 +126,7 @@ export async function updateUserController(id: string, data: Partial<UserConnect
 
     return { success: true, user: safeUser, message: "Utilisateur mis à jour avec succès" };
   } catch (error) {
-    console.log(error);
+    console.warn(error);
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -133,4 +137,38 @@ export async function getUserById(id: string) {
 
   return user as UserConnected;
 }
+
+export async function updatePwd(oldPwd: string, newPwd: string): Promise<{ success: boolean; message?: string; error?: Record<string, string> }> {
+  const userId = await getUserId();
+
+  if (!userId) return { success: false, error: { currentPwd: "Utilisateur non connecté" } };
+
+  const userData = await getUser(userId);
+
+  if (!userData) {
+    return { success: false, error: { currentPwd: "Utilisateur introuvable" } };
+  }
+
+  const currentHash = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    oldPwd + (userData.password_salt || '')
+  );
+
+  if (currentHash !== userData.password) {
+    return { success: false, error: { currentPwd: "Mot de passe actuel incorrect" } };
+  }
+
+  const newHash = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    newPwd + (userData.password_salt || '')
+  );
+
+  // Met à jour uniquement CET utilisateur dans le tableau complet, sans écraser les autres
+  const users = await getAllUser();
+  const updatedUsers = users.map((u) => (u.id === userId ? { ...u, password: newHash } : u));
+  await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(updatedUsers));
+
+  return { success: true, message: "Mot de passe mis à jour avec succès" };
+}
+
 export async function getUserId() { return await getLocalUser().then((u) => u?.id).catch(() => null) }

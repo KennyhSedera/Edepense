@@ -237,10 +237,15 @@ export default function TypeWhatsapp() {
       if (text) {
         const textAnalyser = await analyseText(text as string);
         const { texteClair, json } = extraireTexteEtJson(textAnalyser);
-        console.log(texteClair);
+
+        let message: string = texteClair
+
+        if (!json) {
+          message = "Désolé, il n'y a pas d'audio à analyser ou le message reçu ne semble pas concerner des dépenses, des achats ou des listes de courses. Pouvez-vous svp enregistrer ou envoyer une note vocale décrivant vos dépenses ? 🎙️💡";
+        }
 
         const mess: Message = {
-          id: Date.now().toString(), type: "text", message: texteClair, sender_type: "app", read: true, user_id: "1", created_at: new Date().toISOString(), updated_at: new Date().toISOString(), reponse_id: id, data: json, action: json ? [{ value: "Valider", label: "Valider" }, { value: "Modifier", label: "Modifier" }, { value: "Supprimer", label: "Supprimer" }] : []
+          id: Date.now().toString(), type: "text", message, sender_type: "app", read: true, user_id: "1", created_at: new Date().toISOString(), updated_at: new Date().toISOString(), reponse_id: id, data: json, action: json ? [{ value: "Valider", label: "Valider" }, { value: "Modifier", label: "Modifier" }, { value: "Supprimer", label: "Supprimer" }] : []
         };
         setIsTyping(false);
         await sendMessage(mess);
@@ -286,6 +291,7 @@ export default function TypeWhatsapp() {
       try {
         const result = isOnline ? await sendDataToScan(m) : await scanReceiptOffline(m);
         if (!result) { setIsTyping(false); return; }
+
         if (result.textClair && result.depense.length > 0) {
           const json = { depense: result.depense, provision: result.provision };
           mess = {
@@ -447,6 +453,7 @@ export default function TypeWhatsapp() {
                         borderWidth: item.type === "image" ? 1 : 0,
                         borderColor: item === selectedMessage ? `${sectionColor}4d` : sectionColor,
                         position: "relative",
+                        width: item.type === "audio" ? "100%" : "auto",
                       }}
                     >
                       {renderMessage(item)}

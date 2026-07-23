@@ -60,8 +60,10 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
     loadTheme();
   }, [systemTheme]);
 
-  const toggleTheme = () => {
-    setTheme((t) => (t === "light" ? "dark" : "light"));
+  const toggleTheme = async () => {
+    const next = theme === "light" ? "dark" : "light";
+    setTheme(next);
+    await AsyncStorage.setItem(STORAGE_THEME_KEY, next);
   };
 
   const setThemeMode = async (t: ThemeType) => {

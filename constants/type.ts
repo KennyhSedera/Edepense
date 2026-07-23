@@ -17,25 +17,31 @@ function getGoalType(type: string) {
   return t;
 }
 const CATEGORIES = [
-  "Fruits",
   "Légumes",
+  "Fruits",
   "Viandes",
-  "Poissons et Fruits de mer",
-  "Produits laitiers",
   "Épicerie sèche",
   "Boissons",
   "Snacks et Confiseries",
+  "Produits laitiers",
+  "Poissons et Fruits de mer",
   "Produits ménagers",
+  "Jouet et Jeu",
   "Hygiène et Beauté",
   "Aliments pour animaux",
   "Vêtements et Accessoires",
-  "Jouets et Jeux",
   "Education et Loisirs",
   "Autres",
 ];
 
 const CATEGORIES_PROVISION = [
-  "légumes", "céréales", "autre"
+  "Légumes",
+  "Fruits",
+  "Épicerie sèche",
+  "Viandes",
+  "Boissons",
+  "Poissons et Fruits de mer",
+  "Produits laitiers",
 ];
 
 const UNITE = [
@@ -43,10 +49,10 @@ const UNITE = [
   { label: "g", value: "g" },
   { label: "L", value: "L" },
   { label: "Pièces", value: "piece" },
-  { label: "Plaquette", value: "plaquette" },
-  { label: "Paquet", value: "paquet" },
-  { label: "Carton", value: "carton" },
   { label: "Sac", value: "sac" },
+  { label: "Paquet", value: "paquet" },
+  { label: "Plaquette", value: "plaquette" },
+  { label: "Carton", value: "carton" },
   { label: "Autre", value: "autre" }
 ];
 

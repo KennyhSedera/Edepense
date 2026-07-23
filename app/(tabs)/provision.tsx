@@ -1,12 +1,11 @@
-import { Image, Pressable, ScrollView, Text, ToastAndroid, View } from 'react-native'
+import { Image, Pressable, Text, ToastAndroid, View } from 'react-native'
 import React, { useCallback, useState } from 'react';
-import { CheckCircle, Edit, LucideApple, LucideTrash2, Plus, Search, SearchSlash } from 'lucide-react-native';
+import { CheckCircle, Edit, LucideApple, LucideTrash2, Plus, Search } from 'lucide-react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useAppColors } from '@/hooks/useAppColors';
 import { styles } from '@/styles/styles';
 import { Provision } from '@/types/db';
 import { deleteProvision, deleteProvisions, getProvision } from '@/controller/provision.controller';
-import { useBudgetStore } from '@/store/budgetStore';
 import { formatDateLong } from '@/utils/date.util';
 import { depenseCoverImage } from '@/constants/image';
 import EmptyData from '@/components/ui/empty-data';
@@ -140,7 +139,7 @@ export default function ProvisionScreen() {
                 onLongPress={() => handleSelect(provision)}
               >
                 <Image
-                  source={provision.image ? { uri: provision.image } : depenseCoverImage("Alimentation")}
+                  source={provision.image ? { uri: provision.image } : depenseCoverImage(provision.categorie || "Autre")}
                   style={[
                     styles.image,
                     { borderColor: border },
@@ -149,7 +148,17 @@ export default function ProvisionScreen() {
 
                 <View style={styles.cardContent}>
                   <Text style={[styles.name, { color: textColor }]}>{provision.nom}</Text>
-                  <Text style={[styles.text, { color: textColor }]}>{provision.quantite_initiale} {getUnitLabel(provision.unite)}</Text>
+                  {provision.quantite_restante > 0 ?
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                      <Text style={[styles.price, { color: textColor }]}>
+                        {provision.quantite_restante} {getUnitLabel(provision.unite)}
+                      </Text>
+                      <Text style={[styles.text, { color: textColor, fontWeight: "400" }]}>
+                        (Reste)
+                      </Text>
+                    </View> :
+                    <Text style={[styles.text, { color: dangerColor }]}>Provision épuisée</Text>
+                  }
                   <Text style={styles.price}>{formatCompactNumber(provision.prix_total, user?.devise)} </Text>
                   <Text style={[styles.date, { color: textColor }]}>{formatDateLong(provision.date_achat)} </Text>
                 </View>

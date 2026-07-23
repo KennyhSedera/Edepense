@@ -86,7 +86,14 @@ export default function FooterTypeMessenger({ setImage, setText, setSound, text,
             {textToResponse.type === "audio" && <LecteurAudioMessage uri={textToResponse.message} />}
             {textToResponse.type === "image" && <Image source={{ uri: textToResponse.message }} style={{ width: 50, height: 50, borderRadius: 10 }} />}
           </View>
-          <Pressable onPress={onClearResponse} style={{ padding: 5, borderRadius: 20, backgroundColor: "#ffffff34" }}>
+          <Pressable
+            onPress={onClearResponse}
+            hitSlop={10}
+            style={({ pressed }) => [
+              { padding: 5, borderRadius: 20, backgroundColor: "#ffffff34" },
+              pressed && { opacity: 0.6, transform: [{ scale: 0.92 }] },
+            ]}
+          >
             <XIcon color={dangerColor} size={16} />
           </Pressable>
         </View>
@@ -95,7 +102,14 @@ export default function FooterTypeMessenger({ setImage, setText, setSound, text,
         <ImagePikerModal value={uriImage} onChange={onChangeUri} visible={visible} />
         {!isRecording &&
           <View style={[styles.rowSpacing, { alignItems: "flex-end", width: "100%", gap: 8, }]}>
-            <Pressable onPress={() => setVisible(true)} style={{ padding: 12, backgroundColor: to, borderRadius: 10 }}>
+            <Pressable
+              onPress={() => setVisible(true)}
+              hitSlop={8}
+              style={({ pressed }) => [
+                { padding: 12, backgroundColor: to, borderRadius: 10 },
+                pressed && { opacity: 0.75, transform: [{ scale: 0.95 }] },
+              ]}
+            >
               <Camera size={20} color={"#fff"} />
             </Pressable>
             <Field
@@ -107,17 +121,38 @@ export default function FooterTypeMessenger({ setImage, setText, setSound, text,
               multiline
             />
             {!message && isOnline ?
-              <Pressable onPress={() => { startRecording(); setSound && setSound(""); }} style={{ padding: 12, backgroundColor: from, borderRadius: 10 }}>
+              <Pressable
+                onPress={() => { startRecording(); setSound && setSound(""); }}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  { padding: 12, backgroundColor: from, borderRadius: 10 },
+                  pressed && { opacity: 0.75, transform: [{ scale: 0.95 }] },
+                ]}
+              >
                 <Mic size={20} color={"#fff"} />
               </Pressable> :
-              <Pressable onPress={message ? onSendText : () => { }} style={{ padding: 12, backgroundColor: from, borderRadius: 10 }}>
+              <Pressable
+                onPress={message ? onSendText : () => { }}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  { padding: 12, backgroundColor: from, borderRadius: 10 },
+                  pressed && message && { opacity: 0.75, transform: [{ scale: 0.95 }] },
+                ]}
+              >
                 <SendHorizonalIcon size={20} color={message ? "#fff" : "#919191"} />
               </Pressable>}
           </View>}
 
         {isRecording &&
           <View style={[styles.rowSpacing, { gap: 10, width: "100%" }]}>
-            <Pressable onPress={stopAndDelete} style={{ padding: 12, backgroundColor: dangerColor, borderRadius: 10 }}>
+            <Pressable
+              onPress={stopAndDelete}
+              hitSlop={8}
+              style={({ pressed }) => [
+                { padding: 12, backgroundColor: dangerColor, borderRadius: 10 },
+                pressed && { opacity: 0.75, transform: [{ scale: 0.95 }] },
+              ]}
+            >
               <Trash2Icon size={20} color={"#fff"} />
             </Pressable>
             <View style={[styles.rowSpacing, { gap: 10, flex: 1, backgroundColor: isDark ? "#000" : "#fff", paddingHorizontal: 12, borderRadius: 10, paddingVertical: 8, borderColor: border, borderWidth: 1 }]}>
@@ -132,7 +167,14 @@ export default function FooterTypeMessenger({ setImage, setText, setSound, text,
                 {formatDuree(duree)}
               </Text>
             </View>
-            <Pressable onPress={onStop} style={{ padding: 12, backgroundColor: sectionColor, borderRadius: 10 }}>
+            <Pressable
+              onPress={onStop}
+              hitSlop={8}
+              style={({ pressed }) => [
+                { padding: 12, backgroundColor: sectionColor, borderRadius: 10 },
+                pressed && { opacity: 0.75, transform: [{ scale: 0.95 }] },
+              ]}
+            >
               <SendHorizonalIcon size={20} color={"#fff"} />
             </Pressable>
           </View>}

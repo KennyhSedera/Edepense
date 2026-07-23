@@ -77,12 +77,6 @@ export default function ScanTicket() {
         const res = await setDepenses(depenses);
         const parsedResponse = JSON.parse(res);
         if (parsedResponse.success) {
-          await sendNotification({
-            title: "💰 Nouvelle dépense ajoutée",
-            body: `${parsedResponse.newDepenses.length} nouvelles dépenses ont été ajoutées avec le scan du ticket !`,
-            route: "/(detail)/detail-shopping",
-            params: { id: parsedResponse.newDepenses[0].id, },
-          });
           await addNotification({
             type: "depense_new",
             title: "💰 Nouvelle dépense ajoutée",

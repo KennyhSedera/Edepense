@@ -33,6 +33,7 @@ export default function CourseDetail() {
 
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [prix, setPrix] = useState<Record<string, string>>({});
+  const [error, setError] = useState<Record<string, string>>({});
   const [converting, setConverting] = useState(false);
 
   const { textColor, cardBg, border, sectionColor, dangerColor, inputBg, labelColor } = useAppColors();
@@ -110,8 +111,9 @@ export default function CourseDetail() {
     loadData();
   }
 
+
   function openConvertModal() {
-    const itemsAchetes = liste?.items.filter((i) => i.achete) ?? [];
+    const itemsAchetes = liste?.items.filter((i) => i.achete && !i.converti) ?? [];
     const initialPrix: Record<string, string> = {};
     for (const item of itemsAchetes) {
       initialPrix[item.id] = prix[item.id] ?? "";
@@ -120,14 +122,25 @@ export default function CourseDetail() {
     setShowConvertModal(true);
   }
 
+  function validatePrix(): Record<string, string> | null {
+    const errors: Record<string, string> = {};
+
+    for (const item of itemsAchetes) {
+      const value = prix[item.id];
+      if (!value?.trim() || isNaN(Number(value)) || Number(value) <= 0) {
+        errors[item.id] = "Le prix doit être un nombre valide.";
+      }
+    }
+
+    return Object.keys(errors).length > 0 ? errors : null;
+  }
+
   async function handleConvertir() {
     if (!liste) return;
 
-    const itemsAchetes = liste.items.filter((i) => i.achete);
-
-    const manquants = itemsAchetes.filter((item) => !prix[item.id] || isNaN(Number(prix[item.id])));
-    if (manquants.length > 0) {
-      ToastAndroid.show("Renseigne un prix pour chaque article.", ToastAndroid.SHORT);
+    const errors = validatePrix();
+    if (errors) {
+      setError(errors);
       return;
     }
 
@@ -146,6 +159,7 @@ export default function CourseDetail() {
       if (data.success) {
         ToastAndroid.show("Dépense créée avec succès.", ToastAndroid.SHORT);
         setShowConvertModal(false);
+        setError({});
         router.push("/shopping");
       } else {
         ToastAndroid.show(data.message ?? "Erreur lors de la conversion.", ToastAndroid.SHORT);
@@ -163,7 +177,7 @@ export default function CourseDetail() {
     );
   }
 
-  const itemsAchetes = liste?.items.filter((i) => i.achete) ?? [];
+  const itemsAchetes = liste?.items.filter((i) => i.achete && !i.converti) ?? [];
 
   function renderItem({ item }: { item: CourseItem }) {
     const quantitePart =
@@ -181,7 +195,8 @@ export default function CourseDetail() {
         ]}
       >
         <Pressable
-          onPress={() => handleToggle(item.id)}
+          onPress={() => !item.converti && handleToggle(item.id)}
+          disabled={item.converti}
           style={{
             width: 22,
             height: 22,
@@ -191,6 +206,7 @@ export default function CourseDetail() {
             backgroundColor: item.achete ? sectionColor : "transparent",
             alignItems: 'center',
             justifyContent: 'center',
+            opacity: item.converti ? 0.5 : 1,
           }}
         >
           {item.achete ? <Check size={14} color="#fff" /> : null}
@@ -206,6 +222,7 @@ export default function CourseDetail() {
         >
           {item.nom}
           <Text style={{ opacity: 0.6 }}>{quantitePart}</Text>
+          {item.converti && <Text style={{ opacity: 0.5, fontStyle: 'italic' }}> · déjà en dépense</Text>}
         </Text>
 
         <Pressable onPress={() => handleRemove(item.id)}>
@@ -331,29 +348,20 @@ export default function CourseDetail() {
                 key={item.id}
                 style={[styles.miniCard, { backgroundColor: cardBg, borderColor: border, marginBottom: 10 }]}
               >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <Text style={{ color: textColor, fontWeight: '500' }}>
-                    {item.nom} {quantitePart ? <Text style={{ opacity: 0.6 }}>({quantitePart})</Text> : null}
-                  </Text>
-                </View>
-
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <TextInput
+                  <Field
+                    label={`${item.nom} (${quantitePart})`}
                     value={prix[item.id] ?? ""}
-                    onChangeText={(text) => setPrix({ ...prix, [item.id]: text })}
+                    onChangeText={(text) => {
+                      setPrix({ ...prix, [item.id]: text });
+                      if (error[item.id]) setError({ ...error, [item.id]: "" });
+                    }}
                     placeholder={item.quantite ? "Prix unitaire" : "Prix"}
                     placeholderTextColor={labelColor}
                     keyboardType="numeric"
-                    style={{
-                      flex: 1,
-                      backgroundColor: inputBg,
-                      borderColor: border,
-                      borderWidth: 1,
-                      borderRadius: 10,
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      color: textColor,
-                    }}
+                    style={{ flex: 1 }}
+                    error={error[item.id]}
+                    onFocus={() => setError({ ...error, [item.id]: "" })}
                   />
                   {item.quantite && item.quantite > 1 && prix[item.id] ? (
                     <Text style={{ color: textColor, opacity: 0.6, fontSize: 12 }}>

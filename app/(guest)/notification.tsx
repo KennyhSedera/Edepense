@@ -11,6 +11,7 @@ import { AppNotification, NotificationType } from '@/types/db';
 import { BellOff, CheckIcon, Trash2Icon } from 'lucide-react-native';
 import { styles } from '@/styles/styles';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { formatDateHeure } from '@/utils/date.util';
 
 export default function NotificationScreen() {
   const TYPE_CONFIG: Record<NotificationType, { emoji: string; color: string }> = {
@@ -151,7 +152,7 @@ export default function NotificationScreen() {
                   </View>
                   <Text style={{ color: `${textColor}99`, marginTop: 2 }}>{item.message}</Text>
                   <Text style={{ color: `${textColor}66`, fontSize: 11, marginTop: 4 }}>
-                    {new Date(item.created_at).toLocaleString("fr-FR")}
+                    {formatDateHeure(item.created_at)}
                   </Text>
                 </View>
               </Pressable>

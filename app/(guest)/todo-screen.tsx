@@ -5,10 +5,12 @@ import { useAppColors } from '@/hooks/useAppColors';
 import { MainHeader } from '@/components/header/header-main'
 import { router, useFocusEffect } from 'expo-router';
 import { styles } from '@/styles/styles';
-import { Plus, Check, Trash2 } from 'lucide-react-native';
+import { Plus, Check, Trash2, ListChecks, LucideListChecks } from 'lucide-react-native';
 import { getTodos, toggleTodo, deleteTodo } from '@/controller/todo.controller';
 import { calculerPriorite } from '@/utils/todo.util';
 import { Todo } from '@/types/db';
+import { formatDateLong } from '@/utils/date.util';
+import EmptyData from '@/components/ui/empty-data';
 
 const PRIORITE_COLORS: Record<string, string> = {
   haute: "#e53935",
@@ -101,7 +103,7 @@ export default function TodoScreen() {
           </Text>
           {item.date_echeance ? (
             <Text style={[styles.date, { color: couleurPriorite, opacity: item.completed ? 0.5 : 1 }]}>
-              Échéance : {item.date_echeance}
+              Échéance : {formatDateLong(item.date_echeance)}
             </Text>
           ) : null}
         </Pressable>
@@ -135,9 +137,7 @@ export default function TodoScreen() {
           <ActivityIndicator size="large" color={sectionColor} />
         </View>
       ) : todos.length === 0 ? (
-        <View style={{ paddingTop: 40, alignItems: 'center' }}>
-          <Text style={{ color: textColor, opacity: 0.6 }}>Aucune tâche pour le moment.</Text>
-        </View>
+        <EmptyData icon={<LucideListChecks size={50} color={border} />} message="Aucune tâche en cours pour le moment" />
       ) : (
         <FlatList data={todos} keyExtractor={(item) => item.id} renderItem={renderItem} scrollEnabled={false} />
       )}

@@ -20,9 +20,13 @@ const DOSSIER_IMAGES = `${FileSystem.documentDirectory}images/`;
 const STORAGE_TODO_KEY = "todos";
 const STORAGE_LISTE_COURSE_KEY = "liste_courses";
 const STORAGE_PROVISION_CONSOMMATION_KEY = "provision_consommations";
+const STORAGE_PROVISION_MOUVEMENT_KEY = "provision_mouvements";
 
 const LAST_CHECK_KEY = (goalId: string) => `goal_last_check_${goalId}`;
 const NOTIFICATION_APP_KEY = (userId: string) => `notifications_${userId}`;
+const PIN_KEY = (userId: string) => `app_pin_${userId}`;
+const BIOMETRIC_KEY = (userId: string) => `app_biometric_${userId}`;
+const LOCK_ENABLED_KEY = (userId: string) => `app_lock_enabled_${userId}`;
 
 export {
   STORAGE_THEME_KEY,
@@ -45,7 +49,11 @@ export {
   STORAGE_TODO_KEY,
   STORAGE_LISTE_COURSE_KEY,
   STORAGE_PROVISION_CONSOMMATION_KEY,
+  STORAGE_PROVISION_MOUVEMENT_KEY,
 
   LAST_CHECK_KEY,
   NOTIFICATION_APP_KEY,
+  PIN_KEY,
+  BIOMETRIC_KEY,
+  LOCK_ENABLED_KEY
 };

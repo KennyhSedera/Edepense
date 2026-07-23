@@ -191,17 +191,21 @@ async function groq(text: string, priceMode: PriceMode): Promise<any> {
   return result;
 }
 
-function parseDataGroq(params: string, priceMode?: PriceMode) {
+function retirerBlocReflexion(texte: string): string {
+  return texte.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+}
 
+function parseDataGroq(params: string, priceMode?: PriceMode) {
   function extraireJSON(text: string): string {
-    const debut = text.indexOf('{');
-    const fin = text.lastIndexOf('}');
+    const texteNettoye = retirerBlocReflexion(text);
+    const debut = texteNettoye.indexOf('{');
+    const fin = texteNettoye.lastIndexOf('}');
 
     if (debut === -1 || fin === -1) {
       throw new Error('Aucun JSON trouvé dans la réponse: ' + text);
     }
 
-    return text.substring(debut, fin + 1);
+    return texteNettoye.substring(debut, fin + 1);
   }
 
   let parsed: any = null;
@@ -210,7 +214,7 @@ function parseDataGroq(params: string, priceMode?: PriceMode) {
     const texteNettoye = extraireJSON(params);
     parsed = JSON.parse(texteNettoye);
   } catch (err) {
-    return { depense: [], provision: [], textClair: params };
+    return { depense: [], provision: [], textClair: retirerBlocReflexion(params) };
   }
 
   function recalculerPrix(prod: any, prixModeGlobal?: PriceMode) {
@@ -331,6 +335,18 @@ async function analyseText(text: string) {
   return result;
 }
 
+const MESSAGE_HORS_SUJET = "Désolé, ce texte ne semble pas contenir de données relatives à des dépenses ou à des achats.";
+
+function nettoyerCommentaireMeta(texte: string): string {
+  const t = texte.trim();
+
+  if (t.includes(MESSAGE_HORS_SUJET)) {
+    return MESSAGE_HORS_SUJET;
+  }
+
+  return t;
+}
+
 function extraireJsonDeReponse<T = any>(texte: string): T | null {
   const matchAvecLangage = texte.match(/```json\s*([\s\S]*?)```/i);
   if (matchAvecLangage) {
@@ -351,8 +367,10 @@ function extraireJsonDeReponse<T = any>(texte: string): T | null {
   }
 
   const indexDebut = texte.indexOf("{");
-  if (indexDebut !== -1) {
-    const candidat = texte.slice(indexDebut);
+  const indexFin = texte.lastIndexOf("}");
+
+  if (indexDebut !== -1 && indexFin !== -1 && indexFin > indexDebut) {
+    const candidat = texte.slice(indexDebut, indexFin + 1);
     try {
       return JSON.parse(candidat);
     } catch (e) {
@@ -363,53 +381,57 @@ function extraireJsonDeReponse<T = any>(texte: string): T | null {
   return null;
 }
 
-function extraireTexteEtJson(
-  texte: string
-) {
+function extraireTexte(texte: string): string {
   let texteClair = texte.trim();
 
-  const match = texte.match(
+  const matchComplet = texte.match(
     /(?:---|###)\s*PARTIE\s*1\s*:\s*TEXTE\s*CLAIR\s*(.*?)\s*(?:---|###)\s*PARTIE\s*2\s*:\s*FORMAT\s*JSON/si
   );
 
-  if (match?.[1]) {
-    texteClair = match[1].trim();
+  if (matchComplet?.[1]) {
+    texteClair = matchComplet[1].trim();
   } else {
-    const separateurJson = texte.indexOf("```json");
-    if (separateurJson !== -1) {
-      texteClair = texte.slice(0, separateurJson).trim();
+    const matchPartie2 = texte.match(/(?:---|###)\s*PARTIE\s*2\s*:\s*FORMAT\s*JSON/si);
+    if (matchPartie2?.index !== undefined) {
+      texteClair = texte.slice(0, matchPartie2.index).trim();
+    } else {
+      const separateurJson = texte.indexOf("```json");
+      if (separateurJson !== -1) {
+        texteClair = texte.slice(0, separateurJson).trim();
+      } else {
+        const indexAccolade = texte.indexOf('{');
+        if (indexAccolade !== -1) {
+          texteClair = texte.slice(0, indexAccolade).trim();
+        }
+      }
     }
   }
 
-  const json = extraireJsonDeReponse(texte);
-
-  if (json) {
-    const { depense, provision } = parseDataGroq(JSON.stringify(json));
-
-    return { texteClair, json: { depense, provision } };
-  }
-
-  return { texteClair, json: null };
+  texteClair = nettoyerSeparateursOrphelins(texteClair);
+  texteClair = nettoyerCommentaireMeta(texteClair);
+  return texteClair;
 }
 
-function extraireTexte(texte: string) {
+function extraireTexteEtJson(texte: string) {
+  const texteClair = extraireTexte(texte);
+  const json = extraireJsonDeReponse(texte);
 
-  let texteClair = texte.trim();
-
-  const match = texte.match(
-    /(?:---|###)\s*PARTIE\s*1\s*:\s*TEXTE\s*CLAIR\s*(.*?)\s*(?:---|###)\s*PARTIE\s*2\s*:\s*FORMAT\s*JSON/si
-  );
-
-  if (match?.[1]) {
-    texteClair = match[1].trim();
-  } else {
-    const separateurJson = texte.indexOf("```json");
-    if (separateurJson !== -1) {
-      texteClair = texte.slice(0, separateurJson).trim();
-    }
+  if (!json) {
+    return { texteClair, json: null };
   }
 
-  return texteClair;
+  const { depense, provision } = parseDataGroq(JSON.stringify(json));
+  return { texteClair, json: { depense, provision } };
+}
+
+function nettoyerSeparateursOrphelins(texte: string): string {
+  return texte
+    .replace(/(?:---|###)\s*PARTIE\s*2\s*:\s*FORMAT\s*JSON\s*(?:---|###)?\s*$/si, "")
+    .replace(/^(?:---|###)\s*PARTIE\s*1\s*:\s*TEXTE\s*CLAIR\s*(?:---|###)?\s*/si, "")
+    .split('\n')
+    .filter((ligne) => !/^\s*(?:-{2,}|#{2,})\s*$/.test(ligne))
+    .join('\n')
+    .trim();
 }
 
 export { fusionnerCategoriesDupliquees, analyseText, parseDataGroq, groq, parseExpense, extraireTexteEtJson, extraireTexte };

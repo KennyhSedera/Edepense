@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system';
-import { parseDataGroq } from "./depense.util";
+import { analyseText, extraireTexteEtJson, parseDataGroq } from "./depense.util";
 import { Depense, DepenseItem, ScanResult } from "@/types/db";
 import TextRecognition from "@react-native-ml-kit/text-recognition";
 import { GEMINI_RECEIPT_PROMPT } from '@/constants/prompt';
@@ -15,8 +15,8 @@ export const GROQ_KEYS = [
   process.env.EXPO_PUBLIC_GROQ_API_KEY_2,
 ].filter(Boolean) as string[];
 export const GROQ_VISION_MODELS = [
-  'meta-llama/llama-4-scout-17b-16e-instruct',
   'qwen/qwen3.6-27b',
+  'meta-llama/llama-4-maverick-17b-128e-instruct',
 ];
 export async function callGroqVisionWithRetry(
   base64: string | null,
@@ -43,7 +43,7 @@ export async function callGroqVisionWithRetry(
       },
     ],
     temperature: 0.2,
-    max_completion_tokens: 2048,
+    max_completion_tokens: 4096,
   };
 
   for (const model of GROQ_VISION_MODELS) {
@@ -72,9 +72,15 @@ export async function callGroqVisionWithRetry(
           if (!data.error) {
             const text = data.choices[0].message.content;
 
-            const { depense, provision, textClair } = parseDataGroq(text);
+            const textAnysed = await analyseText(text);
 
-            return { depense, provision, textClair };
+            const { texteClair, json } = extraireTexteEtJson(textAnysed);
+
+            return {
+              depense: json?.depense ?? [],
+              provision: json?.provision ?? [],
+              textClair: texteClair,
+            };
           }
 
           const errorCode = data.error?.code ?? response.status;
@@ -222,15 +228,15 @@ export async function callGeminiWithRetry(base64: string | null, text: string, m
 export async function scanReceipt(base64: string, prompt: string, uri: string) {
   let result = await callGroqVisionWithRetry(base64, prompt, 2);
 
-  if (result.error || result === null || result === undefined) {
-    console.warn('Groq Vision indisponible, fallback vers Gemini...');
-    result = await callGeminiWithRetry(base64, prompt, 2);
-  }
+  // if (result.error || result === null || result === undefined) {
+  //   console.warn('Groq Vision indisponible, fallback vers Gemini...');
+  //   result = await callGeminiWithRetry(base64, prompt, 2);
+  // }
 
-  if (result.error || result === null || result === undefined) {
-    console.warn('Gemini indisponible, fallback vers OCR...');
-    result = await scanReceiptOffline(uri);
-  }
+  // if (result.error || result === null || result === undefined) {
+  //   console.warn('Gemini indisponible, fallback vers OCR...');
+  //   result = await scanReceiptOffline(uri);
+  // }
 
   return result;
 }

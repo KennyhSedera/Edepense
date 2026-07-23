@@ -1,8 +1,9 @@
 import { STORAGE_DEPENSES_KEY } from "@/constants/storage";
 import { Depense, DepenseItem } from "@/types/db";
-import { getCycleStart, getInfosPeriode, getSemaines, toISODate } from "@/utils/date.util";
+import { getCycleStart, getDayFixed, getInfosPeriode, getSemaines, toISODate } from "@/utils/date.util";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUserId } from "./user.controller";
+import { getLocalUser } from "@/utils/token.util";
 
 async function getDepense(): Promise<Depense[]> {
   const data = await AsyncStorage.getItem(STORAGE_DEPENSES_KEY);
@@ -27,7 +28,8 @@ async function getDepenseYesterday() {
 
 async function getDepenseCurrentMonth() {
   const data = await getDepense();
-  const { dateDebut, dateFin } = getInfosPeriode(getCycleStart(new Date().toISOString(), 20).toISOString());
+  const user = await getLocalUser();
+  const { dateDebut, dateFin } = getInfosPeriode(getCycleStart(new Date().toISOString(), getDayFixed(user?.date_debut as string) || 20).toISOString());
 
   return data.filter((d: any) => new Date(d.date) >= new Date(dateDebut) && new Date(d.date) <= new Date(dateFin));
 }
@@ -40,9 +42,23 @@ async function getDepenseCurrentYear() {
 
 async function getDepenseCurrentSemaine() {
   const data = await getDepense();
-  const { dateDebut, dateFin } = getInfosPeriode(getCycleStart(new Date().toISOString(), 20).toISOString());
+  const now = new Date();
 
-  return data.filter((d: any) => new Date(d.date) >= new Date(dateDebut) && new Date(d.date) <= new Date(dateFin));
+  const jour = now.getDay();
+  const decalage = jour === 0 ? 6 : jour - 1;
+
+  const dateDebut = new Date(now);
+  dateDebut.setDate(now.getDate() - decalage);
+  dateDebut.setHours(0, 0, 0, 0);
+
+  const dateFin = new Date(dateDebut);
+  dateFin.setDate(dateDebut.getDate() + 6);
+  dateFin.setHours(23, 59, 59, 999);
+
+  return data.filter((d: any) => {
+    const date = new Date(d.date);
+    return date >= dateDebut && date <= dateFin;
+  });
 }
 
 async function setDepense(newDepense: Depense) {

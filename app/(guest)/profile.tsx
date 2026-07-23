@@ -12,6 +12,7 @@ import AnimatedHeader from '@/components/header/animate-header';
 import HeaderProfile from '@/components/header/header-profile';
 import { User, UserConnected } from '@/types/db';
 import { useAuth } from '@/contexts/AuthContext';
+import ModalConfirm from '@/components/modal/modal-confirm';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -22,6 +23,7 @@ export default function ProfileScreen() {
     show: false,
     value: avatar ?? require("@/assets/images/avatar.png"),
   });
+  const [showModal, setShowModal] = React.useState(false);
 
   useEffect(() => {
     setAvatar(user?.avatar ?? require("@/assets/images/avatar.png"));
@@ -30,6 +32,10 @@ export default function ProfileScreen() {
 
   function onChangeAvatar(v: string) {
     setVisible({ show: false, value: v });
+  }
+
+  const handleLogout = (action: string) => {
+    action === "confirm" ? logout() : setShowModal(false);
   }
 
   return (
@@ -48,6 +54,10 @@ export default function ProfileScreen() {
         />
       )}
     >
+
+
+      <ModalConfirm visible={showModal} onChange={handleLogout} message="Voulez-vous vraiment vous déconnecter ?" title="Déconnexion ?" buttonText="Se déconnecter" />
+
       {value && <>
         <RenderImage value={visible.value} onChange={onChangeAvatar} visible={visible.show} />
         <View style={styles.metricsRow}>
@@ -87,7 +97,7 @@ export default function ProfileScreen() {
           {[
             { icon: 'create-outline', label: 'Modifier le profil', color: textColor, onPress: () => router.push('/edit-profile') },
             { icon: 'settings-outline', label: 'Paramètres', color: textColor, onPress: () => router.push('/setting') },
-            { icon: 'log-out-outline', label: 'Se déconnecter', color: dangerColor, onPress: () => logout() },
+            { icon: 'log-out-outline', label: 'Se déconnecter', color: dangerColor, onPress: () => setShowModal(true) },
           ].map((item, i, arr) => (
             <TouchableOpacity
               key={item.label}

@@ -1,10 +1,10 @@
 import { useTheme } from "@react-navigation/native";
 import { Colors } from "@/constants/Colors";
 
-export function useAppColors() {
-  const theme = useTheme();
+export function useAppColors(appTheme?: "light" | "dark") {
+  const theme = appTheme === "dark" ? true : appTheme === "light" ? false : appTheme || useTheme();
 
-  const isDark = theme?.dark ?? true;
+  const isDark = typeof theme === "boolean" ? theme : theme?.dark ?? true;
 
   const colorScheme = isDark ? "dark" : "light";
 

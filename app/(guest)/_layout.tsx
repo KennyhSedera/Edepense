@@ -113,6 +113,7 @@ export default function GuestLayout() {
       <Stack.Screen name='image-enregistrer' />
       <Stack.Screen name='todo-screen' />
       <Stack.Screen name='course-screen' />
+      <Stack.Screen name='faq' />
     </Stack>
   )
 }

@@ -44,6 +44,20 @@ export type ProvisionConsommation = {
   date: string;
 };
 
+export type TypeMouvement = "entree" | "sortie";
+
+export type ProvisionMouvement = {
+  id: string;
+  provision_id: string;
+  user_id: string;
+  type: TypeMouvement;
+  quantite: number;
+  unite: string;
+  prix_unitaire?: number;
+  note?: string;
+  date: string;
+};
+
 export type BudgetTracker = {
   id: string;
   user_id: string;
@@ -175,6 +189,7 @@ export type CourseItem = {
   quantite?: number;
   unite?: string;
   achete: boolean;
+  converti?: boolean;
   produit_id?: string;
 };
 
@@ -184,6 +199,7 @@ export type ListeCourse = {
   items: CourseItem[];
   user_id: string;
   date_achat?: string | undefined;
+  notification_id?: string;
   created_at: string;
   updated_at: string;
 };

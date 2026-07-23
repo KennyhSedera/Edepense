@@ -5,13 +5,16 @@ import {
   useAppTheme,
 } from '@/contexts/themeContext';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { StatusBar } from 'react-native';
-import { useEffect } from 'react';
+import { AppState, StatusBar, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
 import * as Notifications from "expo-notifications";
 import { scheduleDailyReminder } from '@/services/notificationService';
 import { getHourNotification, getNotificationEnabled } from '@/controller/notification.controller';
 import { initDB } from '@/sqlite/init';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { useAppLock } from '@/hooks/useAppLock';
+import LockScreen from '@/components/lock/LockScreen';
+import { LockSuspendProvider, useLockSuspend } from '@/contexts/LockSuspendContext';
 
 function Navigation() {
   const { navigationTheme } = useAppTheme();
@@ -87,12 +90,91 @@ function Navigation() {
   );
 }
 
+function AppGate() {
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isLockEnabled, loading: lockLoading } = useAppLock(user?.id);
+  const [isAppLocked, setIsAppLocked] = useState(false);
+  const appState = useRef(AppState.currentState);
+  const isAuthenticatingRef = useRef(false);
+  const graceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { isSuspendedRef } = useLockSuspend();
+  const { theme } = useAppTheme();
+
+  useEffect(() => {
+    if (!lockLoading && !authLoading && isAuthenticated && user?.id && isLockEnabled) {
+      setIsAppLocked(true);
+    }
+  }, [lockLoading, authLoading, isAuthenticated, user?.id, isLockEnabled]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (isAuthenticatingRef.current || isSuspendedRef.current) {
+        appState.current = nextState;
+        return;
+      }
+
+      if (
+        appState.current.match(/active/) &&
+        nextState === 'background' &&
+        isLockEnabled &&
+        isAuthenticated &&
+        !isAppLocked
+      ) {
+        setIsAppLocked(true);
+      }
+      appState.current = nextState;
+    });
+    return () => sub.remove();
+  }, [isLockEnabled, isAuthenticated, isAppLocked, isSuspendedRef]);
+
+  const armGracePeriod = (durationMs: number) => {
+    if (graceTimeoutRef.current) clearTimeout(graceTimeoutRef.current);
+    isAuthenticatingRef.current = true;
+    graceTimeoutRef.current = setTimeout(() => {
+      isAuthenticatingRef.current = false;
+    }, durationMs);
+  };
+
+  const handleUnlock = () => {
+    armGracePeriod(1500);
+    setIsAppLocked(false);
+  };
+
+  const handleAuthenticatingChange = (val: boolean) => {
+    if (val) {
+      if (graceTimeoutRef.current) clearTimeout(graceTimeoutRef.current);
+      isAuthenticatingRef.current = true;
+    } else {
+      armGracePeriod(1500);
+    }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Navigation />
+
+      {isAppLocked && user?.id && (
+        <View style={StyleSheet.absoluteFill}>
+          <LockScreen
+            theme={theme}
+            userId={user.id}
+            onUnlock={handleUnlock}
+            onAuthenticatingChange={handleAuthenticatingChange}
+          />
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function RootLayout() {
   return (
     <AppThemeProvider>
       <AuthProvider>
         <NotificationProvider>
-          <Navigation />
+          <LockSuspendProvider>
+            <AppGate />
+          </LockSuspendProvider>
         </NotificationProvider>
       </AuthProvider>
     </AppThemeProvider>

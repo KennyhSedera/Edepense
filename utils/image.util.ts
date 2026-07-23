@@ -3,7 +3,16 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { FichierAudioInfo } from '@/types/global';
 
-const takePhoto = async (setImage: (uri: string) => void) => {
+type LockControls = {
+  suspendLock?: () => void;
+  resumeLock?: (graceMs?: number) => void;
+};
+
+const takePhoto = async (
+  setImage: (uri: string) => void,
+  lockControls?: LockControls
+) => {
+  lockControls?.suspendLock?.();
   try {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
@@ -22,10 +31,16 @@ const takePhoto = async (setImage: (uri: string) => void) => {
     }
   } catch (error) {
     console.log(error);
+  } finally {
+    lockControls?.resumeLock?.();
   }
 };
 
-const pickFromGallery = async (setImage: (uri: string) => void) => {
+const pickFromGallery = async (
+  setImage: (uri: string) => void,
+  lockControls?: LockControls
+) => {
+  lockControls?.suspendLock?.();
   try {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -44,9 +59,9 @@ const pickFromGallery = async (setImage: (uri: string) => void) => {
     }
   } catch (error) {
     console.log(error);
-
+  } finally {
+    lockControls?.resumeLock?.();
   }
-
 };
 
 async function assurerDossierExiste() {

@@ -118,7 +118,7 @@ export const styles = StyleSheet.create({
   text: { fontSize: 14 },
   textMode: { textAlign: "center", fontWeight: "medium", margin: 5, fontSize: 14 },
   orText: { fontSize: 12, textAlign: "center", marginVertical: 10 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
   chipText: { fontSize: 13, fontWeight: "600" },
 
   // Header

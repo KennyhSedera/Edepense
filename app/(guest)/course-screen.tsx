@@ -53,8 +53,12 @@ export default function CourseScreen() {
     setConfirmDelete({ show: false, id: "", message: "" });
   }
 
-  function getDateInfo(dateAchat?: string) {
+  function getDateInfo(dateAchat: string | undefined, restants: number) {
     if (!dateAchat) return null;
+
+    if (restants === 0) {
+      return { label: "Terminé", color: sectionColor };
+    }
 
     const aujourdhui = toISODate(new Date());
     const demain = toISODate((() => {
@@ -80,7 +84,7 @@ export default function CourseScreen() {
     const achetes = item.items.filter((i) => i.achete).length;
     const progress = total > 0 ? achetes / total : 0;
     const restants = total - achetes;
-    const dateInfo = getDateInfo(item.date_achat);
+    const dateInfo = getDateInfo(item.date_achat, restants);
     const apercuItems = item.items.slice(0, MAX_ITEMS_PREVIEW);
     const surplus = total - apercuItems.length;
 

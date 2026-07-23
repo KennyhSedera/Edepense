@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { AVPlaybackStatus } from "expo-av";
-import { playGlobalAudio, stopGlobalAudio, subscribeAudio, } from "@/utils/audio.manager";
-
+import { playGlobalAudio, stopGlobalAudio, subscribeAudio } from "@/utils/audio.manager";
+import { useLockSuspend } from "@/contexts/LockSuspendContext";
 
 export default function useAudioPlayer(id: string, uri: string) {
+  const { suspendLock, resumeLock } = useLockSuspend();
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [dureeAudio, setDureeAudio] = useState(0);
@@ -11,26 +13,24 @@ export default function useAudioPlayer(id: string, uri: string) {
 
   useEffect(() => {
     mounted.current = true;
-    const unsubscribe = subscribeAudio(
-      (activeId) => {
-        if (!mounted.current) return;
-        if (activeId !== id) {
-          setIsPlaying(false);
-          setPosition(0);
-        }
+    const unsubscribe = subscribeAudio((activeId) => {
+      if (!mounted.current) return;
+      if (activeId !== id) {
+        setIsPlaying(false);
+        setPosition(0);
       }
-    );
-    return () => { mounted.current = false; unsubscribe(); };
+    });
+    return () => {
+      mounted.current = false;
+      unsubscribe();
+    };
   }, [id]);
-
 
   function onStatusUpdate(status: AVPlaybackStatus) {
     if (!mounted.current) return;
     if (!status.isLoaded) return;
     setPosition(status.positionMillis);
-    setDureeAudio(
-      status.durationMillis ?? 0
-    );
+    setDureeAudio(status.durationMillis ?? 0);
     if (status.didJustFinish) {
       setIsPlaying(false);
       setPosition(0);
@@ -38,14 +38,24 @@ export default function useAudioPlayer(id: string, uri: string) {
   }
 
   async function togglePlay() {
-    const playing = await playGlobalAudio(id, uri, onStatusUpdate);
-    setIsPlaying(playing);
+    suspendLock();
+    try {
+      const playing = await playGlobalAudio(id, uri, onStatusUpdate);
+      setIsPlaying(playing);
+    } finally {
+      resumeLock();
+    }
   }
 
   async function stop() {
-    await stopGlobalAudio();
-    setIsPlaying(false);
-    setPosition(0);
+    suspendLock();
+    try {
+      await stopGlobalAudio();
+      setIsPlaying(false);
+      setPosition(0);
+    } finally {
+      resumeLock();
+    }
   }
 
   const progression = dureeAudio > 0 ? (position / dureeAudio) * 100 : 0;

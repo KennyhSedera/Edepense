@@ -119,7 +119,7 @@ export default function GlobalSearch() {
           {recent.map((r) => {
             if (!r.data) return null
 
-            const text = r.data.categorie || r.data.name || r.data.nom || r.data.titre || r.data.label || r.data.type || r.data.libelle || r.data.title;
+            const text = r.data.name || r.data.nom || r.data.titre || r.data.label || r.data.type || r.data.libelle || r.data.title || r.data.categorie;
 
             const type = r.type === "depense" ? "Dépense" : r.type === "provision" ? "Provision" : r.type === "budget" ? "Budget" : r.type === "item" ? "Article" : "";
 
@@ -183,9 +183,9 @@ export default function GlobalSearch() {
           <Text style={[styles.category, { color: sectionColor, marginBottom: 12, letterSpacing: 2, fontSize: 18 }]}>
             <ShoppingBasket color={sectionColor} size={16} /> Articles
           </Text>
-          {items.slice(0, 5).map((d) => (
+          {items.slice(0, 5).map((d, i) => (
             <Pressable
-              key={d.id}
+              key={i}
               onPress={() => {
                 addRecentSearch("item", d.id);
                 router.push({ pathname: '/detail-item', params: { id: d.id } });
@@ -212,7 +212,7 @@ export default function GlobalSearch() {
           <Text style={[styles.category, { color: sectionColor, marginBottom: 12, letterSpacing: 2, fontSize: 18 }]}>
             <Apple color={sectionColor} size={16} /> Provisions
           </Text>
-          {provision.slice(0, 5).map((p) => (
+          {provision.slice(0, 5).map((p, i) => (
             <Pressable
               key={p.id}
               onPress={() => {

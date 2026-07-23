@@ -3,8 +3,26 @@ import { Audio } from "expo-av";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, ToastAndroid } from "react-native";
 import * as Clipboard from "expo-clipboard";
+import { useLockSuspend } from "@/contexts/LockSuspendContext";
+
+// 👇 Référence GLOBALE (module-level), partagée entre toutes les instances du hook,
+// pour refléter l'état réel de l'unique Recording natif autorisé par expo-av.
+let globalRecording: Audio.Recording | null = null;
+
+async function nettoyerEnregistrementResiduel() {
+  if (globalRecording) {
+    try {
+      await globalRecording.stopAndUnloadAsync();
+    } catch (e) {
+      // déjà déchargé ou invalide, on ignore
+    }
+    globalRecording = null;
+  }
+}
 
 export default function useVoiceRecord(barLength?: number) {
+  const { suspendLock, resumeLock } = useLockSuspend();
+
   const recordingRef = useRef<Audio.Recording | null>(null);
   const startingRef = useRef(false);
   const stoppingRef = useRef(false);
@@ -29,7 +47,6 @@ export default function useVoiceRecord(barLength?: number) {
         intervalRef.current = null;
       }
     }
-
 
     return () => {
       if (intervalRef.current) {
@@ -84,8 +101,13 @@ export default function useVoiceRecord(barLength?: number) {
     if (startingRef.current) return;
     if (recordingRef.current) return;
     startingRef.current = true;
+    suspendLock();
 
     try {
+      // 👇 Nettoyage préventif : si un enregistrement précédent traîne encore
+      // (crash, remount, navigation rapide), on le libère avant d'en créer un nouveau.
+      await nettoyerEnregistrementResiduel();
+
       const permission = await Audio.requestPermissionsAsync();
       if (!permission.granted) {
         alert("Permission microphone refusée");
@@ -104,6 +126,7 @@ export default function useVoiceRecord(barLength?: number) {
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
       recordingRef.current = recording;
+      globalRecording = recording; // 👈 synchronise la référence globale
       setIsRecording(true);
       setIsPaused(false);
       setDuree(0);
@@ -111,10 +134,12 @@ export default function useVoiceRecord(barLength?: number) {
     } catch (e) {
       console.log("START RECORD ERROR", e);
       recordingRef.current = null;
+      globalRecording = null;
     } finally {
       startingRef.current = false;
+      resumeLock();
     }
-  }, []);
+  }, [suspendLock, resumeLock]);
 
   const pauseRecording = useCallback(async () => {
     try {
@@ -137,12 +162,15 @@ export default function useVoiceRecord(barLength?: number) {
   const stopRecording = useCallback(async () => {
     if (stoppingRef.current) return null;
     stoppingRef.current = true;
+    suspendLock();
+
     try {
       const current = recordingRef.current;
       if (!current) return null;
       await current.stopAndUnloadAsync();
       const uriTemp = current.getURI();
       recordingRef.current = null;
+      globalRecording = null; // 👈 synchronise
       setIsRecording(false);
       setIsPaused(false);
       if (uriTemp) {
@@ -153,18 +181,21 @@ export default function useVoiceRecord(barLength?: number) {
       return null;
     } catch (e) {
       console.log("STOP RECORD ERROR", e);
+      recordingRef.current = null;
+      globalRecording = null; // 👈 nettoie même en cas d'erreur
       return null;
     } finally {
-      recordingRef.current = null;
       stoppingRef.current = false;
+      resumeLock();
     }
-  }, []);
+  }, [suspendLock, resumeLock]);
 
   useEffect(() => {
     return () => {
       if (recordingRef.current) {
         recordingRef.current.stopAndUnloadAsync().catch(() => { });
         recordingRef.current = null;
+        globalRecording = null; // 👈 nettoie aussi au démontage
       }
     };
   }, []);

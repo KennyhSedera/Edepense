@@ -75,14 +75,14 @@ export default function Menu() {
       </View>
 
       <View style={[style.infoGrid, { marginBottom: 0, paddingBottom: 0, gap: 0 }]}>
-        <CardMenu title="Compte" Icon={UserCircleIcon} onPress={() => router.push("/profile")} color='#56c000' iconColor='#fff' />
         <CardMenu title="Budgets" Icon={BadgeDollarSignIcon} onPress={() => router.push("/budget")} color='#F59E0B' iconColor='#fff' />
-        <CardMenu title="Courses à acheter" Icon={ShoppingCart} onPress={() => router.push("/course-screen")} color='#f502a4' iconColor='#fff' />
         <CardMenu title="Messages" Icon={MessageCircle} onPress={() => router.push("/type-whatsapp")} color='#14B8A6' iconColor='#fff' />
+        <CardMenu title="Courses à acheter" Icon={ShoppingCart} onPress={() => router.push("/course-screen")} color='#f502a4' iconColor='#fff' />
         <CardMenu title="Todo List" Icon={ListChecks} onPress={() => router.push("/todo-screen")} color='#f0d800' iconColor='#fff' />
-        <CardMenu title="Paramètres" Icon={CogIcon} onPress={() => router.push("/setting")} color='#2528f0' iconColor='#fff' />
         <CardMenu title="Notes vocales" Icon={Music4Icon} onPress={() => router.push("/notes-vocales")} color='#8B5CF6' iconColor='#fff' />
         <CardMenu title="Photos" Icon={ImagesIcon} onPress={() => router.push("/image-enregistrer")} color='#e00013' iconColor='#fff' />
+        <CardMenu title="Compte" Icon={UserCircleIcon} onPress={() => router.push("/profile")} color='#56c000' iconColor='#fff' />
+        <CardMenu title="Paramètres" Icon={CogIcon} onPress={() => router.push("/setting")} color='#2528f0' iconColor='#fff' />
       </View>
 
       <Pressable onPress={() => setVisible(true)} style={[style.button, { backgroundColor: sectionColor, borderColor: border, marginBottom: 0 }]}>

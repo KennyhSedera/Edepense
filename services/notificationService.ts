@@ -1,5 +1,6 @@
 import { DAILY_KEY, SCHEDULE_LOCK_KEY } from '@/constants/storage';
 import { hasExpenseToday, setLastDepenseDate } from '@/controller/depense.controller';
+import { addNotification } from '@/controller/notification.app.controller';
 import { getUserId } from '@/controller/user.controller';
 import { SendNotifProps } from '@/types/global';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -52,6 +53,22 @@ export async function scheduleDailyReminder(userId: string, hour = 20, minute = 
       minute,
     },
   });
+
+  const notif = await addNotification(userId, {
+    type: "info",
+    title: "💰 Rappel de dépenses",
+    message: "N'oubliez pas de saisir vos dépenses du jour !",
+    data: { pathName: "/(form)/shopping-form" },
+  });
+
+  if (notif.data?.id) {
+    await sendNotification({
+      title: "💰 Rappel de dépenses",
+      body: "N'oubliez pas de saisir vos dépenses du jour !",
+      route: "/(form)/shopping-form",
+      params: { id: notif.data?.id },
+    });
+  }
 
   await AsyncStorage.multiSet([
     [dailyKey(userId), id],

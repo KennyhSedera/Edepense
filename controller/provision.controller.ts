@@ -1,8 +1,8 @@
 import { STORAGE_PROVISION_KEY } from "@/constants/storage";
 import { Provision } from "@/types/db";
-import { getLocalUser } from "@/utils/token.util";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUserId } from "./user.controller";
+import { logEntree, logSortie, logSortieSansImpact } from "./provision.mouvement.controller";
 
 async function getAllProvisionRaw(): Promise<Provision[]> {
   const data = await AsyncStorage.getItem(STORAGE_PROVISION_KEY);
@@ -14,7 +14,7 @@ async function getAllProvisionRaw(): Promise<Provision[]> {
 
 export async function getProvision(): Promise<Provision[]> {
   const data = await getAllProvisionRaw();
-  return data.filter((d: Provision) => d.quantite_restante > 0);
+  return data;
 }
 
 export async function setProvision(provision: any) {
@@ -26,8 +26,12 @@ export async function setProvision(provision: any) {
 
   provision.user_id = uId || "";
 
+  const quantiteAjoutee = provision.quantite_initiale;
+  const prixUnitaireAjoute = provision.prix_unitaire;
+
   let newUserData: any[];
   if (existingNames) {
+    provision.id = existingNames.id;
     provision.quantite_initiale += existingNames.quantite_initiale;
     provision.quantite_restante += existingNames.quantite_restante;
     provision.prix_total += existingNames.prix_total;
@@ -39,6 +43,16 @@ export async function setProvision(provision: any) {
 
   const otherUsersData = existingRaw.filter((d: any) => d.user_id !== uId);
   await AsyncStorage.setItem(STORAGE_PROVISION_KEY, JSON.stringify([...otherUsersData, ...newUserData]));
+
+  if (quantiteAjoutee > 0) {
+    await logEntree(
+      provision.id,
+      quantiteAjoutee,
+      provision.unite,
+      prixUnitaireAjoute,
+      existingNames ? "Réapprovisionnement" : "Achat initial"
+    );
+  }
 
   return JSON.stringify({
     success: true,
@@ -58,15 +72,18 @@ export async function setProvisions(provisions: Provision[]) {
     const otherUsersData = existingRaw.filter((d: any) => d.user_id !== uId);
 
     const provisionsAjoutees: Provision[] = [];
+    const entreesAEnregistrer: { id: string; quantite: number; unite: string; prix: number; note: string }[] = [];
 
     for (const provision of provisions) {
       provision.user_id = uId || "";
 
       const existingItem = userProvisions.find((item: any) => item?.nom === provision.nom);
+      const quantiteAjoutee = provision.quantite_initiale;
 
       if (existingItem) {
         const merged = {
           ...provision,
+          id: existingItem.id,
           quantite_initiale: provision.quantite_initiale + existingItem.quantite_initiale,
           quantite_restante: provision.quantite_restante + existingItem.quantite_restante,
           prix_total: provision.prix_total + existingItem.prix_total,
@@ -76,9 +93,25 @@ export async function setProvisions(provisions: Provision[]) {
           item.nom === existingItem.nom ? merged : item
         );
         provisionsAjoutees.push(merged);
+
+        entreesAEnregistrer.push({
+          id: merged.id,
+          quantite: quantiteAjoutee,
+          unite: merged.unite,
+          prix: provision.prix_unitaire,
+          note: "Réapprovisionnement",
+        });
       } else {
         userProvisions = [...userProvisions, provision];
         provisionsAjoutees.push(provision);
+
+        entreesAEnregistrer.push({
+          id: provision.id,
+          quantite: quantiteAjoutee,
+          unite: provision.unite,
+          prix: provision.prix_unitaire,
+          note: "Achat initial",
+        });
       }
     }
 
@@ -86,6 +119,12 @@ export async function setProvisions(provisions: Provision[]) {
       STORAGE_PROVISION_KEY,
       JSON.stringify([...otherUsersData, ...userProvisions])
     );
+
+    for (const entree of entreesAEnregistrer) {
+      if (entree.quantite > 0) {
+        await logEntree(entree.id, entree.quantite, entree.unite, entree.prix, entree.note);
+      }
+    }
 
     return JSON.stringify({
       success: true,
@@ -99,7 +138,6 @@ export async function setProvisions(provisions: Provision[]) {
     });
   }
 }
-
 export async function removeProvision() {
   const uId = await getUserId();
   const existingRaw = JSON.parse((await AsyncStorage.getItem(STORAGE_PROVISION_KEY)) || "[]") as Provision[];
@@ -117,10 +155,22 @@ export async function updateProvision(provision: any, id: string) {
   const uId = await getUserId();
   const existingRaw = JSON.parse((await AsyncStorage.getItem(STORAGE_PROVISION_KEY)) || "[]") as Provision[];
 
+  const ancienneProvision = existingRaw.find((item: any) => item.id === id);
+
   provision.user_id = uId || "";
   const newData = existingRaw.map((item: any) => (item.id === id ? provision : item));
 
   await AsyncStorage.setItem(STORAGE_PROVISION_KEY, JSON.stringify(newData));
+
+  if (ancienneProvision) {
+    const delta = provision.quantite_restante - ancienneProvision.quantite_restante;
+
+    if (delta > 0) {
+      await logEntree(id, delta, provision.unite, provision.prix_unitaire, "Réapprovisionnement (modification)");
+    } else if (delta < 0) {
+      await logSortieSansImpact(id, Math.abs(delta), provision.unite, "Ajustement manuel (modification)");
+    }
+  }
 
   return JSON.stringify({
     success: true,

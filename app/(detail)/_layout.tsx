@@ -52,6 +52,7 @@ export default function DetailLayout() {
       <Stack.Screen name='detail-provision' />
       <Stack.Screen name='detail-budget' />
       <Stack.Screen name='course-detail' />
+      <Stack.Screen name='historique-provision' />
     </Stack>
   )
 }

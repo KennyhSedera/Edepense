@@ -30,6 +30,7 @@ export async function addNotification(
   };
   const updated = [newNotif, ...list];
   await AsyncStorage.setItem(NOTIFICATION_APP_KEY(userId), JSON.stringify(updated));
+
   return newNotif;
 }
 

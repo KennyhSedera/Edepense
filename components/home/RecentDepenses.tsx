@@ -5,12 +5,14 @@ import { router } from "expo-router";
 import { useAppColors } from "@/hooks/useAppColors";
 import { Depense } from "@/types/db";
 import { styles } from "@/styles/styles";
+import { formatCompactNumber } from "@/utils/number.util";
 
 interface RecentDepensesProps {
   depenses: Depense[];
+  user: any;
 }
 
-export default function RecentDepenses({ depenses }: RecentDepensesProps) {
+export default function RecentDepenses({ depenses, user }: RecentDepensesProps) {
   const { cardBg, border, textColor, labelColor, sectionColor } = useAppColors();
   const recentes = depenses.slice(0, 4);
 
@@ -57,7 +59,7 @@ export default function RecentDepenses({ depenses }: RecentDepensesProps) {
               <Text style={{ color: labelColor, fontSize: 11 }}>{dep.categorie}</Text>
             </View>
             <Text style={{ color: textColor, fontSize: 13, fontWeight: "700" }}>
-              {dep.montant.toLocaleString()} Ar
+              {formatCompactNumber(dep.montant, user?.devise || "MGA")}
             </Text>
           </Pressable>
         ))}

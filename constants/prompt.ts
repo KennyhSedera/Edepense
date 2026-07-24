@@ -1,5 +1,7 @@
 // import { genererBlocCategories } from "./categorie-prompt";
 
+import { genererBlocCategories } from "@/utils/categorie.util";
+
 // // TYPE MESSAGE
 // function ANALYSE_PROMPT(text: string): string {
 //   return ` Agis en tant qu'analyste de données financières et expert en traitement de données. Ta mission est d'analyser le texte fourni par l'utilisateur pour extraire les dépenses, les achats ou les listes de courses.
@@ -377,8 +379,6 @@
 // }
 
 // export { GROQ_PROMPT, ANALYSE_PROMPT, GEMINI_RECEIPT_PROMPT };
-
-import { genererBlocCategories } from "./categorie-prompt";
 
 // TYPE MESSAGE
 function ANALYSE_PROMPT(text: string): string {

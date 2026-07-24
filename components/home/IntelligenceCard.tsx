@@ -3,17 +3,20 @@ import { View, Text } from "react-native";
 import { Sparkles, TrendingUp, TrendingDown } from "lucide-react-native";
 import { useAppColors } from "@/hooks/useAppColors";
 import { styles } from "@/styles/styles";
+import { formatCompactNumber } from "@/utils/number.util";
 
 interface IntelligenceCardProps {
   economieConseil: number;
   predictionFinMois: number;
   budgetMensuel: number;
+  user: any;
 }
 
 export default function IntelligenceCard({
   economieConseil,
   predictionFinMois,
   budgetMensuel,
+  user
 }: IntelligenceCardProps) {
   const { cardBg, border, textColor, labelColor, sectionColor } = useAppColors();
   const risqueDepassement = predictionFinMois > budgetMensuel;
@@ -29,13 +32,13 @@ export default function IntelligenceCard({
         <View>
           <Text style={{ color: labelColor, fontSize: 12 }}>Économie conseillée</Text>
           <Text style={{ color: textColor, fontSize: 16, fontWeight: "700" }}>
-            {economieConseil.toFixed(2)} Ar
+            {formatCompactNumber(economieConseil, user?.devise || "MGA")}
           </Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
           <Text style={{ color: labelColor, fontSize: 12 }}>Prévision fin de mois</Text>
           <Text style={{ color: textColor, fontSize: 16, fontWeight: "700" }}>
-            {predictionFinMois.toFixed(2)} Ar
+            {formatCompactNumber(predictionFinMois, user?.devise || "MGA")}
           </Text>
         </View>
       </View>

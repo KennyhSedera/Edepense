@@ -3,12 +3,14 @@ import { View, Text } from "react-native";
 import { CheckCircle2, AlertTriangle } from "lucide-react-native";
 import { useAppColors } from "@/hooks/useAppColors";
 import { styles } from "@/styles/styles";
+import { formatMoney } from "@/utils/number.util";
 
 interface DailyBudgetCardProps {
   budgetJournalier: number;
+  user: any
 }
 
-export default function DailyBudgetCard({ budgetJournalier }: DailyBudgetCardProps) {
+export default function DailyBudgetCard({ budgetJournalier, user }: DailyBudgetCardProps) {
   const { cardBg, border, labelColor, textColor } = useAppColors();
   const estOk = budgetJournalier > 0;
 
@@ -30,7 +32,7 @@ export default function DailyBudgetCard({ budgetJournalier }: DailyBudgetCardPro
       <View>
         <Text style={{ color: labelColor, fontSize: 12 }}>Budget journalier</Text>
         <Text style={{ color: textColor, fontSize: 20, fontWeight: "700" }}>
-          {budgetJournalier.toLocaleString()} Ar
+          {formatMoney(budgetJournalier, user?.devise || "MGA")}
         </Text>
       </View>
       <View

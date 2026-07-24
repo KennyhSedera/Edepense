@@ -16,6 +16,7 @@ import RenderImage from "@/components/modal/render-image";
 import { styles } from "@/styles/styles";
 import { MainHeader } from "@/components/header/header-main";
 import { DetailHeader } from "./_layout";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DepenseDetail() {
   const { textColor, backgroundColor, border, cardBg, labelColor, sectionColor, itemBg, dangerColor } = useAppColors();
@@ -26,6 +27,7 @@ export default function DepenseDetail() {
     message: "",
   });
   const [showImage, setShowImage] = useState(false);
+  const { user } = useAuth();
 
   const { id }: { id: string } = useLocalSearchParams();
 
@@ -102,7 +104,7 @@ export default function DepenseDetail() {
         />
         <MiniCard
           label="Montant"
-          value={`${formatMoney(depense?.montant) ?? ""} `}
+          value={`${formatMoney(depense?.montant) ?? "", user?.devise as string} `}
           backgroundColor={backgroundColor}
           border={border}
           labelColor={labelColor}
@@ -171,7 +173,7 @@ export default function DepenseDetail() {
                 </Text>
               </View>
               <Text style={[styles.itemTotal, { color: sectionColor }]}>
-                {formatMoney(item.total_price)}
+                {formatMoney(item.total_price, user?.devise || "MGA")}
               </Text>
             </Pressable>
           ))}

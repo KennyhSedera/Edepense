@@ -174,3 +174,11 @@ export type FooterMessageProps = {
   setSound?: (uri: string) => void,
   onClearResponse?: () => void
 }
+
+export type SelectChipsMultiProps = {
+  data: (string | { label: string; value: string })[];
+  values: string[];
+  setValues: (values: string[]) => void;
+  label?: string;
+  groupes?: Record<string, string[]>;
+};

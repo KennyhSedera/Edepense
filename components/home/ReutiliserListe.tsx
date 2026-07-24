@@ -5,12 +5,14 @@ import { router } from "expo-router";
 import { useAppColors } from "@/hooks/useAppColors";
 import { Depense } from "@/types/db";
 import { styles } from "@/styles/styles";
+import { formatCompactNumber } from './../../utils/number.util';
 
 interface ReutiliserListeProps {
   derniereListeCourses: Depense | null;
+  user: any;
 }
 
-export default function ReutiliserListe({ derniereListeCourses }: ReutiliserListeProps) {
+export default function ReutiliserListe({ derniereListeCourses, user }: ReutiliserListeProps) {
   const { gradient, border, textColor, labelColor, sectionColor } = useAppColors();
 
   if (!derniereListeCourses || derniereListeCourses.items?.length === 0) return null;
@@ -64,7 +66,7 @@ export default function ReutiliserListe({ derniereListeCourses }: ReutiliserList
           Réutiliser ta liste du {dateFormatee}
         </Text>
         <Text style={{ color: labelColor, fontSize: 12 }}>
-          {nombreArticles} article{nombreArticles as number > 1 ? "s" : ""} • {derniereListeCourses.montant.toLocaleString()} Ar
+          {nombreArticles} article{nombreArticles as number > 1 ? "s" : ""} • {formatCompactNumber(derniereListeCourses.montant, user?.devise || "MGA")}
         </Text>
       </View>
 

@@ -3,9 +3,11 @@ import { View, Text } from "react-native";
 import { useAppColors } from "@/hooks/useAppColors";
 import { Depense } from "@/types/db";
 import { styles } from "@/styles/styles";
+import { formatMoney } from "@/utils/number.util";
 
 interface CategoryBreakdownProps {
   depenses: Depense[];
+  user: any;
 }
 
 const COULEURS_CATEGORIES: Record<string, string> = {
@@ -69,6 +71,7 @@ function normaliserCategorie(categorie?: string): string {
 
 export default function CategoryBreakdown({
   depenses,
+  user
 }: CategoryBreakdownProps) {
   const { cardBg, border, textColor, labelColor } = useAppColors();
 
@@ -180,7 +183,7 @@ export default function CategoryBreakdown({
                 textAlign: "right",
               }}
             >
-              {montant.toLocaleString()} Ar
+              {formatMoney(montant, user?.devise || "MGA")}
             </Text>
           </View>
         ))}

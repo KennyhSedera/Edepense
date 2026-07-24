@@ -4,12 +4,14 @@ import { Target, ChevronRight } from "lucide-react-native";
 import { router } from "expo-router";
 import { useAppColors } from "@/hooks/useAppColors";
 import { styles } from "@/styles/styles";
+import { formatCompactNumber, formatMoney } from "@/utils/number.util";
 
 interface ObjectifEpargneProps {
   nomObjectif: string;
   montantCible: number;
   montantActuel: number;
   goalId: string;
+  user: any;
 }
 
 export default function ObjectifEpargne({
@@ -17,6 +19,7 @@ export default function ObjectifEpargne({
   montantCible,
   montantActuel,
   goalId,
+  user,
 }: ObjectifEpargneProps) {
   const { textColor, labelColor, sectionColor } = useAppColors();
 
@@ -50,7 +53,7 @@ export default function ObjectifEpargne({
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
           <Text style={{ color: textColor, fontSize: 12 }}>
-            {montantActuel.toLocaleString()} / {montantCible.toLocaleString()} Ar
+            {montantActuel.toLocaleString()} / {formatMoney(montantCible, user?.devise || "MGA")}
           </Text>
           <Text style={{ color: sectionColor, fontSize: 12, fontWeight: "700" }}>
             {pourcentage.toFixed(0)}%
@@ -60,7 +63,7 @@ export default function ObjectifEpargne({
 
       {restant > 0 && (
         <Text style={{ color: textColor, fontSize: 12 }}>
-          Encore {restant.toLocaleString()} Ar pour atteindre ton objectif
+          Encore {formatCompactNumber(restant, user?.devise || "MGA")} pour atteindre ton objectif
         </Text>
       )}
     </Pressable>

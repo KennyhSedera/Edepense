@@ -16,6 +16,7 @@ import RenderImage from '@/components/modal/render-image';
 import { MainHeader } from '@/components/header/header-main';
 import { DetailHeader } from './_layout';
 import { formatFrequenceSuffix } from '@/utils/text.util';
+import { useAuth } from '@/contexts/AuthContext';
 
 const FREQUENCE_LABELS: Record<string, string> = {
   unique: "Unique",
@@ -37,6 +38,8 @@ export default function DetailBudget() {
     id: "",
     message: "",
   });
+
+  const { user } = useAuth();
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -160,11 +163,11 @@ export default function DetailBudget() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <View>
               <Text style={[styles.date, { color: textColor, opacity: 0.6 }]}>Montant actuel</Text>
-              <Text style={[styles.price, { color: textColor }]}>{formatMoney(current)}</Text>
+              <Text style={[styles.price, { color: textColor }]}>{formatMoney(current, user?.devise || "MGA")}</Text>
             </View>
             <View>
               <Text style={[styles.date, { color: textColor, opacity: 0.6 }]}>Objectif</Text>
-              <Text style={[styles.price, { color: sectionColor }]}>{formatMoney(target)}</Text>
+              <Text style={[styles.price, { color: sectionColor }]}>{formatMoney(target, user?.devise || "MGA")}</Text>
             </View>
           </View>
 
@@ -173,7 +176,7 @@ export default function DetailBudget() {
               <View>
                 <Text style={[styles.date, { color: textColor, opacity: 0.6 }]}>Versement</Text>
                 <Text style={[styles.date, { color: textColor }]}>
-                  {formatMoney(goal.montant_regulier)} {formatFrequenceSuffix(goal.frequence)}
+                  {formatMoney(goal.montant_regulier, user?.devise || "MGA")} {formatFrequenceSuffix(goal.frequence)}
                 </Text>
               </View>
             </View>

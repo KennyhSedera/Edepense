@@ -3,13 +3,15 @@ import { View, Text, Dimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { useAppColors } from "@/hooks/useAppColors";
 import { styles } from "@/styles/styles";
+import { formatCompactNumber } from './../../utils/number.util';
 
 interface DepenseChartProps {
   labels: string[];
   data: number[];
+  user: any;
 }
 
-export default function DepenseChart({ labels, data }: DepenseChartProps) {
+export default function DepenseChart({ labels, data, user }: DepenseChartProps) {
   const { cardBg, border, textColor, gradient } = useAppColors();
   const [point, setPoint] = useState({ click: false, v: 0, x: 0, y: 0 });
 
@@ -54,7 +56,7 @@ export default function DepenseChart({ labels, data }: DepenseChartProps) {
               fontSize: 12,
             }}
           >
-            {point.v.toLocaleString()} Ar
+            {formatCompactNumber(point.v, user?.devise || "MGA")}
           </Text>
         )}
       </View>

@@ -23,6 +23,7 @@ import { DetailHeader } from '@/app/(detail)/_layout';
 import SelectChipsMenu from '@/components/input/select-chips-menu';
 import { getUnitesCompatibles } from '@/utils/unit.conversion.util';
 import { getJoursRestants, logSortie, ajouterEntreeManuelle } from '@/controller/provision.mouvement.controller';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DetailProvision() {
   const { textColor, backgroundColor, border, labelColor, dangerColor, sectionColor, cardBg, successColor } = useAppColors();
@@ -48,6 +49,8 @@ export default function DetailProvision() {
   const [qteAjoutee, setQteAjoutee] = useState("");
   const [errorAjout, setErrorAjout] = useState("");
   const [uniteAjout, setUniteAjout] = useState(data?.unite || "");
+
+  const { user } = useAuth();
 
   async function loadData(id: string) {
     const data = await getProvisionById(id);
@@ -294,7 +297,7 @@ export default function DetailProvision() {
         />
         <MiniCard
           label="Prix unitaire"
-          value={`${formatMoney(data?.prix_unitaire as number) ?? ""} `}
+          value={`${formatMoney(data?.prix_unitaire as number, user?.devise || "MGA") ?? ""} `}
           backgroundColor={backgroundColor}
           border={border}
           labelColor={labelColor}
@@ -303,7 +306,7 @@ export default function DetailProvision() {
         />
         <MiniCard
           label="Prix total"
-          value={`${formatMoney(data?.prix_total as number) ?? ""} `}
+          value={`${formatMoney(data?.prix_total as number, user?.devise || "MGA") ?? ""}`}
           backgroundColor={backgroundColor}
           border={border}
           labelColor={labelColor}
@@ -375,7 +378,7 @@ export default function DetailProvision() {
             Ajouter du stock
           </Text>
           <Text style={{ color: labelColor, fontSize: 13 }}>
-            Stock actuel : {data?.quantite_restante} {getUnitLabel(data?.unite as string)} — Prix unitaire actuel : {formatMoney(data?.prix_unitaire as number)}
+            Stock actuel : {data?.quantite_restante} {getUnitLabel(data?.unite as string)} — Prix unitaire actuel : {formatMoney(data?.prix_unitaire as number, user?.devise || "MGA")}
           </Text>
 
           <View style={{ flexDirection: "row", gap: 8 }}>
@@ -400,7 +403,7 @@ export default function DetailProvision() {
           </View>
 
           <Field
-            label={`Nouveau prix unitaire (optionnel, sinon garde ${formatMoney(data?.prix_unitaire as number)})`}
+            label={`Nouveau prix unitaire (optionnel, sinon garde ${formatMoney(data?.prix_unitaire as number, user?.devise || "MGA")})`}
             value={prixAjout}
             onChangeText={setPrixAjout}
             placeholder="Laisser vide si prix inchangé"

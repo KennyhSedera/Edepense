@@ -4,17 +4,20 @@ import { TrendingDown, TrendingUp, Minus } from "lucide-react-native";
 import { useAppColors } from "@/hooks/useAppColors";
 import { Depense } from "@/types/db";
 import { styles } from "@/styles/styles";
+import { formatMoney } from "@/utils/number.util";
 
 interface ComparaisonMoisPrecedentProps {
   depensesMoisActuel: Depense[];
   depensesMoisPrecedent: Depense[];
-  jourDuMois: number; // pour comparer "à date égale"
+  jourDuMois: number;
+  user: any
 }
 
 export default function ComparaisonMoisPrecedent({
   depensesMoisActuel,
   depensesMoisPrecedent,
   jourDuMois,
+  user
 }: ComparaisonMoisPrecedentProps) {
   const { cardBg, border, textColor, labelColor } = useAppColors();
 
@@ -69,7 +72,7 @@ export default function ComparaisonMoisPrecedent({
             : `${pourcentage.toFixed(0)}% ${estMoinsDepense ? "de moins" : "de plus"} qu'à pareille date`}
         </Text>
         <Text style={{ color: labelColor, fontSize: 12 }}>
-          {totalPrecedentADate.toLocaleString()} Ar le mois dernier vs {totalActuel.toLocaleString()} Ar ce mois-ci
+          {formatMoney(totalPrecedentADate, user?.devise || "MGA")} le mois dernier vs {formatMoney(totalActuel, user?.devise || "MGA")} ce mois-ci
         </Text>
       </View>
     </View>

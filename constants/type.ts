@@ -162,8 +162,6 @@ const GOAL_FREQUENCE: { value: GoalFrequency; title: string }[] = [
 
 const GOAL_SOURCE: { value: string; label: string }[] = [
   { label: "Salaire", value: "salaire" },
-  { label: "Budget Journalier", value: "budget_journalier" },
-  { label: "Budget Hebdomadaire", value: "budget_hebdomadaire" },
   { label: "Budjet Mensuel", value: "budget_mensuel" },
 ];
 

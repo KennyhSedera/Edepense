@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserId } from '@/controller/user.controller';
+import { getAllUser, getUserById, getUserId } from '@/controller/user.controller';
+import { STORAGE_USER_KEY } from '@/constants/storage';
+import * as SecureStore from "expo-secure-store";
 
 export type Currency = 'MGA' | 'EUR' | 'USD';
 export type Language = 'fr' | 'mg';
@@ -35,9 +37,20 @@ export function useAppPreferences() {
 
   const updateCurrency = useCallback(async (curr: Currency) => {
     const userId = await getUserId();
-    if (!userId) return;
+    if (!userId) return { ok: false, message: 'Utilisateur non connecté' };
+    const users = await getAllUser();
+    if (users.length === 0) return { ok: false, message: 'Aucun utilisateur' };
+    const newUsers = users.map((u) => (u.id === userId ? { ...u, devise: curr } : u));
+
+    const user = await getUserById(userId);
+
+    await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(newUsers));
     await AsyncStorage.setItem(CURRENCY_KEY(userId), curr);
+    await SecureStore.setItemAsync("local_user", JSON.stringify({ ...user, devise: curr }));
+
     setCurrency(curr);
+
+    return { ok: true, message: 'Devise mise à jour' };
   }, []);
 
   const updateLanguage = useCallback(async (lang: Language) => {

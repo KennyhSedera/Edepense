@@ -12,12 +12,15 @@ import { getUnitLabel } from '@/constants/type';
 import RenderImage from '@/components/modal/render-image';
 import { MainHeader } from '@/components/header/header-main';
 import { DetailHeader } from './_layout';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DetailItem() {
   const { textColor, backgroundColor, border, labelColor, dangerColor } = useAppColors();
   const { id }: { id: string } = useLocalSearchParams();
   const [data, setData] = useState<DepenseItem | null>(null);
   const [showImage, setShowImage] = useState(false);
+
+  const { user } = useAuth();
 
   async function loadData(id: string) {
     const data = await getItemById(id);
@@ -29,6 +32,7 @@ export default function DetailItem() {
       loadData(id);
     }, [id],)
   )
+
 
   return (
     <MainHeader
@@ -81,7 +85,7 @@ export default function DetailItem() {
 
         <MiniCard
           label="Prix unitaire"
-          value={`${formatMoney(data?.unit_price as number) ?? ""} `}
+          value={`${formatMoney(data?.unit_price as number) ?? "", user?.devise || "MGA"} `}
           backgroundColor={backgroundColor}
           border={border}
           labelColor={labelColor}
@@ -91,7 +95,7 @@ export default function DetailItem() {
 
         <MiniCard
           label="Prix total"
-          value={`${formatMoney(data?.total_price as number) ?? ""} `}
+          value={`${formatMoney(data?.total_price as number) ?? "", user?.devise || "MGA"} `}
           backgroundColor={backgroundColor}
           border={border}
           labelColor={labelColor}

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, Image, ScrollView } from "react-native";
 import { useAppColors } from "@/hooks/useAppColors";
-import { Depense, Goal, Provision } from "@/types/db";
+import { Budget, Depense, Goal, Provision } from "@/types/db";
 import { useFocusEffect } from "expo-router";
 import { getDepenseCurrentMonth, trouverDerniereListe } from "@/controller/depense.controller";
 import { getCycleStart, getDayFixed, getDepenseParSemaine, getDepensesMoisPrecedent, getInfosPeriode } from "@/utils/date.util";
@@ -23,9 +23,11 @@ import ObjectifEpargne from "@/components/home/ObjectifEpargne";
 import MeteoSuggestion from "@/components/home/MeteoSuggestion";
 import ReutiliserListe from "@/components/home/ReutiliserListe";
 import ComparaisonMoisPrecedent from "@/components/home/ComparaisonMoisPrecedent";
+import BudgetsCategorieSection from "@/components/home/BudgetsCategorieSection"; // 👈 nouveau
 import { styles } from "@/styles/styles";
 import { FloatingActionButton, useScrollFab } from "@/components/input/floating-action-button";
 import { ChevronUp } from "lucide-react-native";
+import { getBudget, reinitBudget } from "@/controller/budget.controller"; // 👈 nouveau
 
 export default function HomeScreen() {
   const { textColor, sectionColor, labelColor } = useAppColors();
@@ -36,11 +38,13 @@ export default function HomeScreen() {
   const [depenses, setDepenses] = useState<Depense[]>([]);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [provisions, setProvisions] = useState<Provision[]>([]);
+  const [budgetsCategorie, setBudgetsCategorie] = useState<Budget[]>([]); // 👈 nouveau
   const scrollViewRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
       loadData();
+      loadBudgetsCategorie(); // 👈 nouveau
       getProvision().then(setProvisions);
     }, [])
   );
@@ -56,12 +60,17 @@ export default function HomeScreen() {
     setDepenses(data.sort((a: any, b: any) => b.id - a.id));
   };
 
+  const loadBudgetsCategorie = async () => {
+    await reinitBudget();
+    const data = await getBudget();
+    setBudgetsCategorie(data);
+  };
+
   useFocusEffect(
     useCallback(() => {
       loadData();
     }, [])
   );
-
 
   const dateDebut = user?.date_debut
     ? getCycleStart(new Date().toISOString(), getDayFixed(user.date_debut)).toISOString()
@@ -84,7 +93,8 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       getGoal().then((goals) => {
-        if (goals.length === 0) return; const epargnes = goals.filter((g) => g.type === "epargne" && g.user_id === user?.id);
+        if (goals.length === 0) return;
+        const epargnes = goals.filter((g) => g.type === "epargne" && g.user_id === user?.id);
 
         const goal = epargnes.length > 0
           ? epargnes.reduce((closest, current) => {
@@ -130,11 +140,13 @@ export default function HomeScreen() {
 
         <MeteoSuggestion />
 
-        <BudgetCard budgetMensuel={budgetMensuel} totalDepense={totalDepense} reste={reste} />
+        <BudgetCard budgetMensuel={budgetMensuel} totalDepense={totalDepense} reste={reste} user={user} />
 
-        <DailyBudgetCard budgetJournalier={budgetJournalier} />
+        <DailyBudgetCard budgetJournalier={budgetJournalier} user={user} />
 
-        <DepenseChart labels={dataGraphlabel} data={dataGraphdata} />
+        <BudgetsCategorieSection budgets={budgetsCategorie} user={user} />
+
+        <DepenseChart labels={dataGraphlabel} data={dataGraphdata} user={user} />
 
         <StreakCard joursDansLeBudget={2} />
 
@@ -142,14 +154,15 @@ export default function HomeScreen() {
 
         <ProvisionsAlert provisions={provisions} />
 
-        <CategoryBreakdown depenses={depenses} />
+        <CategoryBreakdown depenses={depenses} user={user} />
 
-        <ReutiliserListe derniereListeCourses={trouverDerniereListe(depenses)} />
+        <ReutiliserListe derniereListeCourses={trouverDerniereListe(depenses)} user={user} />
 
-        <RecentDepenses depenses={depenses} />
+        <RecentDepenses depenses={depenses} user={user} />
 
         {objectifPrincipal?.id && (
           <ObjectifEpargne
+            user={user}
             nomObjectif={objectifPrincipal.titre}
             montantCible={objectifPrincipal.montant_cible || 0}
             montantActuel={objectifPrincipal.montant_actuel}
@@ -158,12 +171,14 @@ export default function HomeScreen() {
         )}
 
         <ComparaisonMoisPrecedent
+          user={user}
           depensesMoisActuel={depenses}
           depensesMoisPrecedent={getDepensesMoisPrecedent(depenses, new Date())}
           jourDuMois={new Date().getDate()}
         />
 
         <IntelligenceCard
+          user={user}
           economieConseil={economieConseil}
           predictionFinMois={predictionFinMois}
           budgetMensuel={budgetMensuel}

@@ -117,9 +117,14 @@ export type Depense = {
   items?: DepenseItem[];
 };
 
+export type BudgetFrequence = 'quotidien' | 'hebdomadaire' | 'mensuel';
+
 export type Budget = {
   id: string;
   budgetName: string;
+  categories: string[];
+  source: 'budget_mensuel' | 'salaire_mensuel';
+  frequence: BudgetFrequence;
   budgetTotal: number;
   budgetRestant: number;
   budgetDateReinitialise: string;

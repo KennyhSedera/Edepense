@@ -20,6 +20,7 @@ import { FormHeader } from "./_layout";
 import { useAuth } from "@/contexts/AuthContext";
 import InputSelect from "@/components/input/input-select";
 import { GOAL_FREQUENCE, GOAL_SOURCE, GOAL_TYPE } from "@/constants/type";
+import { getBudgetName } from "@/controller/budget.controller";
 
 function calculerDateLimite(
   montantCible: number,
@@ -76,6 +77,7 @@ export default function GoalForm() {
   const [type, setType] = useState<"epargne" | "reduction_depense">("epargne");
   const [image, setImage] = useState("");
   const [montantActuel, setMontantActuel] = useState(0);
+  const [sourceOptions, setSourceOptions] = useState(GOAL_SOURCE);
 
   const [frequence, setFrequence] = useState<GoalFrequency>("unique");
   const [montantRegulier, setMontantRegulier] = useState("");
@@ -89,11 +91,21 @@ export default function GoalForm() {
   const { sectionColor, border, textColor, cardBg, inputBg, labelColor } = useAppColors();
   const isRecurrent = frequence !== "unique";
 
+  async function getBudget() {
+    const bNames = await getBudgetName();
+    if (bNames.length > 0) {
+      setSourceOptions([...sourceOptions, ...bNames]);
+    }
+  }
+  useEffect(() => {
+    getBudget();
+  }, []);
+
   useEffect(() => {
     const sourceParFrequence: Record<GoalFrequency, string> = {
       unique: "salaire",
-      journalier: "budget_journalier",
-      hebdomadaire: "budget_hebdomadaire",
+      journalier: "salaire",
+      hebdomadaire: "salaire",
       mensuel: "budget_mensuel",
     };
 
@@ -300,7 +312,7 @@ export default function GoalForm() {
               label="Source"
               value={source}
               onChange={setSource}
-              options={GOAL_SOURCE}
+              options={sourceOptions}
             />
             <View style={[styles.field]}>
               <Text style={[styles.label, { color: labelColor }]}>

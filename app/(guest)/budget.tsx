@@ -42,7 +42,7 @@ export default function BudgetScreen() {
 
     return (
       <Pressable
-        onPress={() => router.push({ pathname: '/budget-form', params: { id: item.id } })}
+        onPress={() => router.push({ pathname: '/detail-budget', params: { id: item.id } })}
         style={[styles.miniCard, { backgroundColor: cardBg, borderColor: border, marginBottom: 12 }]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>

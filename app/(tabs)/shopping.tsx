@@ -22,13 +22,13 @@ import DeleteModal from "@/components/modal/DeleteModal";
 import SelectDate from "@/components/input/select-date";
 import { MainHeader } from "@/components/header/header-main";
 import { TabHeader } from "./_layout";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ShoppingScreen() {
   const { search } = useLocalSearchParams();
   const { textColor, backgroundColor, border, sectionColor, labelColor, successColor } = useAppColors();
   const [value, setValue] = React.useState("currentMonth");
-
-  const { devise } = useBudgetStore();
+  const { user } = useAuth();
   const [depenses, setDepenses] = React.useState<Depense[]>([]);
   const [confirmDelete, setConfirmDelete] = useState({
     show: false,
@@ -169,7 +169,7 @@ export default function ShoppingScreen() {
           }}
         />
         <Text style={[styles.title, { color: textColor }]}>
-          {total.toLocaleString()} {devise}
+          {total.toLocaleString()} {user?.devise}
         </Text>
       </View>
 
@@ -211,7 +211,7 @@ export default function ShoppingScreen() {
                   {depense.categorie}
                 </Text>
                 <Text style={styles.price}>
-                  {formatCompactNumber(depense.montant, devise)}
+                  {formatCompactNumber(depense.montant, user?.devise)}
                 </Text>
                 <Text style={[styles.date, { color: textColor }]}>
                   {formatDateStringForDisplay(depense.date)}

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Linking, Pressable } from 'react-native'
+import { View, Text, TouchableOpacity, Linking, Pressable, ToastAndroid } from 'react-native'
 import React, { useState } from 'react'
 import { HeaderWithSearch } from './_layout'
 import { MainHeader } from '@/components/header/header-main'
@@ -15,7 +15,7 @@ import ChangePasswordModal from '@/components/settings/ChangePasswordModal';
 import DeleteModal from '@/components/modal/DeleteModal';
 import { removeUser } from '@/controller/user.controller';
 import { useAppTheme } from '@/contexts/themeContext';
-import { useAppPreferences } from '@/hooks/useAppPreferences';
+import { Currency, useAppPreferences } from '@/hooks/useAppPreferences';
 import ModalConfirm from '@/components/modal/modal-confirm';
 import { Bell, Info, Lock, Settings, User } from 'lucide-react-native';
 
@@ -34,7 +34,7 @@ export default function SettingScreen() {
     handleHourChange
   } = useHours();
 
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
 
   const {
     isLockEnabled, isPinSet, isBiometricEnabled, isBiometricAvailable,
@@ -86,6 +86,14 @@ export default function SettingScreen() {
       router.replace('/login');
     }
     setDeleteModalVisible(false);
+  };
+
+  const handleUpdateCurrency = async (curr: Currency) => {
+    const res = await updateCurrency(curr);
+    if (res.ok) {
+      ToastAndroid.show(res.message, ToastAndroid.SHORT)
+      await refreshUser();
+    };
   };
 
   const SettingItem = ({ icon, label, onPress, danger = false }: any) => (
@@ -218,7 +226,7 @@ export default function SettingScreen() {
           {(['MGA', 'EUR', 'USD'] as const).map((curr) => (
             <TouchableOpacity
               key={curr}
-              onPress={() => updateCurrency(curr)}
+              onPress={() => handleUpdateCurrency(curr)}
               style={{
                 flex: 1, padding: 10, marginRight: curr !== 'USD' ? 8 : 0,
                 borderRadius: 8, alignItems: 'center',

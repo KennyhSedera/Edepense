@@ -42,13 +42,18 @@ export function formatMoney(
 export function formatCompactNumber(value: number, devise: string = 'MGA'): string {
   const safeCurrency = normalizeCurrency(devise);
   const abs = Math.abs(value);
+  const currency = safeCurrency === 'MGA' ? 'Ar' : safeCurrency === 'EUR' ? '€' : '$';
+
+  if (abs >= 1_000_000_000_000) {
+    return `${(value / 1_000_000_000_000).toFixed(1).replace(/\.0$/, '')}T ${currency}`;
+  }
 
   if (abs >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B ${safeCurrency}`;
+    return `${(value / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}B ${currency}`;
   }
 
   if (abs >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M ${safeCurrency}`;
+    return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M ${currency}`;
   }
 
   return formatMoney(value, safeCurrency);
